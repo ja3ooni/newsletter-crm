@@ -311,6 +311,12 @@ reports/
 secrets/
 .secrets/
 
+# API Keys and Credentials
+kaggle.json
+*.credentials
+.kaggle/
+api-keys/
+
 # Local development
 .local/
 local/
