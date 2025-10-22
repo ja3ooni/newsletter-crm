@@ -1,0 +1,74 @@
+# Hadolint configuration for Dockerfile linting
+ignored:
+  # Allow specific base images
+  - DL3006
+  # Allow using latest tag in development
+  - DL3007
+  # Allow using sudo (needed for some setup tasks)
+  - DL3004
+
+override:
+  error:
+    # Enforce specific versions for production images
+    - DL3008
+    - DL3009
+    - DL3015
+    - DL3020
+    - DL3025
+  warning:
+    # Warn about potential issues
+    - DL3003
+    - DL3016
+    - DL3018
+    - DL3019
+    - DL3021
+  info:
+    # Info level for style issues
+    - DL3002
+    - DL3033
+    - DL3034
+    - DL3035
+    - DL3036
+    - DL3037
+    - DL3038
+    - DL3040
+    - DL3041
+    - DL3042
+    - DL3043
+    - DL3044
+    - DL3045
+    - DL3046
+    - DL3047
+    - DL3048
+    - DL3049
+    - DL3050
+    - DL3051
+    - DL3052
+    - DL3053
+    - DL3054
+    - DL3055
+    - DL3056
+    - DL3057
+    - DL3058
+    - DL3059
+    - DL3060
+
+# Trusted registries
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - gcr.io
+  - quay.io
+  - registry.k8s.io
+
+# Allow specific labels
+allowedLabels:
+  - maintainer
+  - version
+  - description
+  - org.opencontainers.image.title
+  - org.opencontainers.image.description
+  - org.opencontainers.image.version
+  - org.opencontainers.image.created
+  - org.opencontainers.image.source
+  - org.opencontainers.image.licenses

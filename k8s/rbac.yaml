@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ailert-service-account
+  namespace: ailert
+  labels:
+    app: ailert
+automountServiceAccountToken: false
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: ailert
+  name: ailert-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ailert-role-binding
+  namespace: ailert
+subjects:
+- kind: ServiceAccount
+  name: ailert-service-account
+  namespace: ailert
+roleRef:
+  kind: Role
+  name: ailert-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: user-service-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: user-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: newsletter-service-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: newsletter-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: content-service-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: content-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: crm-service-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: crm-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  namespace: ailert
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: frontend

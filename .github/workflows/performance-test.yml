@@ -1,0 +1,142 @@
+name: Performance Testing
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # Daily at 4 AM
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'services/**'
+
+jobs:
+  load-test:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run load tests
+        run: |
+          # Create load test script
+          cat > load-test.js << 'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+
+          export let options = {
+            stages: [
+              { duration: '2m', target: 10 },
+              { duration: '5m', target: 50 },
+              { duration: '2m', target: 100 },
+              { duration: '5m', target: 100 },
+              { duration: '2m', target: 0 },
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<500'],
+              http_req_failed: ['rate<0.1'],
+            },
+          };
+
+          export default function () {
+            let response = http.get('https://staging-api.ailert.com/health');
+            check(response, {
+              'status is 200': (r) => r.status === 200,
+              'response time < 500ms': (r) => r.timings.duration < 500,
+            });
+            sleep(1);
+          }
+          EOF
+
+          k6 run load-test.js
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: |
+            *.json
+            *.html
+
+  benchmark:
+    name: API Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Artillery
+        run: npm install -g artillery
+
+      - name: Run API benchmarks
+        run: |
+          # Create Artillery config
+          cat > artillery-config.yml << 'EOF'
+          config:
+            target: 'https://staging-api.ailert.com'
+            phases:
+              - duration: 60
+                arrivalRate: 10
+              - duration: 120
+                arrivalRate: 20
+              - duration: 60
+                arrivalRate: 10
+            defaults:
+              headers:
+                Content-Type: 'application/json'
+          scenarios:
+            - name: "Health Check"
+              weight: 30
+              flow:
+                - get:
+                    url: "/health"
+            - name: "API Info"
+              weight: 20
+              flow:
+                - get:
+                    url: "/api/v1"
+            - name: "User Operations"
+              weight: 25
+              flow:
+                - post:
+                    url: "/api/v1/auth/login"
+                    json:
+                      email: "test@example.com"
+                      password: "testpassword"
+            - name: "Content Search"
+              weight: 25
+              flow:
+                - get:
+                    url: "/api/v1/content/search?q=test"
+          EOF
+
+          artillery run artillery-config.yml --output benchmark-results.json
+
+      - name: Generate benchmark report
+        run: artillery report benchmark-results.json --output benchmark-report.html
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: |
+            benchmark-results.json
+            benchmark-report.html

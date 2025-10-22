@@ -1,0 +1,494 @@
+# Kong API Gateway Configuration
+_format_version: "3.0"
+_transform: true
+
+# JWT Secrets for authentication
+jwt_secrets:
+  - consumer: default
+    key: ailert-jwt-key
+    secret: ${JWT_SECRET}
+    algorithm: HS256
+
+# Consumers for different subscription tiers
+consumers:
+  - username: free-tier
+    custom_id: free
+    tags: ["tier:free"]
+  - username: premium-tier
+    custom_id: premium
+    tags: ["tier:premium"]
+  - username: enterprise-tier
+    custom_id: enterprise
+    tags: ["tier:enterprise"]
+
+# API Keys for different tiers
+keyauth_credentials:
+  - consumer: free-tier
+    key: ${FREE_TIER_API_KEY}
+  - consumer: premium-tier
+    key: ${PREMIUM_TIER_API_KEY}
+  - consumer: enterprise-tier
+    key: ${ENTERPRISE_TIER_API_KEY}
+
+services:
+  - name: user-service
+    url: http://user-service:3001
+    routes:
+      - name: user-auth-routes
+        paths: ["/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/refresh"]
+        methods: ["POST"]
+        strip_path: false
+      - name: user-protected-routes
+        paths: ["/api/v1/users"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+    plugins:
+      # Authentication for protected routes only
+      - name: jwt
+        route: user-protected-routes
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+          uri_param_names: ["jwt"]
+      # Rate limiting based on subscription tiers
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 60  # free tier: 60 requests per minute
+            - 200 # premium tier: 200 requests per minute
+            - 500 # enterprise tier: 500 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
+          credentials: true
+          max_age: 3600
+
+  - name: newsletter-service
+    url: http://newsletter-service:3002
+    routes:
+      - name: newsletter-routes
+        paths: ["/api/v1/newsletters", "/api/v1/templates", "/api/v1/campaigns", "/api/v1/content-library"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+    plugins:
+      # JWT Authentication required
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+          uri_param_names: ["jwt"]
+      # API Key authentication as fallback
+      - name: key-auth
+        config:
+          key_names: ["X-API-Key", "apikey"]
+          key_in_body: false
+          key_in_query: true
+          hide_credentials: true
+      # Subscription-based rate limiting
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 30   # free tier: 30 requests per minute
+            - 150  # premium tier: 150 requests per minute
+            - 400  # enterprise tier: 400 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      # Request size limiting
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 10 # 10MB for newsletter content
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
+          credentials: true
+
+  - name: content-service
+    url: http://content-service:3003
+    routes:
+      - name: content-public-routes
+        paths: ["/api/v1/content/public", "/api/v1/search/public"]
+        methods: ["GET"]
+        strip_path: false
+      - name: content-protected-routes
+        paths: ["/api/v1/content", "/api/v1/sources", "/api/v1/search"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+    plugins:
+      # Authentication for protected routes
+      - name: jwt
+        route: content-protected-routes
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+      - name: key-auth
+        route: content-protected-routes
+        config:
+          key_names: ["X-API-Key", "apikey"]
+          key_in_body: false
+          key_in_query: true
+          hide_credentials: true
+      # Higher rate limits for content service (read-heavy)
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 100  # free tier: 100 requests per minute
+            - 300  # premium tier: 300 requests per minute
+            - 800  # enterprise tier: 800 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      # Response caching for public content
+      - name: proxy-cache
+        route: content-public-routes
+        config:
+          response_code: [200, 301, 404]
+          request_method: ["GET", "HEAD"]
+          content_type: ["text/plain", "application/json"]
+          cache_ttl: 300 # 5 minutes
+          strategy: memory
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
+          credentials: true
+
+  - name: crm-service
+    url: http://crm-service:3004
+    routes:
+      - name: crm-routes
+        paths: ["/api/v1/contacts", "/api/v1/segments", "/api/v1/lead-scoring"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+      - name: crm-automation-routes
+        paths: ["/api/v1/workflows", "/api/v1/automation", "/api/v1/campaigns"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+    plugins:
+      # Strict authentication for CRM data
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+          run_on_preflight: false
+      - name: key-auth
+        config:
+          key_names: ["X-API-Key"]
+          key_in_body: false
+          key_in_query: false
+          hide_credentials: true
+      # Conservative rate limiting for CRM operations
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 50   # free tier: 50 requests per minute
+            - 200  # premium tier: 200 requests per minute
+            - 500  # enterprise tier: 500 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      # Request validation for CRM data
+      - name: request-validator
+        config:
+          body_schema: |
+            {
+              "type": "object",
+              "properties": {
+                "email": {"type": "string", "format": "email"},
+                "phone": {"type": "string", "pattern": "^[+]?[0-9\\s\\-\\(\\)]+$"}
+              }
+            }
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
+          credentials: true
+
+  - name: analytics-service
+    url: http://analytics-service:3005
+    routes:
+      - name: analytics-routes
+        paths: ["/api/v1/analytics", "/api/v1/reports", "/api/v1/metrics"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+      - name: analytics-realtime-routes
+        paths: ["/api/v1/analytics/realtime", "/api/v1/metrics/live"]
+        methods: ["GET"]
+        strip_path: false
+    plugins:
+      # Authentication required for analytics
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+      - name: key-auth
+        config:
+          key_names: ["X-API-Key"]
+          key_in_body: false
+          key_in_query: true
+          hide_credentials: true
+      # Higher rate limits for analytics (read-heavy)
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 80   # free tier: 80 requests per minute
+            - 250  # premium tier: 250 requests per minute
+            - 600  # enterprise tier: 600 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      # Response compression for large analytics payloads
+      - name: response-transformer
+        config:
+          add:
+            headers:
+              - "Cache-Control: public, max-age=60"
+              - "X-Analytics-Version: v1"
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining", "X-Analytics-Version"]
+          credentials: true
+
+  # Marketing Automation Service
+  - name: marketing-automation-service
+    url: http://marketing-automation-service:3006
+    routes:
+      - name: automation-routes
+        paths: ["/api/v1/workflows", "/api/v1/campaigns", "/api/v1/events"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify: ["exp", "iss"]
+          header_names: ["Authorization"]
+      - name: key-auth
+        config:
+          key_names: ["X-API-Key"]
+          key_in_body: false
+          key_in_query: false
+          hide_credentials: true
+      - name: rate-limiting-advanced
+        config:
+          limit:
+            - 40   # free tier: 40 requests per minute
+            - 120  # premium tier: 120 requests per minute
+            - 300  # enterprise tier: 300 requests per minute
+          window_size: [60]
+          identifier: consumer
+          sync_rate: 10
+          strategy: redis
+          redis:
+            host: redis
+            port: 6379
+            password: ${REDIS_PASSWORD}
+            database: 0
+      - name: cors
+        config:
+          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+          headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
+          exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
+          credentials: true
+
+# Global plugins
+plugins:
+  # Monitoring and observability
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  - name: request-id
+    config:
+      header_name: X-Request-ID
+      echo_downstream: true
+      generator: uuid
+
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      echo_downstream: true
+      generator: uuid
+
+  # Security headers
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - "X-Frame-Options: DENY"
+          - "X-Content-Type-Options: nosniff"
+          - "X-XSS-Protection: 1; mode=block"
+          - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+          - "Referrer-Policy: strict-origin-when-cross-origin"
+
+  # Request/Response logging
+  - name: file-log
+    config:
+      path: /var/log/kong/access.log
+      reopen: true
+
+  # IP restriction for admin endpoints
+  - name: ip-restriction
+    config:
+      allow: ["127.0.0.1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+      deny: []
+
+# Load balancing configuration
+upstreams:
+  - name: user-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: user-service:3001
+        weight: 100
+
+  - name: newsletter-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: newsletter-service:3002
+        weight: 100
+
+  - name: content-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: content-service:3003
+        weight: 100
+
+  - name: crm-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: crm-service:3004
+        weight: 100
+
+  - name: analytics-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: analytics-service:3005
+        weight: 100
+
+  - name: marketing-automation-service-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: marketing-automation-service:3006
+        weight: 100

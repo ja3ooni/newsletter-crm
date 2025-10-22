@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: ailert
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: ailert-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: ailert-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ailert-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ailert
+            - -d
+            - ailert
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ailert
+            - -d
+            - ailert
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: init-scripts
+        configMap:
+          name: postgres-init-scripts
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ailert
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: ailert
+data:
+  01-create-databases.sql: |
+    -- Create multiple databases for microservices
+    CREATE DATABASE user_db;
+    CREATE DATABASE newsletter_db;
+    CREATE DATABASE content_db;
+    CREATE DATABASE analytics_db;
+    CREATE DATABASE crm_db;
+    
+    -- Create users for each service
+    CREATE USER user_service WITH PASSWORD 'user_service_password';
+    CREATE USER newsletter_service WITH PASSWORD 'newsletter_service_password';
+    CREATE USER content_service WITH PASSWORD 'content_service_password';
+    CREATE USER analytics_service WITH PASSWORD 'analytics_service_password';
+    CREATE USER crm_service WITH PASSWORD 'crm_service_password';
+    
+    -- Grant privileges
+    GRANT ALL PRIVILEGES ON DATABASE user_db TO user_service;
+    GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO newsletter_service;
+    GRANT ALL PRIVILEGES ON DATABASE content_db TO content_service;
+    GRANT ALL PRIVILEGES ON DATABASE analytics_db TO analytics_service;
+    GRANT ALL PRIVILEGES ON DATABASE crm_db TO crm_service;
+    
+    -- Also grant to main user for development
+    GRANT ALL PRIVILEGES ON DATABASE user_db TO ailert;
+    GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO ailert;
+    GRANT ALL PRIVILEGES ON DATABASE content_db TO ailert;
+    GRANT ALL PRIVILEGES ON DATABASE analytics_db TO ailert;
+    GRANT ALL PRIVILEGES ON DATABASE crm_db TO ailert;

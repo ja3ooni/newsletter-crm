@@ -1,0 +1,85 @@
+# Prometheus configuration for AiLert monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ailert-dev'
+    environment: 'development'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Kong API Gateway metrics
+  - job_name: 'kong'
+    static_configs:
+      - targets: ['api-gateway:8001']
+    metrics_path: '/metrics'
+
+  # Node.js services with enhanced configuration
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  - job_name: 'newsletter-service'
+    static_configs:
+      - targets: ['newsletter-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  - job_name: 'content-service'
+    static_configs:
+      - targets: ['content-service:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  - job_name: 'crm-service'
+    static_configs:
+      - targets: ['crm-service:3004']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:3005']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Infrastructure services
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']

@@ -1,0 +1,176 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug User Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/user-service/src/index.ts",
+      "outFiles": [
+        "${workspaceFolder}/services/user-service/dist/**/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true"
+      },
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "console": "integratedTerminal",
+      "restart": true,
+      "protocol": "inspector"
+    },
+    {
+      "name": "Debug Newsletter Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/newsletter-service/src/index.ts",
+      "outFiles": [
+        "${workspaceFolder}/services/newsletter-service/dist/**/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true"
+      },
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "console": "integratedTerminal",
+      "restart": true,
+      "protocol": "inspector"
+    },
+    {
+      "name": "Debug Content Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/content-service/src/index.ts",
+      "outFiles": [
+        "${workspaceFolder}/services/content-service/dist/**/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true"
+      },
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "console": "integratedTerminal",
+      "restart": true,
+      "protocol": "inspector"
+    },
+    {
+      "name": "Debug CRM Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/crm-service/src/index.ts",
+      "outFiles": [
+        "${workspaceFolder}/services/crm-service/dist/**/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true"
+      },
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "console": "integratedTerminal",
+      "restart": true,
+      "protocol": "inspector"
+    },
+    {
+      "name": "Debug Analytics Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/analytics-service/src/index.ts",
+      "outFiles": [
+        "${workspaceFolder}/services/analytics-service/dist/**/*.js"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "true"
+      },
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "console": "integratedTerminal",
+      "restart": true,
+      "protocol": "inspector"
+    },
+    {
+      "name": "Debug Frontend (Next.js)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/frontend/node_modules/.bin/next",
+      "args": [
+        "dev"
+      ],
+      "cwd": "${workspaceFolder}/frontend",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Attach to User Service Container",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/user-service",
+      "remoteRoot": "/app"
+    },
+    {
+      "name": "Attach to Newsletter Service Container",
+      "type": "node",
+      "request": "attach",
+      "port": 9230,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/newsletter-service",
+      "remoteRoot": "/app"
+    },
+    {
+      "name": "Attach to Content Service Container",
+      "type": "node",
+      "request": "attach",
+      "port": 9231,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/content-service",
+      "remoteRoot": "/app"
+    },
+    {
+      "name": "Attach to CRM Service Container",
+      "type": "node",
+      "request": "attach",
+      "port": 9232,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/crm-service",
+      "remoteRoot": "/app"
+    },
+    {
+      "name": "Attach to Analytics Service Container",
+      "type": "node",
+      "request": "attach",
+      "port": 9233,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/analytics-service",
+      "remoteRoot": "/app"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All Services",
+      "configurations": [
+        "Debug User Service",
+        "Debug Newsletter Service",
+        "Debug Content Service",
+        "Debug CRM Service",
+        "Debug Analytics Service"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,476 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0' # Weekly security scan
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '18'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Security and Code Quality Checks
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/nodejs
+            p/typescript
+            p/docker
+            p/kubernetes
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Setup Node.js for dependency check
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Run npm audit
+        run: |
+          for service in services/*/; do
+            if [ -f "$service/package.json" ]; then
+              echo "Auditing $service..."
+              cd "$service"
+              npm audit --audit-level=moderate --production
+              cd ../..
+            fi
+          done
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --all-projects
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'AiLert'
+          path: '.'
+          format: 'ALL'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+
+      - name: Upload OWASP Dependency Check results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: reports/dependency-check-report.sarif
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Run Bandit security linter (Python)
+        run: |
+          pip install bandit
+          find . -name "*.py" -exec bandit -r {} + || true
+
+      - name: Run ESLint security rules
+        run: |
+          for service in services/*/; do
+            if [ -f "$service/package.json" ]; then
+              echo "Running security linting for $(basename "$service")..."
+              cd "$service"
+              if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ]; then
+                npx eslint . --ext .js,.ts,.tsx || true
+              fi
+              cd ../..
+            fi
+          done
+
+      - name: Run Hadolint (Dockerfile linting)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: services/*/Dockerfile
+          failure-threshold: warning
+          config: .hadolint.yaml
+
+      - name: Run Checkov (Infrastructure as Code scanning)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile,kubernetes
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Upload Checkov scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './scripts'
+
+  # Lint and Test
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [user-service, newsletter-service, content-service, crm-service, analytics-service, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd services/${{ matrix.service }}
+          npm ci
+
+      - name: Run ESLint
+        run: |
+          cd services/${{ matrix.service }}
+          npm run lint
+
+      - name: Run Prettier check
+        run: |
+          cd services/${{ matrix.service }}
+          npm run format:check
+
+      - name: Run TypeScript check
+        run: |
+          cd services/${{ matrix.service }}
+          npm run type-check
+
+      - name: Run tests
+        run: |
+          cd services/${{ matrix.service }}
+          npm test -- --silent --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: services/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+
+  # Build and Push Docker Images
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    needs: [security-scan, lint-and-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        service: [user-service, newsletter-service, content-service, crm-service, analytics-service, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/${{ matrix.service }}
+          file: ./services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: production
+
+      - name: Run Trivy vulnerability scanner on image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run integration tests
+        run: npm run test:integration -- --silent
+        env:
+          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --silent
+        env:
+          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.ailert.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_STAGING }}
+
+      - name: Deploy to staging
+        run: |
+          # Update image tags in Kubernetes manifests
+          sed -i "s|ailert/user-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/user-service:${{ github.sha }}|g" k8s/user-service.yaml
+          sed -i "s|ailert/newsletter-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/newsletter-service:${{ github.sha }}|g" k8s/newsletter-service.yaml
+          sed -i "s|ailert/content-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/content-service:${{ github.sha }}|g" k8s/content-service.yaml
+          sed -i "s|ailert/crm-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/crm-service:${{ github.sha }}|g" k8s/crm-service.yaml
+          sed -i "s|ailert/analytics-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/analytics-service:${{ github.sha }}|g" k8s/analytics-service.yaml
+          sed -i "s|ailert/frontend:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}|g" k8s/frontend.yaml
+
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secrets.yaml
+          kubectl apply -f k8s/
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/user-service -n ailert --timeout=300s
+          kubectl rollout status deployment/newsletter-service -n ailert --timeout=300s
+          kubectl rollout status deployment/content-service -n ailert --timeout=300s
+          kubectl rollout status deployment/crm-service -n ailert --timeout=300s
+          kubectl rollout status deployment/analytics-service -n ailert --timeout=300s
+          kubectl rollout status deployment/frontend -n ailert --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          # Wait for services to be ready
+          sleep 30
+
+          # Run basic health checks
+          kubectl get pods -n ailert
+          kubectl get services -n ailert
+
+          # Test API endpoints
+          curl -f https://staging-api.ailert.com/health || exit 1
+          curl -f https://staging.ailert.com || exit 1
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://ailert.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PROD }}
+
+      - name: Blue-Green Deployment
+        run: |
+          # Create green deployment
+          sed -i "s|ailert/user-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/user-service:${{ github.sha }}|g" k8s/user-service.yaml
+          sed -i "s|ailert/newsletter-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/newsletter-service:${{ github.sha }}|g" k8s/newsletter-service.yaml
+          sed -i "s|ailert/content-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/content-service:${{ github.sha }}|g" k8s/content-service.yaml
+          sed -i "s|ailert/crm-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/crm-service:${{ github.sha }}|g" k8s/crm-service.yaml
+          sed -i "s|ailert/analytics-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/analytics-service:${{ github.sha }}|g" k8s/analytics-service.yaml
+          sed -i "s|ailert/frontend:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}|g" k8s/frontend.yaml
+
+          # Apply new deployment
+          kubectl apply -f k8s/
+
+          # Wait for rollout
+          kubectl rollout status deployment/user-service -n ailert --timeout=600s
+          kubectl rollout status deployment/newsletter-service -n ailert --timeout=600s
+          kubectl rollout status deployment/content-service -n ailert --timeout=600s
+          kubectl rollout status deployment/crm-service -n ailert --timeout=600s
+          kubectl rollout status deployment/analytics-service -n ailert --timeout=600s
+          kubectl rollout status deployment/frontend -n ailert --timeout=600s
+
+      - name: Production Health Check
+        run: |
+          # Wait for services to stabilize
+          sleep 60
+
+          # Comprehensive health checks
+          curl -f https://api.ailert.com/health || exit 1
+          curl -f https://ailert.com || exit 1
+
+          # Check all service endpoints
+          curl -f https://api.ailert.com/api/v1/users/health || exit 1
+          curl -f https://api.ailert.com/api/v1/newsletters/health || exit 1
+          curl -f https://api.ailert.com/api/v1/content/health || exit 1
+          curl -f https://api.ailert.com/api/v1/contacts/health || exit 1
+          curl -f https://api.ailert.com/api/v1/analytics/health || exit 1
+
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          echo "Deployment failed, initiating rollback..."
+          kubectl rollout undo deployment/user-service -n ailert
+          kubectl rollout undo deployment/newsletter-service -n ailert
+          kubectl rollout undo deployment/content-service -n ailert
+          kubectl rollout undo deployment/crm-service -n ailert
+          kubectl rollout undo deployment/analytics-service -n ailert
+          kubectl rollout undo deployment/frontend -n ailert
+
+  # Notify on completion
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

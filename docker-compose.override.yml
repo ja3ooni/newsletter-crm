@@ -1,0 +1,178 @@
+# Development overrides for Docker Compose
+version: '3.8'
+
+services:
+  # Development-specific configurations
+  user-service:
+    build:
+      target: development
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DEBUG=ailert:*
+      - LOG_LEVEL=debug
+    ports:
+      - "9229:9229"  # Debug port
+    command: ["dumb-init", "npm", "run", "dev:debug"]
+
+  newsletter-service:
+    build:
+      target: development
+    volumes:
+      - ./services/newsletter-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DEBUG=ailert:*
+      - LOG_LEVEL=debug
+    ports:
+      - "9230:9229"  # Debug port
+    command: ["dumb-init", "npm", "run", "dev:debug"]
+
+  content-service:
+    build:
+      target: development
+    volumes:
+      - ./services/content-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DEBUG=ailert:*
+      - LOG_LEVEL=debug
+    ports:
+      - "9231:9229"  # Debug port
+    command: ["dumb-init", "npm", "run", "dev:debug"]
+
+  crm-service:
+    build:
+      target: development
+    volumes:
+      - ./services/crm-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DEBUG=ailert:*
+      - LOG_LEVEL=debug
+    ports:
+      - "9232:9229"  # Debug port
+    command: ["dumb-init", "npm", "run", "dev:debug"]
+
+  analytics-service:
+    build:
+      target: development
+    volumes:
+      - ./services/analytics-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DEBUG=ailert:*
+      - LOG_LEVEL=debug
+    ports:
+      - "9233:9229"  # Debug port
+    command: ["dumb-init", "npm", "run", "dev:debug"]
+
+  frontend:
+    build:
+      target: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "9234:9229"  # Debug port (if needed)
+
+  # Development tools
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: ailert-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - ailert-network
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: ailert-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector HTTP
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+    networks:
+      - ailert-network
+
+  # Zipkin for distributed tracing (alternative)
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: ailert-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - ailert-network
+
+  # Development file watcher and hot reload
+  nodemon:
+    image: node:18-alpine
+    container_name: ailert-nodemon
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: npx nodemon --watch services --ext ts,js,json --exec "echo 'Files changed, services will auto-reload'"
+    networks:
+      - ailert-network
+
+  # Database admin tools
+  pgadmin:
+    image: dpage/pgadmin4:7.8
+    container_name: ailert-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ailert.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - ailert-network
+    depends_on:
+      - postgres
+
+  # Redis admin
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ailert-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:ailert_redis_password
+    ports:
+      - "8081:8081"
+    networks:
+      - ailert-network
+    depends_on:
+      - redis
+
+  # Elasticsearch admin
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: ailert-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_SECURITY_ENABLED: false
+    ports:
+      - "5601:5601"
+    networks:
+      - ailert-network
+    depends_on:
+      - elasticsearch
+
+volumes:
+  pgadmin_data:

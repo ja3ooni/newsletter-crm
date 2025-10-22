@@ -1,0 +1,207 @@
+# Production Docker Compose configuration
+version: '3.8'
+
+services:
+  api-gateway:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  postgres:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  redis:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+
+  elasticsearch:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    environment:
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+
+  rabbitmq:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+  user-service:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/user_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+    volumes: []
+
+  newsletter-service:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/newsletter_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    volumes: []
+
+  content-service:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/content_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    volumes: []
+
+  crm-service:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/crm_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    volumes: []
+
+  analytics-service:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/analytics_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    volumes: []
+
+  frontend:
+    build:
+      target: production
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${API_URL}/api/v1
+    volumes: []
+
+  # Remove development tools in production
+  prometheus:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  grafana:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}

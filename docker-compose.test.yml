@@ -1,0 +1,178 @@
+# Docker Compose configuration for testing
+version: '3.8'
+
+services:
+  # Test PostgreSQL Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: ailert-postgres-test
+    environment:
+      POSTGRES_DB: ailert_test
+      POSTGRES_USER: ailert_test
+      POSTGRES_PASSWORD: ailert_test_password
+      POSTGRES_MULTIPLE_DATABASES: "user_db_test,newsletter_db_test,content_db_test,analytics_db_test,crm_db_test"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
+    networks:
+      - ailert-test-network
+    healthcheck:
+      test: ["CMD-EXEC", "pg_isready -U ailert_test -d ailert_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test Redis Cache
+  redis-test:
+    image: redis:7-alpine
+    container_name: ailert-redis-test
+    command: redis-server --appendonly yes --requirepass ailert_test_redis_password
+    volumes:
+      - redis_test_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - ailert-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test Elasticsearch
+  elasticsearch-test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: ailert-elasticsearch-test
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    volumes:
+      - elasticsearch_test_data:/usr/share/elasticsearch/data
+    ports:
+      - "9201:9200"
+    networks:
+      - ailert-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test RabbitMQ
+  rabbitmq-test:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ailert-rabbitmq-test
+    environment:
+      RABBITMQ_DEFAULT_USER: ailert_test
+      RABBITMQ_DEFAULT_PASS: ailert_test_rabbitmq_password
+    volumes:
+      - rabbitmq_test_data:/var/lib/rabbitmq
+    ports:
+      - "5673:5672"   # AMQP
+      - "15673:15672" # Management UI
+    networks:
+      - ailert-test-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test User Service
+  user-service-test:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-user-service-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/user_db_test
+      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
+      - JWT_SECRET=test_jwt_secret
+      - PORT=3001
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    ports:
+      - "3011:3001"
+    networks:
+      - ailert-test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: ["dumb-init", "npm", "run", "test:watch"]
+
+  # Test Newsletter Service
+  newsletter-service-test:
+    build:
+      context: ./services/newsletter-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-newsletter-service-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/newsletter_db_test
+      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
+      - RABBITMQ_URL=amqp://ailert_test:ailert_test_rabbitmq_password@rabbitmq-test:5672
+      - PORT=3002
+    volumes:
+      - ./services/newsletter-service:/app
+      - /app/node_modules
+    ports:
+      - "3012:3002"
+    networks:
+      - ailert-test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+
+  # Test Content Service
+  content-service-test:
+    build:
+      context: ./services/content-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-content-service-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/content_db_test
+      - ELASTICSEARCH_URL=http://elasticsearch-test:9200
+      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
+      - RABBITMQ_URL=amqp://ailert_test:ailert_test_rabbitmq_password@rabbitmq-test:5672
+      - PORT=3003
+    volumes:
+      - ./services/content-service:/app
+      - /app/node_modules
+    ports:
+      - "3013:3003"
+    networks:
+      - ailert-test-network
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      elasticsearch-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+  elasticsearch_test_data:
+  rabbitmq_test_data:
+
+networks:
+  ailert-test-network:
+    driver: bridge

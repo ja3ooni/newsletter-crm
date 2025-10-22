@@ -1,0 +1,372 @@
+# Docker Compose for AiLert Professional Platform
+version: '3.8'
+
+services:
+  # API Gateway (Kong)
+  api-gateway:
+    image: kong:3.4-alpine
+    container_name: ailert-api-gateway
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+      KONG_ADMIN_GUI_URL: "http://localhost:8002"
+    volumes:
+      - ./infrastructure/kong:/kong/declarative
+    ports:
+      - "8000:8000"   # Proxy
+      - "8001:8001"   # Admin API
+      - "8002:8002"   # Admin GUI
+    networks:
+      - ailert-network
+    depends_on:
+      - user-service
+      - newsletter-service
+      - content-service
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ailert-postgres
+    environment:
+      POSTGRES_DB: ailert
+      POSTGRES_USER: ailert
+      POSTGRES_PASSWORD: ailert_dev_password
+      POSTGRES_MULTIPLE_DATABASES: "user_db,newsletter_db,content_db,analytics_db,crm_db"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - ailert-network
+    healthcheck:
+      test: ["CMD-EXEC", "pg_isready -U ailert -d ailert"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ailert-redis
+    command: redis-server --appendonly yes --requirepass ailert_redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ailert-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Elasticsearch for search and analytics
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: ailert-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - ailert-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Message Queue (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ailert-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ailert
+      RABBITMQ_DEFAULT_PASS: ailert_rabbitmq_password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    networks:
+      - ailert-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Service
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-user-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://ailert:ailert_dev_password@postgres:5432/user_db
+      - REDIS_URL=redis://:ailert_redis_password@redis:6379
+      - JWT_SECRET=dev_jwt_secret_change_in_production
+      - PORT=3001
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    networks:
+      - ailert-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./services/user-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/user-service/package.json
+
+  # Newsletter Service
+  newsletter-service:
+    build:
+      context: ./services/newsletter-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-newsletter-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://ailert:ailert_dev_password@postgres:5432/newsletter_db
+      - REDIS_URL=redis://:ailert_redis_password@redis:6379
+      - RABBITMQ_URL=amqp://ailert:ailert_rabbitmq_password@rabbitmq:5672
+      - PORT=3002
+    volumes:
+      - ./services/newsletter-service:/app
+      - /app/node_modules
+    ports:
+      - "3002:3002"
+    networks:
+      - ailert-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./services/newsletter-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/newsletter-service/package.json
+
+  # Content Service
+  content-service:
+    build:
+      context: ./services/content-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-content-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://ailert:ailert_dev_password@postgres:5432/content_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - REDIS_URL=redis://:ailert_redis_password@redis:6379
+      - RABBITMQ_URL=amqp://ailert:ailert_rabbitmq_password@rabbitmq:5672
+      - PORT=3003
+    volumes:
+      - ./services/content-service:/app
+      - /app/node_modules
+    ports:
+      - "3003:3003"
+    networks:
+      - ailert-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./services/content-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/content-service/package.json
+
+  # CRM Service
+  crm-service:
+    build:
+      context: ./services/crm-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-crm-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://ailert:ailert_dev_password@postgres:5432/crm_db
+      - REDIS_URL=redis://:ailert_redis_password@redis:6379
+      - RABBITMQ_URL=amqp://ailert:ailert_rabbitmq_password@rabbitmq:5672
+      - PORT=3004
+    volumes:
+      - ./services/crm-service:/app
+      - /app/node_modules
+    ports:
+      - "3004:3004"
+    networks:
+      - ailert-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./services/crm-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/crm-service/package.json
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-analytics-service
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://ailert:ailert_dev_password@postgres:5432/analytics_db
+      - REDIS_URL=redis://:ailert_redis_password@redis:6379
+      - RABBITMQ_URL=amqp://ailert:ailert_rabbitmq_password@rabbitmq:5672
+      - PORT=3005
+    volumes:
+      - ./services/analytics-service:/app
+      - /app/node_modules
+    ports:
+      - "3005:3005"
+    networks:
+      - ailert-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./services/analytics-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/analytics-service/package.json
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: ailert-frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - PORT=3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    networks:
+      - ailert-network
+    depends_on:
+      - api-gateway
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./frontend/package.json
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: ailert-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./infrastructure/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - ailert-network
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: ailert-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    networks:
+      - ailert-network
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ailert-network:
+    driver: bridge
