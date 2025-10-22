@@ -53,7 +53,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -66,5 +66,6 @@
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "git.autofetch": true,
   "git.enableSmartCommit": true,
-  "extensions.ignoreRecommendations": false
+  "extensions.ignoreRecommendations": false,
+  "typescript.autoClosingTags": false
 }
