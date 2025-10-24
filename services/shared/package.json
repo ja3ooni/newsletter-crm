@@ -1,0 +1,59 @@
+{
+  "name": "@ailert/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities and services for AiLert platform",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "jest --silent",
+    "lint": "eslint **/*.ts --ignore-pattern node_modules --ignore-pattern dist",
+    "lint:fix": "eslint **/*.ts --ignore-pattern node_modules --ignore-pattern dist --fix"
+  },
+  "dependencies": {
+    "winston": "^3.11.0",
+    "winston-elasticsearch": "^0.17.4",
+    "prom-client": "^15.1.0",
+    "opentracing": "^0.14.7",
+    "axios": "^1.6.2",
+    "uuid": "^9.0.1",
+    "express": "^4.18.2",
+    "redis": "^4.6.10",
+    "ioredis": "^5.3.2",
+    "nodemailer": "^6.9.7",
+    "@aws-sdk/client-kms": "^3.490.0",
+    "@aws-sdk/client-secrets-manager": "^3.490.0",
+    "node-cron": "^3.0.3",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.4",
+    "@types/uuid": "^9.0.7",
+    "@types/nodemailer": "^6.4.14",
+    "@types/jest": "^29.5.8",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/bcrypt": "^5.0.2",
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.3.3",
+    "ts-node-dev": "^2.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0"
+  },
+  "keywords": [
+    "logging",
+    "monitoring",
+    "caching",
+    "performance",
+    "shared-utilities"
+  ],
+  "author": "AiLert Team",
+  "license": "MIT"
+}
