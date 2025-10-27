@@ -12,6 +12,8 @@ export const createMockUserRepository = (): jest.Mocked<UserRepository> => {
     updateLastLogin: jest.fn(),
     updateEngagementMetrics: jest.fn(),
     findMany: jest.fn(),
+    delete: jest.fn(),
+    updatePreferences: jest.fn(),
     mapDatabaseUserToUser: jest.fn()
   } as any;
 };

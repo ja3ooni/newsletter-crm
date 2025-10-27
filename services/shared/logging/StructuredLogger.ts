@@ -53,7 +53,9 @@ export class StructuredLogger {
           winston.format.colorize(),
           winston.format.printf(
             ({ timestamp, level, message, service, traceId, ...meta }) => {
-              const traceInfo = traceId ? `[${traceId.substring(0, 8)}]` : '';
+              const traceInfo = traceId
+                ? `[${String(traceId).substring(0, 8)}]`
+                : '';
               const metaStr =
                 Object.keys(meta).length > 0 ? JSON.stringify(meta) : '';
 
@@ -151,18 +153,16 @@ export class StructuredLogger {
       winston.format.json(),
       winston.format.printf(info => {
         // Ensure consistent structure
+        const { timestamp, level, message, ...otherInfo } = info;
         const logEntry = {
-          '@timestamp': info.timestamp,
-          level: info.level,
-          message: info.message,
+          '@timestamp': timestamp,
+          level,
+          message,
           service: info.service || this.defaultContext.service,
           environment: info.environment || this.defaultContext.environment,
           version: info.version || this.defaultContext.version,
-          ...info,
+          ...otherInfo,
         };
-
-        // Remove duplicate fields
-        delete logEntry.timestamp;
 
         return JSON.stringify(logEntry);
       })

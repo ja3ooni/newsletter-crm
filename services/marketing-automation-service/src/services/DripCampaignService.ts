@@ -1,14 +1,14 @@
 import { config } from '@/config';
 import { DripCampaignRepository } from '@/repositories/DripCampaignRepository';
 import {
-    CampaignSubscription,
-    CreateDripCampaignRequest,
-    DripCampaign,
-    DripEmail,
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams,
-    UpdateDripCampaignRequest
+  CampaignSubscription,
+  CreateDripCampaignRequest,
+  DripCampaign,
+  DripEmail,
+  FilterParams,
+  PaginatedResponse,
+  PaginationParams,
+  UpdateDripCampaignRequest,
 } from '@/types';
 import { logger } from '@/utils/logger';
 import { queueManager } from '@/utils/queue';
@@ -33,13 +33,16 @@ export class DripCampaignService {
       // Validate campaign structure
       this.validateCampaignStructure(data);
 
-      const campaign = await this.dripCampaignRepository.create(data, createdBy);
+      const campaign = await this.dripCampaignRepository.create(
+        data,
+        createdBy
+      );
 
       logger.info('Drip campaign created successfully', {
         campaignId: campaign.id,
         name: campaign.name,
         emailCount: campaign.emails.length,
-        createdBy
+        createdBy,
       });
 
       return campaign;
@@ -65,7 +68,11 @@ export class DripCampaignService {
     try {
       return await this.dripCampaignRepository.findAll(pagination, filters);
     } catch (error) {
-      logger.error('Error getting drip campaigns', { error, pagination, filters });
+      logger.error('Error getting drip campaigns', {
+        error,
+        pagination,
+        filters,
+      });
       throw error;
     }
   }
@@ -96,10 +103,11 @@ export class DripCampaignService {
   async deleteDripCampaign(id: string): Promise<boolean> {
     try {
       // Check if campaign has active subscriptions
-      const activeSubscriptions = await this.dripCampaignRepository.findSubscriptionsByCampaign(
-        id,
-        { page: 1, limit: 1 }
-      );
+      const activeSubscriptions =
+        await this.dripCampaignRepository.findSubscriptionsByCampaign(id, {
+          page: 1,
+          limit: 1,
+        });
 
       if (activeSubscriptions.data.some(sub => sub.status === 'active')) {
         throw new Error('Cannot delete campaign with active subscriptions');
@@ -120,7 +128,9 @@ export class DripCampaignService {
 
   async activateDripCampaign(id: string): Promise<DripCampaign | null> {
     try {
-      const campaign = await this.dripCampaignRepository.update(id, { status: 'active' });
+      const campaign = await this.dripCampaignRepository.update(id, {
+        status: 'active',
+      });
 
       if (campaign) {
         logger.info('Drip campaign activated', { campaignId: id });
@@ -135,21 +145,27 @@ export class DripCampaignService {
 
   async pauseDripCampaign(id: string): Promise<DripCampaign | null> {
     try {
-      const campaign = await this.dripCampaignRepository.update(id, { status: 'paused' });
+      const campaign = await this.dripCampaignRepository.update(id, {
+        status: 'paused',
+      });
 
       if (campaign) {
         // Pause all active subscriptions
-        const activeSubscriptions = await this.dripCampaignRepository.findSubscriptionsByCampaign(
-          id,
-          { page: 1, limit: 1000 }
-        );
+        const activeSubscriptions =
+          await this.dripCampaignRepository.findSubscriptionsByCampaign(id, {
+            page: 1,
+            limit: 1000,
+          });
 
         for (const subscription of activeSubscriptions.data) {
           if (subscription.status === 'active') {
             await queueManager.cancelDripSubscription(subscription.id);
-            await this.dripCampaignRepository.updateSubscription(subscription.id, {
-              status: 'paused'
-            });
+            await this.dripCampaignRepository.updateSubscription(
+              subscription.id,
+              {
+                status: 'paused',
+              }
+            );
           }
         }
 
@@ -184,10 +200,11 @@ export class DripCampaignService {
       }
 
       // Check if contact is already subscribed
-      const existingSubscriptions = await this.dripCampaignRepository.findSubscriptionsByCampaign(
-        campaignId,
-        { page: 1, limit: 1000 }
-      );
+      const existingSubscriptions =
+        await this.dripCampaignRepository.findSubscriptionsByCampaign(
+          campaignId,
+          { page: 1, limit: 1000 }
+        );
 
       const existingSubscription = existingSubscriptions.data.find(
         sub => sub.contactId === contactId && sub.status === 'active'
@@ -210,56 +227,73 @@ export class DripCampaignService {
       logger.info('Contact subscribed to drip campaign', {
         campaignId,
         subscriptionId: subscription.id,
-        contactId
+        contactId,
       });
 
       return subscription;
     } catch (error) {
-      logger.error('Error subscribing to campaign', { error, campaignId, contactId });
+      logger.error('Error subscribing to campaign', {
+        error,
+        campaignId,
+        contactId,
+      });
       throw error;
     }
   }
 
-  async unsubscribeFromCampaign(subscriptionId: string): Promise<CampaignSubscription | null> {
+  async unsubscribeFromCampaign(
+    subscriptionId: string
+  ): Promise<CampaignSubscription | null> {
     try {
       // Cancel any pending emails
       await queueManager.cancelDripSubscription(subscriptionId);
 
       // Update subscription status
-      const subscription = await this.dripCampaignRepository.updateSubscription(subscriptionId, {
-        status: 'unsubscribed'
-      });
+      const subscription = await this.dripCampaignRepository.updateSubscription(
+        subscriptionId,
+        {
+          status: 'unsubscribed',
+        }
+      );
 
       if (subscription) {
         logger.info('Contact unsubscribed from drip campaign', {
           subscriptionId,
           campaignId: subscription.campaignId,
-          contactId: subscription.contactId
+          contactId: subscription.contactId,
         });
       }
 
       return subscription;
     } catch (error) {
-      logger.error('Error unsubscribing from campaign', { error, subscriptionId });
+      logger.error('Error unsubscribing from campaign', {
+        error,
+        subscriptionId,
+      });
       throw error;
     }
   }
 
-  async pauseSubscription(subscriptionId: string): Promise<CampaignSubscription | null> {
+  async pauseSubscription(
+    subscriptionId: string
+  ): Promise<CampaignSubscription | null> {
     try {
       // Cancel any pending emails
       await queueManager.cancelDripSubscription(subscriptionId);
 
       // Update subscription status
-      const subscription = await this.dripCampaignRepository.updateSubscription(subscriptionId, {
-        status: 'paused'
-      });
+      const subscription = await this.dripCampaignRepository.updateSubscription(
+        subscriptionId,
+        {
+          status: 'paused',
+        }
+      );
 
       if (subscription) {
         logger.info('Subscription paused', {
           subscriptionId,
           campaignId: subscription.campaignId,
-          contactId: subscription.contactId
+          contactId: subscription.contactId,
         });
       }
 
@@ -270,9 +304,12 @@ export class DripCampaignService {
     }
   }
 
-  async resumeSubscription(subscriptionId: string): Promise<CampaignSubscription | null> {
+  async resumeSubscription(
+    subscriptionId: string
+  ): Promise<CampaignSubscription | null> {
     try {
-      const subscription = await this.dripCampaignRepository.findSubscriptionById(subscriptionId);
+      const subscription =
+        await this.dripCampaignRepository.findSubscriptionById(subscriptionId);
 
       if (!subscription) {
         throw new Error(`Subscription ${subscriptionId} not found`);
@@ -282,17 +319,19 @@ export class DripCampaignService {
         throw new Error(`Subscription ${subscriptionId} is not paused`);
       }
 
-      const campaign = await this.dripCampaignRepository.findById(subscription.campaignId);
+      const campaign = await this.dripCampaignRepository.findById(
+        subscription.campaignId
+      );
 
       if (!campaign) {
         throw new Error(`Campaign ${subscription.campaignId} not found`);
       }
 
       // Update subscription status
-      const updatedSubscription = await this.dripCampaignRepository.updateSubscription(
-        subscriptionId,
-        { status: 'active' }
-      );
+      const updatedSubscription =
+        await this.dripCampaignRepository.updateSubscription(subscriptionId, {
+          status: 'active',
+        });
 
       if (updatedSubscription) {
         // Schedule next email
@@ -301,7 +340,7 @@ export class DripCampaignService {
         logger.info('Subscription resumed', {
           subscriptionId,
           campaignId: subscription.campaignId,
-          contactId: subscription.contactId
+          contactId: subscription.contactId,
         });
       }
 
@@ -317,9 +356,15 @@ export class DripCampaignService {
     pagination: PaginationParams
   ): Promise<PaginatedResponse<CampaignSubscription>> {
     try {
-      return await this.dripCampaignRepository.findSubscriptionsByCampaign(campaignId, pagination);
+      return await this.dripCampaignRepository.findSubscriptionsByCampaign(
+        campaignId,
+        pagination
+      );
     } catch (error) {
-      logger.error('Error getting campaign subscriptions', { error, campaignId });
+      logger.error('Error getting campaign subscriptions', {
+        error,
+        campaignId,
+      });
       throw error;
     }
   }
@@ -334,7 +379,8 @@ export class DripCampaignService {
     emailId: string
   ): Promise<void> {
     try {
-      const subscription = await this.dripCampaignRepository.findSubscriptionById(subscriptionId);
+      const subscription =
+        await this.dripCampaignRepository.findSubscriptionById(subscriptionId);
 
       if (!subscription) {
         throw new Error(`Subscription ${subscriptionId} not found`);
@@ -343,12 +389,15 @@ export class DripCampaignService {
       if (subscription.status !== 'active') {
         logger.warn('Skipping email for inactive subscription', {
           subscriptionId,
-          status: subscription.status
+          status: subscription.status,
         });
+
         return;
       }
 
-      const campaign = await this.dripCampaignRepository.findById(subscription.campaignId);
+      const campaign = await this.dripCampaignRepository.findById(
+        subscription.campaignId
+      );
 
       if (!campaign) {
         throw new Error(`Campaign ${subscription.campaignId} not found`);
@@ -357,30 +406,37 @@ export class DripCampaignService {
       if (campaign.status !== 'active') {
         logger.warn('Skipping email for inactive campaign', {
           campaignId: campaign.id,
-          status: campaign.status
+          status: campaign.status,
         });
+
         return;
       }
 
       const email = campaign.emails.find(e => e.id === emailId);
 
       if (!email) {
-        throw new Error(`Email ${emailId} not found in campaign ${campaign.id}`);
+        throw new Error(
+          `Email ${emailId} not found in campaign ${campaign.id}`
+        );
       }
 
       // Check email conditions if any
       if (email.conditions && email.conditions.length > 0) {
-        const conditionsMet = await this.evaluateEmailConditions(email.conditions, subscription);
+        const conditionsMet = await this.evaluateEmailConditions(
+          email.conditions,
+          subscription
+        );
 
         if (!conditionsMet) {
           logger.info('Email conditions not met, skipping', {
             subscriptionId,
             emailId,
-            emailIndex
+            emailIndex,
           });
 
           // Move to next email
           await this.moveToNextEmail(subscription, campaign);
+
           return;
         }
       }
@@ -396,15 +452,14 @@ export class DripCampaignService {
         emailId,
         emailIndex,
         campaignId: campaign.id,
-        contactId: subscription.contactId
+        contactId: subscription.contactId,
       });
-
     } catch (error) {
       logger.error('Error processing drip email', {
         error,
         subscriptionId,
         emailIndex,
-        emailId
+        emailId,
       });
       throw error;
     }
@@ -417,38 +472,41 @@ export class DripCampaignService {
   ): Promise<void> {
     try {
       // Call newsletter service to send email
-      await axios.post(`${config.services.newsletterService.baseUrl}/api/v1/emails/send`, {
-        to: subscription.contactId,
-        subject: email.subject,
-        preheader: email.preheader,
-        content: email.content,
-        templateId: email.templateId,
-        metadata: {
-          campaignId: campaign.id,
-          subscriptionId: subscription.id,
-          emailId: email.id,
-          emailOrder: email.order,
-          dripCampaign: true
+      await axios.post(
+        `${config.services.newsletterService.baseUrl}/api/v1/emails/send`,
+        {
+          to: subscription.contactId,
+          subject: email.subject,
+          preheader: email.preheader,
+          content: email.content,
+          templateId: email.templateId,
+          metadata: {
+            campaignId: campaign.id,
+            subscriptionId: subscription.id,
+            emailId: email.id,
+            emailOrder: email.order,
+            dripCampaign: true,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.newsletterService.apiKey}`,
+            'Content-Type': 'application/json',
+          },
         }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.services.newsletterService.apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      );
 
       logger.info('Drip email sent successfully', {
         emailId: email.id,
         subscriptionId: subscription.id,
         contactId: subscription.contactId,
-        subject: email.subject
+        subject: email.subject,
       });
-
     } catch (error) {
       logger.error('Failed to send drip email', {
         error,
         emailId: email.id,
-        subscriptionId: subscription.id
+        subscriptionId: subscription.id,
       });
       throw error;
     }
@@ -465,23 +523,23 @@ export class DripCampaignService {
       await this.dripCampaignRepository.updateSubscription(subscription.id, {
         status: 'completed',
         completedAt: new Date(),
-        currentEmailIndex: nextEmailIndex
+        currentEmailIndex: nextEmailIndex,
       });
 
       logger.info('Drip campaign completed for subscription', {
         subscriptionId: subscription.id,
         campaignId: campaign.id,
-        contactId: subscription.contactId
+        contactId: subscription.contactId,
       });
 
       return;
     }
 
     // Update to next email
-    const updatedSubscription = await this.dripCampaignRepository.updateSubscription(
-      subscription.id,
-      { currentEmailIndex: nextEmailIndex }
-    );
+    const updatedSubscription =
+      await this.dripCampaignRepository.updateSubscription(subscription.id, {
+        currentEmailIndex: nextEmailIndex,
+      });
 
     if (updatedSubscription) {
       // Schedule next email
@@ -498,8 +556,9 @@ export class DripCampaignService {
     if (!currentEmail) {
       logger.warn('No current email found for subscription', {
         subscriptionId: subscription.id,
-        currentEmailIndex: subscription.currentEmailIndex
+        currentEmailIndex: subscription.currentEmailIndex,
       });
+
       return;
     }
 
@@ -508,24 +567,27 @@ export class DripCampaignService {
 
     // Update subscription with next email time
     await this.dripCampaignRepository.updateSubscription(subscription.id, {
-      nextEmailAt
+      nextEmailAt,
     });
 
     // Queue email for sending
-    await queueManager.addDripEmail({
-      subscriptionId: subscription.id,
-      campaignId: subscription.campaignId,
-      contactId: subscription.contactId,
-      emailIndex: subscription.currentEmailIndex,
-      emailId: currentEmail.id
-    }, delayMs);
+    await queueManager.addDripEmail(
+      {
+        subscriptionId: subscription.id,
+        campaignId: subscription.campaignId,
+        contactId: subscription.contactId,
+        emailIndex: subscription.currentEmailIndex,
+        emailId: currentEmail.id,
+      },
+      delayMs
+    );
 
     logger.info('Next drip email scheduled', {
       subscriptionId: subscription.id,
       emailId: currentEmail.id,
       emailIndex: subscription.currentEmailIndex,
       delayMs,
-      nextEmailAt
+      nextEmailAt,
     });
   }
 
@@ -550,17 +612,23 @@ export class DripCampaignService {
         throw new Error(`Campaign ${campaignId} not found`);
       }
 
-      const subscriptions = await this.dripCampaignRepository.findSubscriptionsByCampaign(
-        campaignId,
-        { page: 1, limit: 1000 }
-      );
+      const subscriptions =
+        await this.dripCampaignRepository.findSubscriptionsByCampaign(
+          campaignId,
+          { page: 1, limit: 1000 }
+        );
 
       const analytics = {
         campaign,
         totalSubscribers: subscriptions.data.length,
-        activeSubscribers: subscriptions.data.filter(s => s.status === 'active').length,
-        completedSubscribers: subscriptions.data.filter(s => s.status === 'completed').length,
-        unsubscribed: subscriptions.data.filter(s => s.status === 'unsubscribed').length,
+        activeSubscribers: subscriptions.data.filter(s => s.status === 'active')
+          .length,
+        completedSubscribers: subscriptions.data.filter(
+          s => s.status === 'completed'
+        ).length,
+        unsubscribed: subscriptions.data.filter(
+          s => s.status === 'unsubscribed'
+        ).length,
         emailPerformance: campaign.emails.map(email => ({
           emailId: email.id,
           subject: email.subject,
@@ -569,9 +637,12 @@ export class DripCampaignService {
           sent: 0,
           opens: 0,
           clicks: 0,
-          unsubscribes: 0
+          unsubscribes: 0,
         })),
-        conversionFunnel: this.calculateConversionFunnel(campaign.emails, subscriptions.data)
+        conversionFunnel: this.calculateConversionFunnel(
+          campaign.emails,
+          subscriptions.data
+        ),
       };
 
       return analytics;
@@ -581,21 +652,28 @@ export class DripCampaignService {
     }
   }
 
-  private calculateConversionFunnel(emails: DripEmail[], subscriptions: CampaignSubscription[]): any[] {
+  private calculateConversionFunnel(
+    emails: DripEmail[],
+    subscriptions: CampaignSubscription[]
+  ): any[] {
     return emails.map((email, index) => {
       const reachedThisEmail = subscriptions.filter(
-        s => s.currentEmailIndex > index || (s.currentEmailIndex === index && s.status === 'completed')
+        s =>
+          s.currentEmailIndex > index ||
+          (s.currentEmailIndex === index && s.status === 'completed')
       ).length;
 
-      const conversionRate = subscriptions.length > 0 ?
-        (reachedThisEmail / subscriptions.length) * 100 : 0;
+      const conversionRate =
+        subscriptions.length > 0
+          ? (reachedThisEmail / subscriptions.length) * 100
+          : 0;
 
       return {
         emailIndex: index,
         emailId: email.id,
         subject: email.subject,
         subscribersReached: reachedThisEmail,
-        conversionRate
+        conversionRate,
       };
     });
   }
@@ -645,22 +723,28 @@ export class DripCampaignService {
 
   async processActiveSubscriptions(): Promise<number> {
     try {
-      const activeSubscriptions = await this.dripCampaignRepository.findActiveSubscriptions();
+      const activeSubscriptions =
+        await this.dripCampaignRepository.findActiveSubscriptions();
 
       if (activeSubscriptions.length === 0) {
         return 0;
       }
 
-      logger.info('Processing active drip subscriptions', { count: activeSubscriptions.length });
+      logger.info('Processing active drip subscriptions', {
+        count: activeSubscriptions.length,
+      });
 
       let processedCount = 0;
 
       for (const subscription of activeSubscriptions) {
         try {
-          const campaign = await this.dripCampaignRepository.findById(subscription.campaignId);
+          const campaign = await this.dripCampaignRepository.findById(
+            subscription.campaignId
+          );
 
           if (campaign && campaign.status === 'active') {
-            const currentEmail = campaign.emails[subscription.currentEmailIndex];
+            const currentEmail =
+              campaign.emails[subscription.currentEmailIndex];
 
             if (currentEmail) {
               await this.processDripEmail(
@@ -674,7 +758,7 @@ export class DripCampaignService {
         } catch (error) {
           logger.error('Error processing subscription in batch', {
             error,
-            subscriptionId: subscription.id
+            subscriptionId: subscription.id,
           });
           // Continue processing other subscriptions
         }
@@ -683,7 +767,7 @@ export class DripCampaignService {
       logger.info('Batch processing of subscriptions completed', {
         totalSubscriptions: activeSubscriptions.length,
         processedCount,
-        failedCount: activeSubscriptions.length - processedCount
+        failedCount: activeSubscriptions.length - processedCount,
       });
 
       return processedCount;

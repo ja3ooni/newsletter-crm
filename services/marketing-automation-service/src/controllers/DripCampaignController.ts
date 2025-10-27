@@ -1,9 +1,9 @@
 import { DripCampaignService } from '@/services/DripCampaignService';
 import {
-    CreateDripCampaignRequest,
-    FilterParams,
-    PaginationParams,
-    UpdateDripCampaignRequest
+  CreateDripCampaignRequest,
+  FilterParams,
+  PaginationParams,
+  UpdateDripCampaignRequest,
 } from '@/types';
 import { logger } from '@/utils/logger';
 import { Request, Response } from 'express';
@@ -23,24 +23,29 @@ export class DripCampaignController {
   async createDripCampaign(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
       const campaignData: CreateDripCampaignRequest = req.body;
       const createdBy = req.user?.id || 'system';
 
-      const campaign = await this.dripCampaignService.createDripCampaign(campaignData, createdBy);
+      const campaign = await this.dripCampaignService.createDripCampaign(
+        campaignData,
+        createdBy
+      );
 
       res.status(201).json({
         success: true,
         message: 'Drip campaign created successfully',
-        data: campaign
+        data: campaign,
       });
 
       logger.info('Drip campaign created via API', {
@@ -48,14 +53,17 @@ export class DripCampaignController {
         name: campaign.name,
         emailCount: campaign.emails.length,
         createdBy,
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
-      logger.error('Error in createDripCampaign controller', { error, body: req.body });
+      logger.error('Error in createDripCampaign controller', {
+        error,
+        body: req.body,
+      });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -69,21 +77,24 @@ export class DripCampaignController {
       if (!campaign) {
         res.status(404).json({
           success: false,
-          message: 'Drip campaign not found'
+          message: 'Drip campaign not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
-        data: campaign
+        data: campaign,
       });
-
     } catch (error) {
-      logger.error('Error in getDripCampaign controller', { error, campaignId: req.params.id });
+      logger.error('Error in getDripCampaign controller', {
+        error,
+        campaignId: req.params.id,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -94,14 +105,14 @@ export class DripCampaignController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20,
         sortBy: req.query.sortBy as string,
-        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
+        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
       };
 
       const filters: FilterParams = {};
 
       if (req.query.status) {
         filters.status = Array.isArray(req.query.status)
-          ? req.query.status as string[]
+          ? (req.query.status as string[])
           : [req.query.status as string];
       }
 
@@ -112,23 +123,28 @@ export class DripCampaignController {
       if (req.query.startDate && req.query.endDate) {
         filters.dateRange = {
           start: new Date(req.query.startDate as string),
-          end: new Date(req.query.endDate as string)
+          end: new Date(req.query.endDate as string),
         };
       }
 
-      const result = await this.dripCampaignService.getDripCampaigns(pagination, filters);
+      const result = await this.dripCampaignService.getDripCampaigns(
+        pagination,
+        filters
+      );
 
       res.json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
-
     } catch (error) {
-      logger.error('Error in getDripCampaigns controller', { error, query: req.query });
+      logger.error('Error in getDripCampaigns controller', {
+        error,
+        query: req.query,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -136,49 +152,55 @@ export class DripCampaignController {
   async updateDripCampaign(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
       const { id } = req.params;
       const updateData: UpdateDripCampaignRequest = req.body;
 
-      const campaign = await this.dripCampaignService.updateDripCampaign(id, updateData);
+      const campaign = await this.dripCampaignService.updateDripCampaign(
+        id,
+        updateData
+      );
 
       if (!campaign) {
         res.status(404).json({
           success: false,
-          message: 'Drip campaign not found'
+          message: 'Drip campaign not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Drip campaign updated successfully',
-        data: campaign
+        data: campaign,
       });
 
       logger.info('Drip campaign updated via API', {
         campaignId: id,
         updatedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in updateDripCampaign controller', {
         error,
         campaignId: req.params.id,
-        body: req.body
+        body: req.body,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -192,30 +214,31 @@ export class DripCampaignController {
       if (!deleted) {
         res.status(404).json({
           success: false,
-          message: 'Drip campaign not found'
+          message: 'Drip campaign not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
-        message: 'Drip campaign deleted successfully'
+        message: 'Drip campaign deleted successfully',
       });
 
       logger.info('Drip campaign deleted via API', {
         campaignId: id,
         deletedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in deleteDripCampaign controller', {
         error,
-        campaignId: req.params.id
+        campaignId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -229,31 +252,32 @@ export class DripCampaignController {
       if (!campaign) {
         res.status(404).json({
           success: false,
-          message: 'Drip campaign not found'
+          message: 'Drip campaign not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Drip campaign activated successfully',
-        data: campaign
+        data: campaign,
       });
 
       logger.info('Drip campaign activated via API', {
         campaignId: id,
         activatedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in activateDripCampaign controller', {
         error,
-        campaignId: req.params.id
+        campaignId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -267,31 +291,32 @@ export class DripCampaignController {
       if (!campaign) {
         res.status(404).json({
           success: false,
-          message: 'Drip campaign not found'
+          message: 'Drip campaign not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Drip campaign paused successfully',
-        data: campaign
+        data: campaign,
       });
 
       logger.info('Drip campaign paused via API', {
         campaignId: id,
         pausedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in pauseDripCampaign controller', {
         error,
-        campaignId: req.params.id
+        campaignId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -303,12 +328,14 @@ export class DripCampaignController {
   async subscribeToCampaign(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
@@ -324,7 +351,7 @@ export class DripCampaignController {
       res.status(201).json({
         success: true,
         message: 'Contact subscribed to campaign successfully',
-        data: subscription
+        data: subscription,
       });
 
       logger.info('Contact subscribed to drip campaign via API', {
@@ -332,18 +359,18 @@ export class DripCampaignController {
         subscriptionId: subscription.id,
         contactId,
         subscribedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in subscribeToCampaign controller', {
         error,
         campaignId: req.params.id,
-        body: req.body
+        body: req.body,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -352,20 +379,22 @@ export class DripCampaignController {
     try {
       const { subscriptionId } = req.params;
 
-      const subscription = await this.dripCampaignService.unsubscribeFromCampaign(subscriptionId);
+      const subscription =
+        await this.dripCampaignService.unsubscribeFromCampaign(subscriptionId);
 
       if (!subscription) {
         res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: 'Subscription not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Contact unsubscribed from campaign successfully',
-        data: subscription
+        data: subscription,
       });
 
       logger.info('Contact unsubscribed from drip campaign via API', {
@@ -373,17 +402,17 @@ export class DripCampaignController {
         campaignId: subscription.campaignId,
         contactId: subscription.contactId,
         unsubscribedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in unsubscribeFromCampaign controller', {
         error,
-        subscriptionId: req.params.subscriptionId
+        subscriptionId: req.params.subscriptionId,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -392,36 +421,38 @@ export class DripCampaignController {
     try {
       const { subscriptionId } = req.params;
 
-      const subscription = await this.dripCampaignService.pauseSubscription(subscriptionId);
+      const subscription =
+        await this.dripCampaignService.pauseSubscription(subscriptionId);
 
       if (!subscription) {
         res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: 'Subscription not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Subscription paused successfully',
-        data: subscription
+        data: subscription,
       });
 
       logger.info('Subscription paused via API', {
         subscriptionId,
         pausedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in pauseSubscription controller', {
         error,
-        subscriptionId: req.params.subscriptionId
+        subscriptionId: req.params.subscriptionId,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -430,36 +461,38 @@ export class DripCampaignController {
     try {
       const { subscriptionId } = req.params;
 
-      const subscription = await this.dripCampaignService.resumeSubscription(subscriptionId);
+      const subscription =
+        await this.dripCampaignService.resumeSubscription(subscriptionId);
 
       if (!subscription) {
         res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: 'Subscription not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Subscription resumed successfully',
-        data: subscription
+        data: subscription,
       });
 
       logger.info('Subscription resumed via API', {
         subscriptionId,
         resumedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in resumeSubscription controller', {
         error,
-        subscriptionId: req.params.subscriptionId
+        subscriptionId: req.params.subscriptionId,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -472,26 +505,28 @@ export class DripCampaignController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20,
         sortBy: req.query.sortBy as string,
-        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
+        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
       };
 
-      const result = await this.dripCampaignService.getCampaignSubscriptions(id, pagination);
+      const result = await this.dripCampaignService.getCampaignSubscriptions(
+        id,
+        pagination
+      );
 
       res.json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
-
     } catch (error) {
       logger.error('Error in getCampaignSubscriptions controller', {
         error,
         campaignId: req.params.id,
-        query: req.query
+        query: req.query,
       });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -508,17 +543,17 @@ export class DripCampaignController {
 
       res.json({
         success: true,
-        data: analytics
+        data: analytics,
       });
-
     } catch (error) {
       logger.error('Error in getCampaignAnalytics controller', {
         error,
-        campaignId: req.params.id
+        campaignId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -529,27 +564,28 @@ export class DripCampaignController {
 
   async processActiveSubscriptions(req: Request, res: Response): Promise<void> {
     try {
-      const processedCount = await this.dripCampaignService.processActiveSubscriptions();
+      const processedCount =
+        await this.dripCampaignService.processActiveSubscriptions();
 
       res.json({
         success: true,
         message: 'Active subscriptions processed successfully',
         data: {
-          processedCount
-        }
+          processedCount,
+        },
       });
 
       logger.info('Active subscriptions processed via API', {
         processedCount,
         triggeredBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in processActiveSubscriptions controller', { error });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }

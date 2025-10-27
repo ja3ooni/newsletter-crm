@@ -255,7 +255,9 @@ export class SecurityMiddleware {
 
         next();
       } catch (error) {
-        logger.error('Error in request sanitization', { error, ip: req.ip });
+        logger.error('Error in request sanitization', error as Error, {
+          ip: req.ip,
+        });
         res.status(500).json({
           error: 'Internal Server Error',
           message: 'Request processing failed',

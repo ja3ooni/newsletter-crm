@@ -12,13 +12,13 @@ module.exports = {
     '**/__tests__/**/*.ts',
     '**/__tests__/**/*.js',
     '**/?(*.)+(spec|test).ts',
-    '**/?(*.)+(spec|test).js'
+    '**/?(*.)+(spec|test).js',
   ],
 
   // Transform files
   transform: {
     '^.+\\.ts$': 'ts-jest',
-    '^.+\\.js$': 'babel-jest'
+    '^.+\\.js$': 'babel-jest',
   },
 
   // Module file extensions
@@ -41,17 +41,42 @@ module.exports = {
     '!**/dist/**',
     '!**/coverage/**',
     '!**/*.config.{js,ts}',
-    '!**/tests/**'
+    '!**/tests/**',
   ],
 
   // Coverage thresholds
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
-    }
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    // Service-specific thresholds
+    'services/user-service/src/**/*.ts': {
+      branches: 95,
+      functions: 95,
+      lines: 95,
+      statements: 95,
+    },
+    'services/newsletter-service/src/**/*.ts': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    'services/crm-service/src/**/*.ts': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    'services/analytics-service/src/**/*.ts': {
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85,
+    },
   },
 
   // Coverage reporters
@@ -70,73 +95,62 @@ module.exports = {
   silent: process.env.CI === 'true',
 
   // Module name mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@shared/(.*)$': '<rootDir>/shared/$1',
-    '^@types/(.*)$': '<rootDir>/types/$1'
+    '^@types/(.*)$': '<rootDir>/types/$1',
   },
 
   // Ignore patterns
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/coverage/',
-    '/.next/'
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/coverage/', '/.next/'],
 
-  // Watch plugins
-  watchPlugins: [
-    'jest-watch-typeahead/filename',
-    'jest-watch-typeahead/testname'
-  ],
+  // Watch plugins (commented out as they may not be installed)
+  // watchPlugins: [
+  //   'jest-watch-typeahead/filename',
+  //   'jest-watch-typeahead/testname'
+  // ],
 
   // Projects for multi-service testing
   projects: [
     {
       displayName: 'user-service',
       testMatch: ['<rootDir>/services/user-service/tests/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'newsletter-service',
       testMatch: ['<rootDir>/services/newsletter-service/tests/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'content-service',
       testMatch: ['<rootDir>/services/content-service/tests/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'crm-service',
       testMatch: ['<rootDir>/services/crm-service/tests/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'analytics-service',
       testMatch: ['<rootDir>/services/analytics-service/tests/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'integration',
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     },
     {
       displayName: 'e2e',
       testMatch: ['<rootDir>/tests/e2e/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
-    }
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+    },
   ],
 
   // Reporters
-  reporters: [
-    'default',
-    ['jest-junit', {
-      outputDirectory: 'test-results',
-      outputName: 'junit.xml'
-    }]
-  ],
+  reporters: ['default'],
 
   // Error handling
   errorOnDeprecated: true,
@@ -145,5 +159,5 @@ module.exports = {
   clearMocks: true,
 
   // Restore mocks after each test
-  restoreMocks: true
+  restoreMocks: true,
 };

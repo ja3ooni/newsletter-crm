@@ -222,9 +222,19 @@ export interface ContactActivity {
   updatedAt: Date;
 }
 
-export type ContactActivityType = 'note' | 'call' | 'email' | 'meeting' | 'task' | 'deal';
+export type ContactActivityType =
+  | 'note'
+  | 'call'
+  | 'email'
+  | 'meeting'
+  | 'task'
+  | 'deal';
 export type ActivityPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type ActivityStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type ActivityStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled';
 
 // ============================================================================
 // SALES PIPELINE TYPES
@@ -249,14 +259,17 @@ export interface PipelineStage {
   probability: number;
   isClosedWon: boolean;
   isClosedLost: boolean;
+  color?: string;
+  rottenDays?: number; // Days after which deals in this stage are considered stale
 }
 
 export interface Deal {
   id: string;
   name: string;
   contactId?: string;
+  companyId?: string;
   pipelineId: string;
-  stage: string;
+  stageId: string;
   value?: number;
   currency: string;
   probability: number;
@@ -264,13 +277,402 @@ export interface Deal {
   actualCloseDate?: Date;
   status: DealStatus;
   lostReason?: string;
+  wonReason?: string;
   ownerId?: string;
+  customFields: Record<string, any>;
+  tags: string[];
+  source?: string;
+  priority: DealPriority;
+  lastActivityAt?: Date;
+  rottenDate?: Date;
   createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type DealStatus = 'open' | 'won' | 'lost';
+export type DealPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface DealActivity {
+  id: string;
+  dealId: string;
+  contactId?: string;
+  type: DealActivityType;
+  subject: string;
+  content?: string;
+  dueDate?: Date;
+  completedAt?: Date;
+  priority: ActivityPriority;
+  status: ActivityStatus;
+  assignedTo?: string;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type DealActivityType =
+  | 'call'
+  | 'email'
+  | 'meeting'
+  | 'task'
+  | 'note'
+  | 'proposal'
+  | 'demo';
+
+export interface Opportunity {
+  id: string;
+  name: string;
+  contactId: string;
+  companyId?: string;
+  dealId?: string;
+  value: number;
+  currency: string;
+  probability: number;
+  stage: OpportunityStage;
+  source?: string;
+  description?: string;
+  expectedCloseDate?: Date;
+  actualCloseDate?: Date;
+  ownerId?: string;
+  customFields: Record<string, any>;
+  tags: string[];
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type OpportunityStage =
+  | 'identified'
+  | 'qualified'
+  | 'proposal'
+  | 'negotiation'
+  | 'closed_won'
+  | 'closed_lost';
+
+// ============================================================================
+// COMPANY/ACCOUNT TYPES
+// ============================================================================
+
+export interface Company {
+  id: string;
+  name: string;
+  domain?: string;
+  industry?: string;
+  size?: CompanySize;
+  revenue?: number;
+  currency: string;
+  website?: string;
+  phone?: string;
+  address?: ContactAddress;
+  description?: string;
+  customFields: Record<string, any>;
+  tags: string[];
+  ownerId?: string;
+  parentCompanyId?: string;
+  subsidiaries?: string[];
+  contacts?: string[];
+  deals?: string[];
+  opportunities?: string[];
+  lastActivityAt?: Date;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type CompanySize =
+  | 'startup'
+  | 'small'
+  | 'medium'
+  | 'large'
+  | 'enterprise';
+
+export interface ContactCompanyRelation {
+  contactId: string;
+  companyId: string;
+  role?: string;
+  isPrimary: boolean;
+  startDate?: Date;
+  endDate?: Date;
+  createdAt: Date;
+}
+
+// ============================================================================
+// TASK AND ACTIVITY MANAGEMENT TYPES
+// ============================================================================
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  type: TaskType;
+  priority: ActivityPriority;
+  status: TaskStatus;
+  dueDate?: Date;
+  completedAt?: Date;
+  assignedTo?: string;
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  opportunityId?: string;
+  reminderAt?: Date;
+  isRecurring: boolean;
+  recurringPattern?: RecurringPattern;
+  customFields: Record<string, any>;
+  tags: string[];
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TaskType =
+  | 'call'
+  | 'email'
+  | 'meeting'
+  | 'follow_up'
+  | 'demo'
+  | 'proposal'
+  | 'contract'
+  | 'other';
+export type TaskStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'overdue';
+
+export interface RecurringPattern {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number; // Every N days/weeks/months/years
+  daysOfWeek?: number[]; // For weekly: 0=Sunday, 1=Monday, etc.
+  dayOfMonth?: number; // For monthly
+  endDate?: Date;
+  occurrences?: number; // Number of times to repeat
+}
+
+export interface Meeting {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+  location?: string;
+  meetingUrl?: string;
+  attendees: MeetingAttendee[];
+  contactIds: string[];
+  companyIds: string[];
+  dealId?: string;
+  opportunityId?: string;
+  status: MeetingStatus;
+  outcome?: string;
+  followUpTasks?: string[];
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MeetingAttendee {
+  email: string;
+  name?: string;
+  status: AttendeeStatus;
+  isOrganizer: boolean;
+}
+
+export type MeetingStatus =
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'no_show';
+export type AttendeeStatus = 'pending' | 'accepted' | 'declined' | 'tentative';
+
+// ============================================================================
+// CUSTOM FIELDS TYPES
+// ============================================================================
+
+export interface CustomField {
+  id: string;
+  name: string;
+  label: string;
+  type: CustomFieldType;
+  entityType: CustomFieldEntity;
+  options?: CustomFieldOption[];
+  validation?: CustomFieldValidation;
+  isRequired: boolean;
+  isUnique: boolean;
+  isSearchable: boolean;
+  defaultValue?: any;
+  helpText?: string;
+  order: number;
+  isActive: boolean;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type CustomFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'decimal'
+  | 'boolean'
+  | 'date'
+  | 'datetime'
+  | 'select'
+  | 'multiselect'
+  | 'url'
+  | 'email'
+  | 'phone'
+  | 'currency'
+  | 'percentage';
+
+export type CustomFieldEntity =
+  | 'contact'
+  | 'company'
+  | 'deal'
+  | 'opportunity'
+  | 'task';
+
+export interface CustomFieldOption {
+  value: string;
+  label: string;
+  color?: string;
+  order: number;
+  isActive: boolean;
+}
+
+export interface CustomFieldValidation {
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  pattern?: string;
+  required?: boolean;
+}
+
+// ============================================================================
+// TERRITORY MANAGEMENT TYPES
+// ============================================================================
+
+export interface Territory {
+  id: string;
+  name: string;
+  description?: string;
+  type: TerritoryType;
+  rules: TerritoryRule[];
+  assignedUsers: string[];
+  isActive: boolean;
+  priority: number;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TerritoryType =
+  | 'geographic'
+  | 'industry'
+  | 'company_size'
+  | 'revenue'
+  | 'custom';
+
+export interface TerritoryRule {
+  field: string;
+  operator: SegmentOperator;
+  value: any;
+  logicalOperator?: 'AND' | 'OR';
+}
+
+export interface TerritoryAssignment {
+  id: string;
+  territoryId: string;
+  userId: string;
+  role: TerritoryRole;
+  assignedAt: Date;
+  assignedBy?: string;
+}
+
+export type TerritoryRole = 'owner' | 'member' | 'viewer';
+
+// ============================================================================
+// REVENUE FORECASTING TYPES
+// ============================================================================
+
+export interface RevenueForecast {
+  id: string;
+  name: string;
+  period: ForecastPeriod;
+  startDate: Date;
+  endDate: Date;
+  targetRevenue: number;
+  predictedRevenue: number;
+  actualRevenue: number;
+  confidence: number;
+  deals: ForecastDeal[];
+  opportunities: ForecastOpportunity[];
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ForecastPeriod = 'monthly' | 'quarterly' | 'yearly';
+
+export interface ForecastDeal {
+  dealId: string;
+  value: number;
+  probability: number;
+  expectedCloseDate: Date;
+  weightedValue: number;
+}
+
+export interface ForecastOpportunity {
+  opportunityId: string;
+  value: number;
+  probability: number;
+  expectedCloseDate: Date;
+  weightedValue: number;
+}
+
+// ============================================================================
+// WIN/LOSS TRACKING TYPES
+// ============================================================================
+
+export interface WinLossAnalysis {
+  id: string;
+  dealId?: string;
+  opportunityId?: string;
+  outcome: 'won' | 'lost';
+  primaryReason: string;
+  secondaryReasons: string[];
+  competitorId?: string;
+  feedback?: string;
+  lessonsLearned?: string;
+  actionItems: string[];
+  analyzedBy?: string;
+  analyzedAt: Date;
+  createdBy?: string;
+  createdAt: Date;
+}
+
+export interface Competitor {
+  id: string;
+  name: string;
+  website?: string;
+  description?: string;
+  strengths: string[];
+  weaknesses: string[];
+  pricing?: CompetitorPricing;
+  marketShare?: number;
+  isActive: boolean;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CompetitorPricing {
+  model: 'subscription' | 'one_time' | 'usage_based' | 'freemium' | 'custom';
+  startingPrice?: number;
+  currency: string;
+  notes?: string;
+}
 
 // ============================================================================
 // IMPORT/EXPORT TYPES
@@ -293,7 +695,12 @@ export interface ImportJob {
   completedAt?: Date;
 }
 
-export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type ImportStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
 export interface ImportError {
   row: number;
@@ -331,7 +738,12 @@ export interface ExportJob {
 }
 
 export type ExportFormat = 'csv' | 'xlsx' | 'json';
-export type ExportStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
+export type ExportStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'expired';
 
 export interface ExportFilter {
   field: string;
@@ -358,8 +770,18 @@ export interface EnrichmentJob {
   completedAt?: Date;
 }
 
-export type EnrichmentProvider = 'clearbit' | 'fullcontact' | 'hunter' | 'pipl' | 'internal';
-export type EnrichmentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'skipped';
+export type EnrichmentProvider =
+  | 'clearbit'
+  | 'fullcontact'
+  | 'hunter'
+  | 'pipl'
+  | 'internal';
+export type EnrichmentStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'skipped';
 
 export interface EnrichmentRule {
   id: string;
@@ -396,7 +818,11 @@ export interface DuplicateGroup {
   createdAt: Date;
 }
 
-export type DuplicateStatus = 'pending' | 'merged' | 'ignored' | 'false_positive';
+export type DuplicateStatus =
+  | 'pending'
+  | 'merged'
+  | 'ignored'
+  | 'false_positive';
 
 export interface DuplicateRule {
   id: string;
@@ -552,7 +978,13 @@ export interface BulkOperationRequest {
 }
 
 export interface BulkOperation {
-  type: 'update' | 'delete' | 'add_tags' | 'remove_tags' | 'change_lifecycle' | 'assign_owner';
+  type:
+    | 'update'
+    | 'delete'
+    | 'add_tags'
+    | 'remove_tags'
+    | 'change_lifecycle'
+    | 'assign_owner';
   params: Record<string, any>;
 }
 
@@ -560,6 +992,419 @@ export interface BulkOperationResponse {
   jobId: string;
   totalRecords: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+// ============================================================================
+// SALES PIPELINE REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateSalesPipelineRequest {
+  name: string;
+  description?: string;
+  stages: CreatePipelineStageRequest[];
+  isDefault?: boolean;
+}
+
+export interface CreatePipelineStageRequest {
+  name: string;
+  order: number;
+  probability: number;
+  isClosedWon?: boolean;
+  isClosedLost?: boolean;
+  color?: string;
+  rottenDays?: number;
+}
+
+export interface UpdateSalesPipelineRequest {
+  name?: string;
+  description?: string;
+  stages?: UpdatePipelineStageRequest[];
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface UpdatePipelineStageRequest {
+  id?: string;
+  name?: string;
+  order?: number;
+  probability?: number;
+  isClosedWon?: boolean;
+  isClosedLost?: boolean;
+  color?: string;
+  rottenDays?: number;
+}
+
+export interface CreateDealRequest {
+  name: string;
+  contactId?: string;
+  companyId?: string;
+  pipelineId: string;
+  stageId: string;
+  value?: number;
+  currency?: string;
+  probability?: number;
+  expectedCloseDate?: Date;
+  ownerId?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+  source?: string;
+  priority?: DealPriority;
+}
+
+export interface UpdateDealRequest {
+  name?: string;
+  contactId?: string;
+  companyId?: string;
+  stageId?: string;
+  value?: number;
+  currency?: string;
+  probability?: number;
+  expectedCloseDate?: Date;
+  actualCloseDate?: Date;
+  status?: DealStatus;
+  lostReason?: string;
+  wonReason?: string;
+  ownerId?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+  priority?: DealPriority;
+}
+
+export interface DealSearchRequest {
+  query?: string;
+  pipelineId?: string;
+  stageId?: string;
+  status?: DealStatus[];
+  ownerId?: string[];
+  contactId?: string;
+  companyId?: string;
+  valueMin?: number;
+  valueMax?: number;
+  priority?: DealPriority[];
+  tags?: string[];
+  expectedCloseBefore?: Date;
+  expectedCloseAfter?: Date;
+  createdAfter?: Date;
+  createdBefore?: Date;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface DealSearchResponse {
+  deals: Deal[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// ============================================================================
+// COMPANY REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateCompanyRequest {
+  name: string;
+  domain?: string;
+  industry?: string;
+  size?: CompanySize;
+  revenue?: number;
+  currency?: string;
+  website?: string;
+  phone?: string;
+  address?: ContactAddress;
+  description?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+  ownerId?: string;
+  parentCompanyId?: string;
+}
+
+export interface UpdateCompanyRequest {
+  name?: string;
+  domain?: string;
+  industry?: string;
+  size?: CompanySize;
+  revenue?: number;
+  currency?: string;
+  website?: string;
+  phone?: string;
+  address?: ContactAddress;
+  description?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+  ownerId?: string;
+  parentCompanyId?: string;
+}
+
+export interface CompanySearchRequest {
+  query?: string;
+  industry?: string[];
+  size?: CompanySize[];
+  ownerId?: string[];
+  tags?: string[];
+  revenueMin?: number;
+  revenueMax?: number;
+  createdAfter?: Date;
+  createdBefore?: Date;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface CompanySearchResponse {
+  companies: Company[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// ============================================================================
+// TASK REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  type: TaskType;
+  priority?: ActivityPriority;
+  dueDate?: Date;
+  assignedTo?: string;
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  opportunityId?: string;
+  reminderAt?: Date;
+  isRecurring?: boolean;
+  recurringPattern?: RecurringPattern;
+  customFields?: Record<string, any>;
+  tags?: string[];
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  type?: TaskType;
+  priority?: ActivityPriority;
+  status?: TaskStatus;
+  dueDate?: Date;
+  completedAt?: Date;
+  assignedTo?: string;
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  opportunityId?: string;
+  reminderAt?: Date;
+  isRecurring?: boolean;
+  recurringPattern?: RecurringPattern;
+  customFields?: Record<string, any>;
+  tags?: string[];
+}
+
+export interface TaskSearchRequest {
+  query?: string;
+  type?: TaskType[];
+  status?: TaskStatus[];
+  priority?: ActivityPriority[];
+  assignedTo?: string[];
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  opportunityId?: string;
+  dueBefore?: Date;
+  dueAfter?: Date;
+  tags?: string[];
+  isOverdue?: boolean;
+  createdAfter?: Date;
+  createdBefore?: Date;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface TaskSearchResponse {
+  tasks: Task[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+// ============================================================================
+// MEETING REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateMeetingRequest {
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+  location?: string;
+  meetingUrl?: string;
+  attendees: CreateMeetingAttendeeRequest[];
+  contactIds?: string[];
+  companyIds?: string[];
+  dealId?: string;
+  opportunityId?: string;
+}
+
+export interface CreateMeetingAttendeeRequest {
+  email: string;
+  name?: string;
+  isOrganizer?: boolean;
+}
+
+export interface UpdateMeetingRequest {
+  title?: string;
+  description?: string;
+  startTime?: Date;
+  endTime?: Date;
+  location?: string;
+  meetingUrl?: string;
+  attendees?: UpdateMeetingAttendeeRequest[];
+  contactIds?: string[];
+  companyIds?: string[];
+  dealId?: string;
+  opportunityId?: string;
+  status?: MeetingStatus;
+  outcome?: string;
+  followUpTasks?: string[];
+}
+
+export interface UpdateMeetingAttendeeRequest {
+  email: string;
+  name?: string;
+  status?: AttendeeStatus;
+  isOrganizer?: boolean;
+}
+
+// ============================================================================
+// CUSTOM FIELD REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateCustomFieldRequest {
+  name: string;
+  label: string;
+  type: CustomFieldType;
+  entityType: CustomFieldEntity;
+  options?: CreateCustomFieldOptionRequest[];
+  validation?: CustomFieldValidation;
+  isRequired?: boolean;
+  isUnique?: boolean;
+  isSearchable?: boolean;
+  defaultValue?: any;
+  helpText?: string;
+  order?: number;
+}
+
+export interface CreateCustomFieldOptionRequest {
+  value: string;
+  label: string;
+  color?: string;
+  order: number;
+}
+
+export interface UpdateCustomFieldRequest {
+  name?: string;
+  label?: string;
+  options?: UpdateCustomFieldOptionRequest[];
+  validation?: CustomFieldValidation;
+  isRequired?: boolean;
+  isUnique?: boolean;
+  isSearchable?: boolean;
+  defaultValue?: any;
+  helpText?: string;
+  order?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateCustomFieldOptionRequest {
+  value: string;
+  label: string;
+  color?: string;
+  order: number;
+  isActive?: boolean;
+}
+
+// ============================================================================
+// OPPORTUNITY REQUEST/RESPONSE TYPES
+// ============================================================================
+
+export interface CreateOpportunityRequest {
+  name: string;
+  contactId: string;
+  companyId?: string;
+  dealId?: string;
+  value: number;
+  currency?: string;
+  probability?: number;
+  stage?: OpportunityStage;
+  source?: string;
+  description?: string;
+  expectedCloseDate?: Date;
+  ownerId?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+}
+
+export interface UpdateOpportunityRequest {
+  name?: string;
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  value?: number;
+  currency?: string;
+  probability?: number;
+  stage?: OpportunityStage;
+  source?: string;
+  description?: string;
+  expectedCloseDate?: Date;
+  actualCloseDate?: Date;
+  ownerId?: string;
+  customFields?: Record<string, any>;
+  tags?: string[];
+}
+
+export interface OpportunitySearchRequest {
+  query?: string;
+  stage?: OpportunityStage[];
+  ownerId?: string[];
+  contactId?: string;
+  companyId?: string;
+  dealId?: string;
+  valueMin?: number;
+  valueMax?: number;
+  probabilityMin?: number;
+  probabilityMax?: number;
+  tags?: string[];
+  expectedCloseBefore?: Date;
+  expectedCloseAfter?: Date;
+  createdAfter?: Date;
+  createdBefore?: Date;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface OpportunitySearchResponse {
+  opportunities: Opportunity[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 // ============================================================================
@@ -660,6 +1505,12 @@ export class ConflictError extends CRMError {
 export class DuplicateContactError extends ConflictError {
   constructor(email: string) {
     super(`Contact with email ${email} already exists`);
+  }
+}
+
+export class UnauthorizedError extends CRMError {
+  constructor(message: string = 'Unauthorized') {
+    super(message, 401);
   }
 }
 

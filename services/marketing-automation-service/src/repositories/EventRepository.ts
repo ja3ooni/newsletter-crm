@@ -1,9 +1,9 @@
 import {
-    AutomationEvent,
-    EventTrigger,
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams
+  AutomationEvent,
+  EventTrigger,
+  FilterParams,
+  PaginatedResponse,
+  PaginationParams,
 } from '@/types';
 import { database } from '@/utils/database';
 import { logger } from '@/utils/logger';
@@ -38,16 +38,28 @@ export class EventRepository {
       JSON.stringify(data),
       source,
       false,
-      null
+      null,
     ];
 
     try {
       const result = await database.query(query, values);
       const event = this.mapRowToEvent(result.rows[0]);
-      logger.info('Automation event created', { eventId: id, type, contactId, source });
+
+      logger.info('Automation event created', {
+        eventId: id,
+        type,
+        contactId,
+        source,
+      });
+
       return event;
     } catch (error) {
-      logger.error('Error creating automation event', { error, type, contactId, data });
+      logger.error('Error creating automation event', {
+        error,
+        type,
+        contactId,
+        data,
+      });
       throw error;
     }
   }
@@ -57,6 +69,7 @@ export class EventRepository {
 
     try {
       const result = await database.query(query, [id]);
+
       return result.rows[0] ? this.mapRowToEvent(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding event by ID', { error, id });
@@ -74,6 +87,7 @@ export class EventRepository {
 
     try {
       const result = await database.query(query, [limit]);
+
       return result.rows.map(row => this.mapRowToEvent(row));
     } catch (error) {
       logger.error('Error finding unprocessed events', { error, limit });
@@ -104,9 +118,9 @@ export class EventRepository {
 
     // Data query with pagination
     const offset = (pagination.page - 1) * pagination.limit;
-    const orderBy = pagination.sortBy ?
-      `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}` :
-      'ORDER BY timestamp DESC';
+    const orderBy = pagination.sortBy
+      ? `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}`
+      : 'ORDER BY timestamp DESC';
 
     const dataQuery = `
       SELECT * FROM automation_events
@@ -133,7 +147,12 @@ export class EventRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding events by contact', { error, contactId, pagination, filters });
+      logger.error('Error finding events by contact', {
+        error,
+        contactId,
+        pagination,
+        filters,
+      });
       throw error;
     }
   }
@@ -161,9 +180,9 @@ export class EventRepository {
 
     // Data query with pagination
     const offset = (pagination.page - 1) * pagination.limit;
-    const orderBy = pagination.sortBy ?
-      `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}` :
-      'ORDER BY timestamp DESC';
+    const orderBy = pagination.sortBy
+      ? `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}`
+      : 'ORDER BY timestamp DESC';
 
     const dataQuery = `
       SELECT * FROM automation_events
@@ -190,7 +209,12 @@ export class EventRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding events by type', { error, eventType, pagination, filters });
+      logger.error('Error finding events by type', {
+        error,
+        eventType,
+        pagination,
+        filters,
+      });
       throw error;
     }
   }
@@ -213,6 +237,7 @@ export class EventRepository {
 
   async deleteOldEvents(olderThanDays: number = 90): Promise<number> {
     const cutoffDate = new Date();
+
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
     const query = `
@@ -265,16 +290,23 @@ export class EventRepository {
       campaignId || null,
       true,
       now,
-      now
+      now,
     ];
 
     try {
       const result = await database.query(query, values);
       const trigger = this.mapRowToEventTrigger(result.rows[0]);
+
       logger.info('Event trigger created', { triggerId: id, name, eventType });
+
       return trigger;
     } catch (error) {
-      logger.error('Error creating event trigger', { error, name, eventType, conditions });
+      logger.error('Error creating event trigger', {
+        error,
+        name,
+        eventType,
+        conditions,
+      });
       throw error;
     }
   }
@@ -284,6 +316,7 @@ export class EventRepository {
 
     try {
       const result = await database.query(query, [id]);
+
       return result.rows[0] ? this.mapRowToEventTrigger(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding event trigger by ID', { error, id });
@@ -300,9 +333,13 @@ export class EventRepository {
 
     try {
       const result = await database.query(query, [eventType]);
+
       return result.rows.map(row => this.mapRowToEventTrigger(row));
     } catch (error) {
-      logger.error('Error finding event triggers by type', { error, eventType });
+      logger.error('Error finding event triggers by type', {
+        error,
+        eventType,
+      });
       throw error;
     }
   }
@@ -329,9 +366,9 @@ export class EventRepository {
 
     // Data query with pagination
     const offset = (pagination.page - 1) * pagination.limit;
-    const orderBy = pagination.sortBy ?
-      `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}` :
-      'ORDER BY created_at DESC';
+    const orderBy = pagination.sortBy
+      ? `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}`
+      : 'ORDER BY created_at DESC';
 
     const dataQuery = `
       SELECT * FROM event_triggers
@@ -358,7 +395,11 @@ export class EventRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding all event triggers', { error, pagination, filters });
+      logger.error('Error finding all event triggers', {
+        error,
+        pagination,
+        filters,
+      });
       throw error;
     }
   }
@@ -408,11 +449,15 @@ export class EventRepository {
 
     try {
       const result = await database.query(query, values);
+
       if (result.rows[0]) {
         const trigger = this.mapRowToEventTrigger(result.rows[0]);
+
         logger.info('Event trigger updated', { triggerId: id });
+
         return trigger;
       }
+
       return null;
     } catch (error) {
       logger.error('Error updating event trigger', { error, id, updates });
@@ -426,9 +471,11 @@ export class EventRepository {
     try {
       const result = await database.query(query, [id]);
       const deleted = result.rowCount > 0;
+
       if (deleted) {
         logger.info('Event trigger deleted', { triggerId: id });
       }
+
       return deleted;
     } catch (error) {
       logger.error('Error deleting event trigger', { error, id });

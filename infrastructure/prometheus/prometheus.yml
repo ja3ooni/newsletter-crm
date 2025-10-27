@@ -7,12 +7,12 @@ global:
     environment: 'development'
 
 rule_files:
-  - "alert_rules.yml"
+  - 'alert_rules.yml'
 
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: []
+        - targets: ['alertmanager:9093']
 
 scrape_configs:
   # Prometheus itself
@@ -62,6 +62,14 @@ scrape_configs:
   - job_name: 'analytics-service'
     static_configs:
       - targets: ['analytics-service:3005']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  - job_name: 'monitoring-service'
+    static_configs:
+      - targets: ['monitoring-service:3006']
     metrics_path: '/metrics'
     scrape_interval: 30s
     scrape_timeout: 10s

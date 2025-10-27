@@ -1,20 +1,23 @@
 import {
-    CreateWorkflowRequest,
-    ExecutionLogEntry,
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams,
-    UpdateWorkflowRequest,
-    Workflow,
-    WorkflowExecution,
-    WorkflowMetrics
+  CreateWorkflowRequest,
+  ExecutionLogEntry,
+  FilterParams,
+  PaginatedResponse,
+  PaginationParams,
+  UpdateWorkflowRequest,
+  Workflow,
+  WorkflowExecution,
+  WorkflowMetrics,
 } from '@/types';
 import { database } from '@/utils/database';
 import { logger } from '@/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 export class WorkflowRepository {
-  async create(data: CreateWorkflowRequest, createdBy: string): Promise<Workflow> {
+  async create(
+    data: CreateWorkflowRequest,
+    createdBy: string
+  ): Promise<Workflow> {
     const id = uuidv4();
     const now = new Date();
 
@@ -38,17 +41,19 @@ export class WorkflowRepository {
         failedExecutions: 0,
         averageCompletionTime: 0,
         conversionRate: 0,
-        stepMetrics: {}
+        stepMetrics: {},
       }),
       createdBy,
       now,
-      now
+      now,
     ];
 
     try {
       const result = await database.query(query, values);
       const workflow = this.mapRowToWorkflow(result.rows[0]);
+
       logger.info('Workflow created', { workflowId: id, name: data.name });
+
       return workflow;
     } catch (error) {
       logger.error('Error creating workflow', { error, data });
@@ -61,6 +66,7 @@ export class WorkflowRepository {
 
     try {
       const result = await database.query(query, [id]);
+
       return result.rows[0] ? this.mapRowToWorkflow(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding workflow by ID', { error, id });
@@ -102,9 +108,9 @@ export class WorkflowRepository {
 
     // Data query with pagination
     const offset = (pagination.page - 1) * pagination.limit;
-    const orderBy = pagination.sortBy ?
-      `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}` :
-      'ORDER BY created_at DESC';
+    const orderBy = pagination.sortBy
+      ? `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}`
+      : 'ORDER BY created_at DESC';
 
     const dataQuery = `
       SELECT * FROM workflows
@@ -136,7 +142,10 @@ export class WorkflowRepository {
     }
   }
 
-  async update(id: string, data: UpdateWorkflowRequest): Promise<Workflow | null> {
+  async update(
+    id: string,
+    data: UpdateWorkflowRequest
+  ): Promise<Workflow | null> {
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -190,11 +199,15 @@ export class WorkflowRepository {
 
     try {
       const result = await database.query(query, values);
+
       if (result.rows[0]) {
         const workflow = this.mapRowToWorkflow(result.rows[0]);
+
         logger.info('Workflow updated', { workflowId: id });
+
         return workflow;
       }
+
       return null;
     } catch (error) {
       logger.error('Error updating workflow', { error, id, data });
@@ -208,9 +221,11 @@ export class WorkflowRepository {
     try {
       const result = await database.query(query, [id]);
       const deleted = result.rowCount > 0;
+
       if (deleted) {
         logger.info('Workflow deleted', { workflowId: id });
       }
+
       return deleted;
     } catch (error) {
       logger.error('Error deleting workflow', { error, id });
@@ -258,16 +273,26 @@ export class WorkflowRepository {
       'running',
       now,
       JSON.stringify(metadata || {}),
-      JSON.stringify([])
+      JSON.stringify([]),
     ];
 
     try {
       const result = await database.query(query, values);
       const execution = this.mapRowToExecution(result.rows[0]);
-      logger.info('Workflow execution created', { executionId: id, workflowId, contactId });
+
+      logger.info('Workflow execution created', {
+        executionId: id,
+        workflowId,
+        contactId,
+      });
+
       return execution;
     } catch (error) {
-      logger.error('Error creating workflow execution', { error, workflowId, contactId });
+      logger.error('Error creating workflow execution', {
+        error,
+        workflowId,
+        contactId,
+      });
       throw error;
     }
   }
@@ -277,6 +302,7 @@ export class WorkflowRepository {
 
     try {
       const result = await database.query(query, [id]);
+
       return result.rows[0] ? this.mapRowToExecution(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding execution by ID', { error, id });
@@ -286,7 +312,12 @@ export class WorkflowRepository {
 
   async updateExecution(
     id: string,
-    updates: Partial<Pick<WorkflowExecution, 'currentStep' | 'status' | 'completedAt' | 'metadata'>>
+    updates: Partial<
+      Pick<
+        WorkflowExecution,
+        'currentStep' | 'status' | 'completedAt' | 'metadata'
+      >
+    >
   ): Promise<WorkflowExecution | null> {
     const updateFields: string[] = [];
     const values: any[] = [];
@@ -331,6 +362,7 @@ export class WorkflowRepository {
 
     try {
       const result = await database.query(query, values);
+
       return result.rows[0] ? this.mapRowToExecution(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error updating execution', { error, id, updates });
@@ -338,7 +370,10 @@ export class WorkflowRepository {
     }
   }
 
-  async addExecutionLogEntry(executionId: string, logEntry: ExecutionLogEntry): Promise<void> {
+  async addExecutionLogEntry(
+    executionId: string,
+    logEntry: ExecutionLogEntry
+  ): Promise<void> {
     const query = `
       UPDATE workflow_executions
       SET execution_log = execution_log || $1::jsonb
@@ -347,9 +382,16 @@ export class WorkflowRepository {
 
     try {
       await database.query(query, [JSON.stringify(logEntry), executionId]);
-      logger.debug('Execution log entry added', { executionId, stepId: logEntry.stepId });
+      logger.debug('Execution log entry added', {
+        executionId,
+        stepId: logEntry.stepId,
+      });
     } catch (error) {
-      logger.error('Error adding execution log entry', { error, executionId, logEntry });
+      logger.error('Error adding execution log entry', {
+        error,
+        executionId,
+        logEntry,
+      });
       throw error;
     }
   }
@@ -361,7 +403,8 @@ export class WorkflowRepository {
     const offset = (pagination.page - 1) * pagination.limit;
 
     // Count query
-    const countQuery = 'SELECT COUNT(*) FROM workflow_executions WHERE workflow_id = $1';
+    const countQuery =
+      'SELECT COUNT(*) FROM workflow_executions WHERE workflow_id = $1';
     const countResult = await database.query(countQuery, [workflowId]);
     const total = parseInt(countResult.rows[0].count);
 
@@ -374,7 +417,11 @@ export class WorkflowRepository {
     `;
 
     try {
-      const result = await database.query(dataQuery, [workflowId, pagination.limit, offset]);
+      const result = await database.query(dataQuery, [
+        workflowId,
+        pagination.limit,
+        offset,
+      ]);
       const executions = result.rows.map(row => this.mapRowToExecution(row));
 
       return {
@@ -389,7 +436,10 @@ export class WorkflowRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding executions by workflow', { error, workflowId });
+      logger.error('Error finding executions by workflow', {
+        error,
+        workflowId,
+      });
       throw error;
     }
   }

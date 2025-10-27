@@ -85,6 +85,11 @@ export class EncryptionService {
       case 'vault':
         // HashiCorp Vault will be initialized when needed
         break;
+
+      default:
+        throw new Error(
+          `Unsupported encryption provider: ${this.config.provider}`
+        );
     }
   }
 
@@ -106,8 +111,7 @@ export class EncryptionService {
           );
       }
     } catch (error) {
-      logger.error('Encryption failed', {
-        error,
+      logger.error('Encryption failed', error as Error, {
         provider: this.config.provider,
       });
       throw error;
@@ -132,8 +136,7 @@ export class EncryptionService {
           );
       }
     } catch (error) {
-      logger.error('Decryption failed', {
-        error,
+      logger.error('Decryption failed', error as Error, {
         provider: this.config.provider,
       });
       throw error;
@@ -180,7 +183,7 @@ export class EncryptionService {
         try {
           const encryptedData = JSON.parse(result[field]);
 
-          result[field] = await this.decrypt(encryptedData);
+          (result as any)[field] = await this.decrypt(encryptedData);
         } catch (error) {
           logger.warn(`Failed to decrypt field ${field}`, { error });
           // Keep original value if decryption fails
@@ -253,7 +256,7 @@ export class EncryptionService {
    */
   private async encryptLocal(plaintext: string): Promise<EncryptedData> {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipherGCM('aes-256-gcm', this.masterKey!, iv);
+    const cipher = crypto.createCipheriv('aes-256-gcm', this.masterKey!, iv);
 
     let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
 
@@ -278,7 +281,7 @@ export class EncryptionService {
     }
 
     const iv = Buffer.from(encryptedData.iv, 'hex');
-    const decipher = crypto.createDecipherGCM(
+    const decipher = crypto.createDecipheriv(
       'aes-256-gcm',
       this.masterKey!,
       iv
@@ -399,7 +402,9 @@ export function createEncryptionService(
   config?: Partial<EncryptionConfig>
 ): EncryptionService {
   const defaultConfig: EncryptionConfig = {
-    provider: (process.env.ENCRYPTION_PROVIDER as unknown) || 'local',
+    provider:
+      (process.env.ENCRYPTION_PROVIDER as 'aws-kms' | 'local' | 'vault') ||
+      'local',
     keyId: process.env.ENCRYPTION_KEY_ID,
     aws: {
       region: process.env.AWS_REGION || 'us-east-1',

@@ -2,7 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 import Redis from 'ioredis';
 import { StructuredLogger } from '../logging/StructuredLogger';
 
-const logger = new StructuredLogger('RateLimiter');
+const logger = new StructuredLogger({
+  service: 'RateLimiter',
+  environment: process.env.NODE_ENV || 'development',
+  version: '1.0.0',
+});
 
 export interface RateLimitConfig {
   windowMs: number;
@@ -30,7 +34,7 @@ export class RateLimiter {
     );
 
     this.redis.on('error', error => {
-      logger.error('Redis connection error', { error });
+      logger.error('Redis connection error', error as Error);
     });
   }
 
@@ -88,7 +92,7 @@ export class RateLimiter {
         }
         next();
       } catch (error) {
-        logger.error('Rate limiting error', { error, ruleName });
+        logger.error('Rate limiting error', error as Error, { ruleName });
         // Fail open - allow request if rate limiting fails
         next();
       }
@@ -101,7 +105,7 @@ export class RateLimiter {
   createDynamicMiddleware() {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
-        for (const [ruleName, rule] of this.rules.entries()) {
+        for (const [, rule] of this.rules.entries()) {
           if (this.ruleApplies(rule, req)) {
             const allowed = await this.checkRateLimit(req, rule.config);
 
@@ -118,7 +122,7 @@ export class RateLimiter {
         }
         next();
       } catch (error) {
-        logger.error('Dynamic rate limiting error', { error });
+        logger.error('Dynamic rate limiting error', error as Error);
         // Fail open - allow request if rate limiting fails
         next();
       }
@@ -184,6 +188,11 @@ export class RateLimiter {
 
     if (!results) {
       throw new Error('Redis pipeline execution failed');
+    }
+
+    // Check if the zcard result exists and is valid
+    if (!results[1] || results[1][0]) {
+      throw new Error('Redis zcard operation failed');
     }
 
     const currentCount = results[1][1] as number;

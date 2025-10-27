@@ -15,7 +15,7 @@ export class WebhookProcessor {
         method,
         executionId,
         stepId,
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Update job progress
@@ -28,7 +28,7 @@ export class WebhookProcessor {
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'AiLert-Marketing-Automation/1.0',
-          ...headers
+          ...headers,
         },
         timeout: config.webhook.timeout,
         validateStatus: (status: number) => status < 500, // Don't throw on 4xx errors
@@ -56,12 +56,14 @@ export class WebhookProcessor {
         statusCode: response.status,
         responseSize: JSON.stringify(response.data).length,
         executionId,
-        stepId
+        stepId,
       });
 
       // Check if response indicates success
       if (response.status >= 400) {
-        throw new Error(`Webhook returned ${response.status}: ${response.statusText}`);
+        throw new Error(
+          `Webhook returned ${response.status}: ${response.statusText}`
+        );
       }
 
       // Update job progress to completion
@@ -73,9 +75,8 @@ export class WebhookProcessor {
         method,
         statusCode: response.status,
         executionId,
-        stepId
+        stepId,
       });
-
     } catch (error) {
       logger.error('Webhook job failed', {
         jobId: job.id,
@@ -84,7 +85,7 @@ export class WebhookProcessor {
         executionId,
         stepId,
         error: error instanceof Error ? error.message : 'Unknown error',
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Re-throw error to let Bull handle retries
@@ -100,7 +101,7 @@ export class WebhookProcessor {
       executionId: job.data.executionId,
       stepId: job.data.stepId,
       processingTime: Date.now() - job.processedOn!,
-      result
+      result,
     });
   }
 
@@ -113,7 +114,7 @@ export class WebhookProcessor {
       stepId: job.data.stepId,
       error: error.message,
       attempts: job.attemptsMade,
-      failedReason: job.failedReason
+      failedReason: job.failedReason,
     });
 
     // Here you could implement additional failure handling:
@@ -130,7 +131,7 @@ export class WebhookProcessor {
       executionId: job.data.executionId,
       stepId: job.data.stepId,
       processedOn: job.processedOn,
-      stalledInterval: Date.now() - (job.processedOn || 0)
+      stalledInterval: Date.now() - (job.processedOn || 0),
     });
   }
 
@@ -141,7 +142,7 @@ export class WebhookProcessor {
       method: job.data.method,
       executionId: job.data.executionId,
       stepId: job.data.stepId,
-      progress
+      progress,
     });
   }
 }

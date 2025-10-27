@@ -41,6 +41,7 @@ describe('SecretManager', () => {
       await secretManager.updateSecret(secretName, updatedValue);
 
       const retrievedSecret = await secretManager.getSecret(secretName);
+
       expect(retrievedSecret.value).toBe(updatedValue);
     });
 
@@ -58,6 +59,7 @@ describe('SecretManager', () => {
       const plaintext = 'sensitive-data';
 
       const encrypted = await secretManager.encrypt(plaintext);
+
       expect(encrypted.encryptedData).toBeDefined();
       expect(encrypted.algorithm).toBe('AES-256-GCM');
       expect(encrypted.iv).toBeDefined();
@@ -67,6 +69,7 @@ describe('SecretManager', () => {
         undefined,
         encrypted.iv
       );
+
       expect(decrypted.decryptedData).toBe(plaintext);
     });
 

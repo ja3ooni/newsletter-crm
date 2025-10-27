@@ -91,7 +91,11 @@ export class CacheManager {
 
       return null;
     } catch (error) {
-      logger.error('Cache get error', { key: fullKey, error });
+      logger.error(
+        'Cache get error',
+        error instanceof Error ? error : new Error(String(error)),
+        { key: fullKey }
+      );
       this.stats.misses++;
       this.updateHitRate();
 
@@ -118,7 +122,11 @@ export class CacheManager {
       this.stats.sets++;
       logger.debug('Cache set', { key: fullKey, ttl: cacheTTL });
     } catch (error) {
-      logger.error('Cache set error', { key: fullKey, error });
+      logger.error(
+        'Cache set error',
+        error instanceof Error ? error : new Error(String(error)),
+        { key: fullKey }
+      );
       throw error;
     }
   }
@@ -139,7 +147,11 @@ export class CacheManager {
       this.stats.deletes++;
       logger.debug('Cache delete', { key: fullKey });
     } catch (error) {
-      logger.error('Cache delete error', { key: fullKey, error });
+      logger.error(
+        'Cache delete error',
+        error instanceof Error ? error : new Error(String(error)),
+        { key: fullKey }
+      );
       throw error;
     }
   }
@@ -190,7 +202,11 @@ export class CacheManager {
         });
       }
     } catch (error) {
-      logger.error('Cache pattern invalidation error', { pattern, error });
+      logger.error(
+        'Cache pattern invalidation error',
+        error instanceof Error ? error : new Error(String(error)),
+        { pattern }
+      );
       throw error;
     }
   }
@@ -220,7 +236,11 @@ export class CacheManager {
 
       logger.info('Cache invalidated by tags', { tags });
     } catch (error) {
-      logger.error('Cache tag invalidation error', { tags, error });
+      logger.error(
+        'Cache tag invalidation error',
+        error instanceof Error ? error : new Error(String(error)),
+        { tags }
+      );
       throw error;
     }
   }
@@ -262,7 +282,10 @@ export class CacheManager {
 
       logger.info('Cache warmed up', { itemCount: data.length });
     } catch (error) {
-      logger.error('Cache warm up error', error);
+      logger.error(
+        'Cache warm up error',
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
   }
@@ -294,7 +317,58 @@ export class CacheManager {
 
       logger.info('Cache cleared');
     } catch (error) {
-      logger.error('Cache clear error', error);
+      logger.error(
+        'Cache clear error',
+        error instanceof Error ? error : new Error(String(error))
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Optimize cache performance by cleaning up expired entries and managing memory
+   */
+  async optimizeCache(): Promise<{
+    expiredEntriesRemoved: number;
+    memoryFreed: number;
+    lruEvictionsPerformed: boolean;
+  }> {
+    try {
+      const initialMemoryUsage = this.memoryUsage;
+      const initialCacheSize = this.memoryCache.size;
+
+      // Clean up expired entries
+      this.cleanupExpiredEntries();
+
+      const expiredEntriesRemoved = initialCacheSize - this.memoryCache.size;
+      let lruEvictionsPerformed = false;
+
+      // Perform LRU eviction if memory usage is still high
+      if (this.memoryUsage > this.config.maxMemoryUsage * 1024 * 1024 * 0.8) {
+        this.evictLRU();
+        lruEvictionsPerformed = true;
+      }
+
+      const memoryFreed = initialMemoryUsage - this.memoryUsage;
+
+      logger.info('Cache optimization completed', {
+        expiredEntriesRemoved,
+        memoryFreed,
+        lruEvictionsPerformed,
+        finalMemoryUsage: this.memoryUsage,
+        finalCacheSize: this.memoryCache.size,
+      });
+
+      return {
+        expiredEntriesRemoved,
+        memoryFreed,
+        lruEvictionsPerformed,
+      };
+    } catch (error) {
+      logger.error(
+        'Cache optimization error',
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
   }

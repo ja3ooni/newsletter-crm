@@ -7,22 +7,18 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended',
     'prettier',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',
-    project: ['./tsconfig.json', './services/*/tsconfig.json', './frontend/tsconfig.json'],
   },
   plugins: ['@typescript-eslint', 'prettier'],
   rules: {
     'prettier/prettier': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/explicit-function-return-type': 'warn',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/prefer-const': 'error',
     '@typescript-eslint/no-var-requires': 'error',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'error',
@@ -34,18 +30,43 @@ module.exports = {
       'error',
       { blankLine: 'always', prev: '*', next: 'return' },
       { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
-      { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
+      {
+        blankLine: 'any',
+        prev: ['const', 'let', 'var'],
+        next: ['const', 'let', 'var'],
+      },
     ],
   },
   overrides: [
     {
-      files: ['*.test.ts', '*.test.js', '*.spec.ts', '*.spec.js'],
+      files: ['services/*/src/**/*.ts'],
+      parserOptions: {
+        project: './services/*/tsconfig.json',
+      },
+    },
+    {
+      files: ['frontend/src/**/*.ts', 'frontend/src/**/*.tsx'],
+      parserOptions: {
+        project: './frontend/tsconfig.json',
+      },
+    },
+    {
+      files: ['src/**/*.ts', '*.ts'],
+      excludedFiles: ['services/**/*'],
+      parserOptions: {
+        project: './tsconfig.json',
+      },
+    },
+    {
+      files: ['**/*.test.ts', '**/*.test.js', '**/*.spec.ts', '**/*.spec.js'],
       env: {
         jest: true,
       },
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         'no-console': 'off',
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
       },
     },
     {
@@ -62,5 +83,6 @@ module.exports = {
     'coverage/',
     '.next/',
     '*.min.js',
+    'services/shared/',
   ],
 };

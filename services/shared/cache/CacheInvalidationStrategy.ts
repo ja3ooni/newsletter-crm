@@ -48,7 +48,7 @@ export class CacheInvalidationStrategy {
   ) {
     this.cacheManager = cacheManager;
     this.queryCache = queryCache;
-    this.cdnManager = cdnManager;
+    this.cdnManager = cdnManager ?? undefined;
 
     this.setupDefaultRules();
     this.startPeriodicCleanup();
@@ -307,7 +307,10 @@ export class CacheInvalidationStrategy {
       };
 
       this.addEventToHistory(event);
-      logger.error('Cache invalidation failed', { eventId, error });
+      logger.error('Cache invalidation failed', {
+        eventId,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }
@@ -509,7 +512,9 @@ export class CacheInvalidationStrategy {
         try {
           await this.optimizeRules();
         } catch (error) {
-          logger.error('Failed to optimize invalidation rules', error);
+          logger.error('Failed to optimize invalidation rules', {
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       },
       60 * 60 * 1000

@@ -68,15 +68,15 @@ export const errorHandler = (
       name: error.name,
       message: error.message,
       stack: error.stack,
-      statusCode: error.statusCode
+      statusCode: error.statusCode,
     },
     request: {
       method: req.method,
       url: req.url,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
-      userId: req.user?.id
-    }
+      userId: req.user?.id,
+    },
   });
 
   // Handle known operational errors
@@ -84,8 +84,9 @@ export const errorHandler = (
     res.status(error.statusCode).json({
       success: false,
       message: error.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
     });
+
     return;
   }
 
@@ -94,8 +95,9 @@ export const errorHandler = (
     res.status(400).json({
       success: false,
       message: error.message,
-      type: 'validation_error'
+      type: 'validation_error',
     });
+
     return;
   }
 
@@ -103,16 +105,18 @@ export const errorHandler = (
   if (error.name === 'JsonWebTokenError') {
     res.status(401).json({
       success: false,
-      message: 'Invalid token'
+      message: 'Invalid token',
     });
+
     return;
   }
 
   if (error.name === 'TokenExpiredError') {
     res.status(401).json({
       success: false,
-      message: 'Token expired'
+      message: 'Token expired',
     });
+
     return;
   }
 
@@ -120,16 +124,18 @@ export const errorHandler = (
   if (error.message?.includes('duplicate key')) {
     res.status(409).json({
       success: false,
-      message: 'Resource already exists'
+      message: 'Resource already exists',
     });
+
     return;
   }
 
   if (error.message?.includes('foreign key constraint')) {
     res.status(400).json({
       success: false,
-      message: 'Invalid reference to related resource'
+      message: 'Invalid reference to related resource',
     });
+
     return;
   }
 
@@ -139,15 +145,15 @@ export const errorHandler = (
     message: 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && {
       error: error.message,
-      stack: error.stack
-    })
+      stack: error.stack,
+    }),
   });
 };
 
 export const notFoundHandler = (req: Request, res: Response): void => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.method} ${req.path} not found`
+    message: `Route ${req.method} ${req.path} not found`,
   });
 };
 

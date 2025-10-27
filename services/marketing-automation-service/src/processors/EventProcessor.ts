@@ -18,7 +18,7 @@ export class EventProcessor {
         jobId: job.id,
         eventId,
         eventType,
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Update job progress
@@ -33,16 +33,15 @@ export class EventProcessor {
       logger.info('Event processing job completed successfully', {
         jobId: job.id,
         eventId,
-        eventType
+        eventType,
       });
-
     } catch (error) {
       logger.error('Event processing job failed', {
         jobId: job.id,
         eventId,
         eventType,
         error: error instanceof Error ? error.message : 'Unknown error',
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Re-throw error to let Bull handle retries
@@ -50,24 +49,30 @@ export class EventProcessor {
     }
   }
 
-  async onCompleted(job: Job<EventProcessingJobData>, result: any): Promise<void> {
+  async onCompleted(
+    job: Job<EventProcessingJobData>,
+    result: any
+  ): Promise<void> {
     logger.info('Event processing job completed', {
       jobId: job.id,
       eventId: job.data.eventId,
       eventType: job.data.eventType,
       processingTime: Date.now() - job.processedOn!,
-      result
+      result,
     });
   }
 
-  async onFailed(job: Job<EventProcessingJobData>, error: Error): Promise<void> {
+  async onFailed(
+    job: Job<EventProcessingJobData>,
+    error: Error
+  ): Promise<void> {
     logger.error('Event processing job failed permanently', {
       jobId: job.id,
       eventId: job.data.eventId,
       eventType: job.data.eventType,
       error: error.message,
       attempts: job.attemptsMade,
-      failedReason: job.failedReason
+      failedReason: job.failedReason,
     });
 
     // Here you could implement additional failure handling:
@@ -82,16 +87,19 @@ export class EventProcessor {
       eventId: job.data.eventId,
       eventType: job.data.eventType,
       processedOn: job.processedOn,
-      stalledInterval: Date.now() - (job.processedOn || 0)
+      stalledInterval: Date.now() - (job.processedOn || 0),
     });
   }
 
-  async onProgress(job: Job<EventProcessingJobData>, progress: number): Promise<void> {
+  async onProgress(
+    job: Job<EventProcessingJobData>,
+    progress: number
+  ): Promise<void> {
     logger.debug('Event processing job progress', {
       jobId: job.id,
       eventId: job.data.eventId,
       eventType: job.data.eventType,
-      progress
+      progress,
     });
   }
 }

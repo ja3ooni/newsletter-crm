@@ -109,13 +109,16 @@ const config: CRMConfig = {
     ssl: process.env.DB_SSL === 'true',
     maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
-    connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000', 10),
+    connectionTimeoutMillis: parseInt(
+      process.env.DB_CONNECTION_TIMEOUT || '2000',
+      10
+    ),
   },
 
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    ...(process.env.REDIS_PASSWORD && { password: process.env.REDIS_PASSWORD }),
     db: parseInt(process.env.REDIS_DB || '0', 10),
     maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES || '3', 10),
     retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY || '100', 10),
@@ -145,15 +148,21 @@ const config: CRMConfig = {
   enrichment: {
     providers: {
       clearbit: {
-        apiKey: process.env.CLEARBIT_API_KEY || undefined,
+        ...(process.env.CLEARBIT_API_KEY && {
+          apiKey: process.env.CLEARBIT_API_KEY,
+        }),
         enabled: process.env.CLEARBIT_ENABLED === 'true',
       },
       fullcontact: {
-        apiKey: process.env.FULLCONTACT_API_KEY || undefined,
+        ...(process.env.FULLCONTACT_API_KEY && {
+          apiKey: process.env.FULLCONTACT_API_KEY,
+        }),
         enabled: process.env.FULLCONTACT_ENABLED === 'true',
       },
       hunter: {
-        apiKey: process.env.HUNTER_API_KEY || undefined,
+        ...(process.env.HUNTER_API_KEY && {
+          apiKey: process.env.HUNTER_API_KEY,
+        }),
         enabled: process.env.HUNTER_ENABLED === 'true',
       },
     },
@@ -164,7 +173,10 @@ const config: CRMConfig = {
 
   import: {
     maxFileSize: parseInt(process.env.IMPORT_MAX_FILE_SIZE || '10485760', 10), // 10MB
-    allowedFormats: process.env.IMPORT_ALLOWED_FORMATS?.split(',') || ['csv', 'xlsx'],
+    allowedFormats: process.env.IMPORT_ALLOWED_FORMATS?.split(',') || [
+      'csv',
+      'xlsx',
+    ],
     batchSize: parseInt(process.env.IMPORT_BATCH_SIZE || '100', 10),
     tempDir: process.env.IMPORT_TEMP_DIR || '/tmp/crm-imports',
   },
@@ -176,14 +188,23 @@ const config: CRMConfig = {
   },
 
   segmentation: {
-    maxConditions: parseInt(process.env.SEGMENTATION_MAX_CONDITIONS || '20', 10),
-    updateInterval: parseInt(process.env.SEGMENTATION_UPDATE_INTERVAL || '30', 10),
+    maxConditions: parseInt(
+      process.env.SEGMENTATION_MAX_CONDITIONS || '20',
+      10
+    ),
+    updateInterval: parseInt(
+      process.env.SEGMENTATION_UPDATE_INTERVAL || '30',
+      10
+    ),
     batchSize: parseInt(process.env.SEGMENTATION_BATCH_SIZE || '1000', 10),
   },
 
   leadScoring: {
     maxRules: parseInt(process.env.LEAD_SCORING_MAX_RULES || '50', 10),
-    decayInterval: parseInt(process.env.LEAD_SCORING_DECAY_INTERVAL || '24', 10),
+    decayInterval: parseInt(
+      process.env.LEAD_SCORING_DECAY_INTERVAL || '24',
+      10
+    ),
     maxScore: parseInt(process.env.LEAD_SCORING_MAX_SCORE || '1000', 10),
     minScore: parseInt(process.env.LEAD_SCORING_MIN_SCORE || '0', 10),
   },
@@ -191,12 +212,20 @@ const config: CRMConfig = {
   duplicateDetection: {
     enabled: process.env.DUPLICATE_DETECTION_ENABLED !== 'false',
     threshold: parseFloat(process.env.DUPLICATE_DETECTION_THRESHOLD || '0.8'),
-    batchSize: parseInt(process.env.DUPLICATE_DETECTION_BATCH_SIZE || '100', 10),
-    autoMergeThreshold: parseFloat(process.env.DUPLICATE_AUTO_MERGE_THRESHOLD || '0.95'),
+    batchSize: parseInt(
+      process.env.DUPLICATE_DETECTION_BATCH_SIZE || '100',
+      10
+    ),
+    autoMergeThreshold: parseFloat(
+      process.env.DUPLICATE_AUTO_MERGE_THRESHOLD || '0.95'
+    ),
   },
 
   monitoring: {
-    healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
+    healthCheckInterval: parseInt(
+      process.env.HEALTH_CHECK_INTERVAL || '30000',
+      10
+    ),
     metricsInterval: parseInt(process.env.METRICS_INTERVAL || '60000', 10),
   },
 };

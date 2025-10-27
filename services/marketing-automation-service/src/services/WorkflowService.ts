@@ -2,17 +2,17 @@ import { config } from '@/config';
 import { EventRepository } from '@/repositories/EventRepository';
 import { WorkflowRepository } from '@/repositories/WorkflowRepository';
 import {
-    CreateWorkflowRequest,
-    ExecutionLogEntry,
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams,
-    TriggerWorkflowRequest,
-    UpdateWorkflowRequest,
-    Workflow,
-    WorkflowAnalyticsResponse,
-    WorkflowExecution,
-    WorkflowStep
+  CreateWorkflowRequest,
+  ExecutionLogEntry,
+  FilterParams,
+  PaginatedResponse,
+  PaginationParams,
+  TriggerWorkflowRequest,
+  UpdateWorkflowRequest,
+  Workflow,
+  WorkflowAnalyticsResponse,
+  WorkflowExecution,
+  WorkflowStep,
 } from '@/types';
 import { logger } from '@/utils/logger';
 import { queueManager } from '@/utils/queue';
@@ -31,7 +31,10 @@ export class WorkflowService {
   // WORKFLOW MANAGEMENT
   // ============================================================================
 
-  async createWorkflow(data: CreateWorkflowRequest, createdBy: string): Promise<Workflow> {
+  async createWorkflow(
+    data: CreateWorkflowRequest,
+    createdBy: string
+  ): Promise<Workflow> {
     try {
       // Validate workflow structure
       this.validateWorkflowStructure(data);
@@ -41,7 +44,7 @@ export class WorkflowService {
       logger.info('Workflow created successfully', {
         workflowId: workflow.id,
         name: workflow.name,
-        createdBy
+        createdBy,
       });
 
       return workflow;
@@ -72,15 +75,22 @@ export class WorkflowService {
     }
   }
 
-  async updateWorkflow(id: string, data: UpdateWorkflowRequest): Promise<Workflow | null> {
+  async updateWorkflow(
+    id: string,
+    data: UpdateWorkflowRequest
+  ): Promise<Workflow | null> {
     try {
       // Validate workflow structure if steps are being updated
       if (data.steps) {
         this.validateWorkflowStructure({
           name: '',
           description: '',
-          trigger: data.trigger || { type: 'manual', conditions: [], settings: {} },
-          steps: data.steps
+          trigger: data.trigger || {
+            type: 'manual',
+            conditions: [],
+            settings: {},
+          },
+          steps: data.steps,
         });
       }
 
@@ -100,7 +110,11 @@ export class WorkflowService {
   async deleteWorkflow(id: string): Promise<boolean> {
     try {
       // Check if workflow has active executions
-      const activeExecutions = await this.workflowRepository.findExecutionsByWorkflow(id, { page: 1, limit: 1 });
+      const activeExecutions =
+        await this.workflowRepository.findExecutionsByWorkflow(id, {
+          page: 1,
+          limit: 1,
+        });
 
       if (activeExecutions.data.some(exec => exec.status === 'running')) {
         throw new Error('Cannot delete workflow with active executions');
@@ -121,7 +135,9 @@ export class WorkflowService {
 
   async activateWorkflow(id: string): Promise<Workflow | null> {
     try {
-      const workflow = await this.workflowRepository.update(id, { status: 'active' });
+      const workflow = await this.workflowRepository.update(id, {
+        status: 'active',
+      });
 
       if (workflow) {
         logger.info('Workflow activated', { workflowId: id });
@@ -136,16 +152,24 @@ export class WorkflowService {
 
   async pauseWorkflow(id: string): Promise<Workflow | null> {
     try {
-      const workflow = await this.workflowRepository.update(id, { status: 'paused' });
+      const workflow = await this.workflowRepository.update(id, {
+        status: 'paused',
+      });
 
       if (workflow) {
         // Pause all running executions
-        const activeExecutions = await this.workflowRepository.findExecutionsByWorkflow(id, { page: 1, limit: 100 });
+        const activeExecutions =
+          await this.workflowRepository.findExecutionsByWorkflow(id, {
+            page: 1,
+            limit: 100,
+          });
 
         for (const execution of activeExecutions.data) {
           if (execution.status === 'running') {
             await queueManager.pauseWorkflowExecution(execution.id);
-            await this.workflowRepository.updateExecution(execution.id, { status: 'paused' });
+            await this.workflowRepository.updateExecution(execution.id, {
+              status: 'paused',
+            });
           }
         }
 
@@ -163,7 +187,10 @@ export class WorkflowService {
   // WORKFLOW EXECUTION
   // ============================================================================
 
-  async triggerWorkflow(workflowId: string, data: TriggerWorkflowRequest): Promise<WorkflowExecution> {
+  async triggerWorkflow(
+    workflowId: string,
+    data: TriggerWorkflowRequest
+  ): Promise<WorkflowExecution> {
     try {
       const workflow = await this.workflowRepository.findById(workflowId);
 
@@ -188,7 +215,7 @@ export class WorkflowService {
       logger.info('Workflow triggered successfully', {
         workflowId,
         executionId: execution.id,
-        contactId: data.contactId
+        contactId: data.contactId,
       });
 
       return execution;
@@ -212,7 +239,10 @@ export class WorkflowService {
     pagination: PaginationParams
   ): Promise<PaginatedResponse<WorkflowExecution>> {
     try {
-      return await this.workflowRepository.findExecutionsByWorkflow(workflowId, pagination);
+      return await this.workflowRepository.findExecutionsByWorkflow(
+        workflowId,
+        pagination
+      );
     } catch (error) {
       logger.error('Error getting workflow executions', { error, workflowId });
       throw error;
@@ -222,7 +252,10 @@ export class WorkflowService {
   async pauseExecution(executionId: string): Promise<WorkflowExecution | null> {
     try {
       await queueManager.pauseWorkflowExecution(executionId);
-      const execution = await this.workflowRepository.updateExecution(executionId, { status: 'paused' });
+      const execution = await this.workflowRepository.updateExecution(
+        executionId,
+        { status: 'paused' }
+      );
 
       if (execution) {
         logger.info('Workflow execution paused', { executionId });
@@ -235,9 +268,12 @@ export class WorkflowService {
     }
   }
 
-  async resumeExecution(executionId: string): Promise<WorkflowExecution | null> {
+  async resumeExecution(
+    executionId: string
+  ): Promise<WorkflowExecution | null> {
     try {
-      const execution = await this.workflowRepository.findExecutionById(executionId);
+      const execution =
+        await this.workflowRepository.findExecutionById(executionId);
 
       if (!execution) {
         throw new Error(`Execution ${executionId} not found`);
@@ -254,7 +290,10 @@ export class WorkflowService {
         execution.workflowId
       );
 
-      const updatedExecution = await this.workflowRepository.updateExecution(executionId, { status: 'running' });
+      const updatedExecution = await this.workflowRepository.updateExecution(
+        executionId,
+        { status: 'running' }
+      );
 
       if (updatedExecution) {
         logger.info('Workflow execution resumed', { executionId });
@@ -278,18 +317,25 @@ export class WorkflowService {
     const startTime = Date.now();
 
     try {
-      const execution = await this.workflowRepository.findExecutionById(executionId);
+      const execution =
+        await this.workflowRepository.findExecutionById(executionId);
 
       if (!execution) {
         throw new Error(`Execution ${executionId} not found`);
       }
 
       if (execution.status !== 'running') {
-        logger.warn('Skipping step execution for non-running execution', { executionId, status: execution.status });
+        logger.warn('Skipping step execution for non-running execution', {
+          executionId,
+          status: execution.status,
+        });
+
         return;
       }
 
-      const workflow = await this.workflowRepository.findById(execution.workflowId);
+      const workflow = await this.workflowRepository.findById(
+        execution.workflowId
+      );
 
       if (!workflow) {
         throw new Error(`Workflow ${execution.workflowId} not found`);
@@ -306,11 +352,13 @@ export class WorkflowService {
         stepId,
         timestamp: new Date(),
         status: 'started',
-        metadata: { stepType: step.type }
+        metadata: { stepType: step.type },
       };
 
       await this.workflowRepository.addExecutionLogEntry(executionId, logEntry);
-      await this.workflowRepository.updateExecution(executionId, { currentStep: stepId });
+      await this.workflowRepository.updateExecution(executionId, {
+        currentStep: stepId,
+      });
 
       // Execute step based on type
       await this.executeStepByType(step, execution, workflow);
@@ -322,10 +370,13 @@ export class WorkflowService {
         timestamp: new Date(),
         status: 'completed',
         duration: completionTime,
-        metadata: { stepType: step.type }
+        metadata: { stepType: step.type },
       };
 
-      await this.workflowRepository.addExecutionLogEntry(executionId, completionLogEntry);
+      await this.workflowRepository.addExecutionLogEntry(
+        executionId,
+        completionLogEntry
+      );
 
       // Determine next steps
       await this.processNextSteps(step, execution, workflow);
@@ -334,9 +385,8 @@ export class WorkflowService {
         executionId,
         stepId,
         stepType: step.type,
-        duration: completionTime
+        duration: completionTime,
       });
-
     } catch (error) {
       // Log step failure
       const failureTime = Date.now() - startTime;
@@ -345,20 +395,23 @@ export class WorkflowService {
         timestamp: new Date(),
         status: 'failed',
         duration: failureTime,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
 
-      await this.workflowRepository.addExecutionLogEntry(executionId, failureLogEntry);
+      await this.workflowRepository.addExecutionLogEntry(
+        executionId,
+        failureLogEntry
+      );
       await this.workflowRepository.updateExecution(executionId, {
         status: 'failed',
-        completedAt: new Date()
+        completedAt: new Date(),
       });
 
       logger.error('Workflow step execution failed', {
         error,
         executionId,
         stepId,
-        duration: failureTime
+        duration: failureTime,
       });
 
       throw error;
@@ -397,7 +450,10 @@ export class WorkflowService {
     }
   }
 
-  private async executeEmailStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeEmailStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
 
     if (!config.templateId && !config.content) {
@@ -406,45 +462,52 @@ export class WorkflowService {
 
     // Call newsletter service to send email
     try {
-      await axios.post(`${config.services.newsletterService.baseUrl}/api/v1/emails/send`, {
-        to: execution.contactId,
-        subject: config.subject,
-        content: config.content,
-        templateId: config.templateId,
-        metadata: {
-          workflowId: execution.workflowId,
-          executionId: execution.id,
-          stepId: step.id
+      await axios.post(
+        `${config.services.newsletterService.baseUrl}/api/v1/emails/send`,
+        {
+          to: execution.contactId,
+          subject: config.subject,
+          content: config.content,
+          templateId: config.templateId,
+          metadata: {
+            workflowId: execution.workflowId,
+            executionId: execution.id,
+            stepId: step.id,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.newsletterService.apiKey || ''}`,
+            'Content-Type': 'application/json',
+          },
         }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.services.newsletterService.apiKey || ''}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      );
 
       logger.info('Email sent successfully', {
         executionId: execution.id,
         stepId: step.id,
-        contactId: execution.contactId
+        contactId: execution.contactId,
       });
-
     } catch (error) {
       logger.error('Failed to send email', {
         error,
         executionId: execution.id,
-        stepId: step.id
+        stepId: step.id,
       });
       throw error;
     }
   }
 
-  private async executeWaitStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeWaitStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
     const duration = config.duration || 1;
     const unit = config.unit || 'hours';
 
     let delayMs = 0;
+
     switch (unit) {
       case 'minutes':
         delayMs = duration * 60 * 1000;
@@ -464,13 +527,16 @@ export class WorkflowService {
 
     // Schedule next steps with delay
     for (const nextStepId of step.nextSteps) {
-      await queueManager.addDelayedWorkflowStep({
-        executionId: execution.id,
-        workflowId: execution.workflowId,
-        contactId: execution.contactId,
-        currentStep: nextStepId,
-        metadata: execution.metadata
-      }, delayMs);
+      await queueManager.addDelayedWorkflowStep(
+        {
+          executionId: execution.id,
+          workflowId: execution.workflowId,
+          contactId: execution.contactId,
+          currentStep: nextStepId,
+          metadata: execution.metadata,
+        },
+        delayMs
+      );
     }
 
     logger.info('Wait step scheduled', {
@@ -478,11 +544,14 @@ export class WorkflowService {
       stepId: step.id,
       duration,
       unit,
-      delayMs
+      delayMs,
     });
   }
 
-  private async executeConditionStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeConditionStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
     const conditions = config.conditions || [];
 
@@ -490,21 +559,33 @@ export class WorkflowService {
     const contactData = await this.getContactData(execution.contactId);
 
     // Evaluate conditions
-    const conditionMet = this.evaluateConditions(conditions, contactData, execution.metadata);
+    const conditionMet = this.evaluateConditions(
+      conditions,
+      contactData,
+      execution.metadata
+    );
 
     logger.info('Condition step evaluated', {
       executionId: execution.id,
       stepId: step.id,
       conditionMet,
-      conditions: conditions.length
+      conditions: conditions.length,
     });
 
     // Conditions are handled in processNextSteps based on the evaluation result
-    execution.metadata = { ...execution.metadata, [`${step.id}_condition_result`]: conditionMet };
-    await this.workflowRepository.updateExecution(execution.id, { metadata: execution.metadata });
+    execution.metadata = {
+      ...execution.metadata,
+      [`${step.id}_condition_result`]: conditionMet,
+    };
+    await this.workflowRepository.updateExecution(execution.id, {
+      metadata: execution.metadata,
+    });
   }
 
-  private async executeWebhookStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeWebhookStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
 
     if (!config.url) {
@@ -522,21 +603,24 @@ export class WorkflowService {
         executionId: execution.id,
         contactId: execution.contactId,
         stepId: step.id,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       executionId: execution.id,
-      stepId: step.id
+      stepId: step.id,
     });
 
     logger.info('Webhook queued', {
       executionId: execution.id,
       stepId: step.id,
       url: config.url,
-      method: config.method
+      method: config.method,
     });
   }
 
-  private async executeTagStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeTagStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
     const action = config.action || 'add';
     const tags = config.tags || [];
@@ -547,75 +631,87 @@ export class WorkflowService {
 
     try {
       // Call CRM service to update contact tags
-      await axios.post(`${config.services.crmService.baseUrl}/api/v1/contacts/${execution.contactId}/tags`, {
-        action,
-        tags
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.services.crmService.apiKey || ''}`,
-          'Content-Type': 'application/json'
+      await axios.post(
+        `${config.services.crmService.baseUrl}/api/v1/contacts/${execution.contactId}/tags`,
+        {
+          action,
+          tags,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.crmService.apiKey || ''}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       logger.info('Contact tags updated', {
         executionId: execution.id,
         stepId: step.id,
         contactId: execution.contactId,
         action,
-        tags
+        tags,
       });
-
     } catch (error) {
       logger.error('Failed to update contact tags', {
         error,
         executionId: execution.id,
-        stepId: step.id
+        stepId: step.id,
       });
       throw error;
     }
   }
 
-  private async executeScoreStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeScoreStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
     const points = config.points || 0;
     const reason = config.reason || 'Workflow automation';
 
     try {
       // Call CRM service to update lead score
-      await axios.post(`${config.services.crmService.baseUrl}/api/v1/contacts/${execution.contactId}/score`, {
-        points,
-        reason,
-        metadata: {
-          workflowId: execution.workflowId,
-          executionId: execution.id,
-          stepId: step.id
+      await axios.post(
+        `${config.services.crmService.baseUrl}/api/v1/contacts/${execution.contactId}/score`,
+        {
+          points,
+          reason,
+          metadata: {
+            workflowId: execution.workflowId,
+            executionId: execution.id,
+            stepId: step.id,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.crmService.apiKey || ''}`,
+            'Content-Type': 'application/json',
+          },
         }
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.services.crmService.apiKey || ''}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      );
 
       logger.info('Contact score updated', {
         executionId: execution.id,
         stepId: step.id,
         contactId: execution.contactId,
         points,
-        reason
+        reason,
       });
-
     } catch (error) {
       logger.error('Failed to update contact score', {
         error,
         executionId: execution.id,
-        stepId: step.id
+        stepId: step.id,
       });
       throw error;
     }
   }
 
-  private async executeSegmentStep(step: WorkflowStep, execution: WorkflowExecution): Promise<void> {
+  private async executeSegmentStep(
+    step: WorkflowStep,
+    execution: WorkflowExecution
+  ): Promise<void> {
     const config = step.config;
     const segmentId = config.segmentId;
     const action = config.segmentAction || 'add';
@@ -626,29 +722,32 @@ export class WorkflowService {
 
     try {
       // Call CRM service to update contact segment
-      await axios.post(`${config.services.crmService.baseUrl}/api/v1/segments/${segmentId}/contacts`, {
-        contactId: execution.contactId,
-        action
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.services.crmService.apiKey || ''}`,
-          'Content-Type': 'application/json'
+      await axios.post(
+        `${config.services.crmService.baseUrl}/api/v1/segments/${segmentId}/contacts`,
+        {
+          contactId: execution.contactId,
+          action,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.crmService.apiKey || ''}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       logger.info('Contact segment updated', {
         executionId: execution.id,
         stepId: step.id,
         contactId: execution.contactId,
         segmentId,
-        action
+        action,
       });
-
     } catch (error) {
       logger.error('Failed to update contact segment', {
         error,
         executionId: execution.id,
-        stepId: step.id
+        stepId: step.id,
       });
       throw error;
     }
@@ -663,7 +762,8 @@ export class WorkflowService {
 
     // Handle conditional logic for condition steps
     if (currentStep.type === 'condition') {
-      const conditionResult = execution.metadata[`${currentStep.id}_condition_result`];
+      const conditionResult =
+        execution.metadata[`${currentStep.id}_condition_result`];
 
       if (typeof conditionResult === 'boolean') {
         // Assume first next step is for true condition, second for false
@@ -681,12 +781,12 @@ export class WorkflowService {
       // Workflow execution completed
       await this.workflowRepository.updateExecution(execution.id, {
         status: 'completed',
-        completedAt: new Date()
+        completedAt: new Date(),
       });
 
       logger.info('Workflow execution completed', {
         executionId: execution.id,
-        workflowId: execution.workflowId
+        workflowId: execution.workflowId,
       });
 
       return;
@@ -699,7 +799,7 @@ export class WorkflowService {
         workflowId: execution.workflowId,
         contactId: execution.contactId,
         currentStep: nextStepId,
-        metadata: execution.metadata
+        metadata: execution.metadata,
       });
     }
   }
@@ -710,7 +810,9 @@ export class WorkflowService {
   ): Promise<void> {
     // Find the first step (step with no incoming connections)
     const allNextSteps = workflow.steps.flatMap(step => step.nextSteps);
-    const firstSteps = workflow.steps.filter(step => !allNextSteps.includes(step.id));
+    const firstSteps = workflow.steps.filter(
+      step => !allNextSteps.includes(step.id)
+    );
 
     if (firstSteps.length === 0) {
       throw new Error('Workflow has no starting step');
@@ -718,6 +820,7 @@ export class WorkflowService {
 
     // Start with the first step
     const firstStep = firstSteps[0];
+
     if (!firstStep) {
       throw new Error('No valid first step found');
     }
@@ -727,13 +830,13 @@ export class WorkflowService {
       workflowId: execution.workflowId,
       contactId: execution.contactId,
       currentStep: firstStep.id,
-      metadata: execution.metadata
+      metadata: execution.metadata,
     });
 
     logger.info('Workflow execution started', {
       executionId: execution.id,
       workflowId: workflow.id,
-      firstStepId: firstStep.id
+      firstStepId: firstStep.id,
     });
   }
 
@@ -762,7 +865,9 @@ export class WorkflowService {
     for (const step of data.steps) {
       for (const nextStepId of step.nextSteps) {
         if (!stepIds.includes(nextStepId)) {
-          throw new Error(`Step ${step.id} references non-existent step ${nextStepId}`);
+          throw new Error(
+            `Step ${step.id} references non-existent step ${nextStepId}`
+          );
         }
       }
     }
@@ -777,7 +882,9 @@ export class WorkflowService {
     switch (step.type) {
       case 'email':
         if (!step.config.templateId && !step.config.content) {
-          throw new Error(`Email step ${step.id} requires either templateId or content`);
+          throw new Error(
+            `Email step ${step.id} requires either templateId or content`
+          );
         }
         break;
       case 'wait':
@@ -805,11 +912,15 @@ export class WorkflowService {
 
   private async getContactData(contactId: string): Promise<any> {
     try {
-      const response = await axios.get(`${config.services.crmService.baseUrl}/api/v1/contacts/${contactId}`, {
-        headers: {
-          'Authorization': `Bearer ${config.services.crmService.apiKey || ''}`
+      const response = await axios.get(
+        `${config.services.crmService.baseUrl}/api/v1/contacts/${contactId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${config.services.crmService.apiKey || ''}`,
+          },
         }
-      });
+      );
+
       return response.data;
     } catch (error) {
       logger.error('Failed to get contact data', { error, contactId });
@@ -817,7 +928,11 @@ export class WorkflowService {
     }
   }
 
-  private evaluateConditions(conditions: any[], contactData: any, metadata: any): boolean {
+  private evaluateConditions(
+    conditions: any[],
+    contactData: any,
+    metadata: any
+  ): boolean {
     if (conditions.length === 0) {
       return true;
     }
@@ -826,7 +941,11 @@ export class WorkflowService {
     let currentOperator = 'AND';
 
     for (const condition of conditions) {
-      const conditionResult = this.evaluateSingleCondition(condition, contactData, metadata);
+      const conditionResult = this.evaluateSingleCondition(
+        condition,
+        contactData,
+        metadata
+      );
 
       if (currentOperator === 'AND') {
         result = result && conditionResult;
@@ -840,22 +959,37 @@ export class WorkflowService {
     return result;
   }
 
-  private evaluateSingleCondition(condition: any, contactData: any, metadata: any): boolean {
-    const fieldValue = this.getFieldValue(condition.field, contactData, metadata);
+  private evaluateSingleCondition(
+    condition: any,
+    contactData: any,
+    metadata: any
+  ): boolean {
+    const fieldValue = this.getFieldValue(
+      condition.field,
+      contactData,
+      metadata
+    );
 
     switch (condition.operator) {
       case 'equals':
         return fieldValue === condition.value;
       case 'contains':
-        return String(fieldValue).toLowerCase().includes(String(condition.value).toLowerCase());
+        return String(fieldValue)
+          .toLowerCase()
+          .includes(String(condition.value).toLowerCase());
       case 'greater_than':
         return Number(fieldValue) > Number(condition.value);
       case 'less_than':
         return Number(fieldValue) < Number(condition.value);
       case 'in':
-        return Array.isArray(condition.value) && condition.value.includes(fieldValue);
+        return (
+          Array.isArray(condition.value) && condition.value.includes(fieldValue)
+        );
       case 'not_in':
-        return Array.isArray(condition.value) && !condition.value.includes(fieldValue);
+        return (
+          Array.isArray(condition.value) &&
+          !condition.value.includes(fieldValue)
+        );
       default:
         return false;
     }
@@ -864,11 +998,13 @@ export class WorkflowService {
   private getFieldValue(field: string, contactData: any, metadata: any): any {
     if (field.startsWith('contact.')) {
       const contactField = field.substring(8);
+
       return this.getNestedValue(contactData, contactField);
     }
 
     if (field.startsWith('metadata.')) {
       const metadataField = field.substring(9);
+
       return this.getNestedValue(metadata, metadataField);
     }
 
@@ -883,7 +1019,9 @@ export class WorkflowService {
   // ANALYTICS AND REPORTING
   // ============================================================================
 
-  async getWorkflowAnalytics(workflowId: string): Promise<WorkflowAnalyticsResponse> {
+  async getWorkflowAnalytics(
+    workflowId: string
+  ): Promise<WorkflowAnalyticsResponse> {
     try {
       const workflow = await this.workflowRepository.findById(workflowId);
 
@@ -891,17 +1029,29 @@ export class WorkflowService {
         throw new Error(`Workflow ${workflowId} not found`);
       }
 
-      const executions = await this.workflowRepository.findExecutionsByWorkflow(workflowId, { page: 1, limit: 1000 });
+      const executions = await this.workflowRepository.findExecutionsByWorkflow(
+        workflowId,
+        { page: 1, limit: 1000 }
+      );
 
-      const completionRate = executions.data.length > 0 ?
-        (executions.data.filter(e => e.status === 'completed').length / executions.data.length) * 100 : 0;
+      const completionRate =
+        executions.data.length > 0
+          ? (executions.data.filter(e => e.status === 'completed').length /
+              executions.data.length) *
+            100
+          : 0;
 
-      const completedExecutions = executions.data.filter(e => e.status === 'completed' && e.completedAt);
-      const averageTime = completedExecutions.length > 0 ?
-        completedExecutions.reduce((sum, e) => {
-          const duration = e.completedAt!.getTime() - e.startedAt.getTime();
-          return sum + duration;
-        }, 0) / completedExecutions.length : 0;
+      const completedExecutions = executions.data.filter(
+        e => e.status === 'completed' && e.completedAt
+      );
+      const averageTime =
+        completedExecutions.length > 0
+          ? completedExecutions.reduce((sum, e) => {
+              const duration = e.completedAt!.getTime() - e.startedAt.getTime();
+
+              return sum + duration;
+            }, 0) / completedExecutions.length
+          : 0;
 
       // Calculate dropoff points
       const stepExecutions: Record<string, number> = {};
@@ -910,25 +1060,32 @@ export class WorkflowService {
       for (const execution of executions.data) {
         for (const logEntry of execution.executionLog) {
           if (logEntry.status === 'started') {
-            stepExecutions[logEntry.stepId] = (stepExecutions[logEntry.stepId] || 0) + 1;
+            stepExecutions[logEntry.stepId] =
+              (stepExecutions[logEntry.stepId] || 0) + 1;
           }
           if (logEntry.status === 'completed') {
-            stepCompletions[logEntry.stepId] = (stepCompletions[logEntry.stepId] || 0) + 1;
+            stepCompletions[logEntry.stepId] =
+              (stepCompletions[logEntry.stepId] || 0) + 1;
           }
         }
       }
 
-      const dropoffPoints = workflow.steps.map(step => {
-        const executions = stepExecutions[step.id] || 0;
-        const completions = stepCompletions[step.id] || 0;
-        const dropoffRate = executions > 0 ? ((executions - completions) / executions) * 100 : 0;
+      const dropoffPoints = workflow.steps
+        .map(step => {
+          const executions = stepExecutions[step.id] || 0;
+          const completions = stepCompletions[step.id] || 0;
+          const dropoffRate =
+            executions > 0
+              ? ((executions - completions) / executions) * 100
+              : 0;
 
-        return {
-          stepId: step.id,
-          stepName: `${step.type} - ${step.id}`,
-          dropoffRate
-        };
-      }).sort((a, b) => b.dropoffRate - a.dropoffRate);
+          return {
+            stepId: step.id,
+            stepName: `${step.type} - ${step.id}`,
+            dropoffRate,
+          };
+        })
+        .sort((a, b) => b.dropoffRate - a.dropoffRate);
 
       return {
         workflow,
@@ -937,10 +1094,9 @@ export class WorkflowService {
         performanceData: {
           completionRate,
           averageTime,
-          dropoffPoints
-        }
+          dropoffPoints,
+        },
       };
-
     } catch (error) {
       logger.error('Error getting workflow analytics', { error, workflowId });
       throw error;

@@ -3,10 +3,17 @@
  * Handles events and communication with other services
  */
 
-import { EventCoordinator, createEventCoordinator, defaultEventCoordinatorConfig } from '../../../../infrastructure/utils/event-coordinator';
-import { initializeServiceDiscovery, setupGracefulShutdown } from '../../../../infrastructure/utils/service-discovery';
+import {
+  EventCoordinator,
+  createEventCoordinator,
+  defaultEventCoordinatorConfig,
+} from '../../../../infrastructure/utils/event-coordinator';
+import {
+  initializeServiceDiscovery,
+  setupGracefulShutdown,
+} from '../../../../infrastructure/utils/service-discovery';
 import { config } from '../config';
-import { logger } from './logger';
+import logger from './logger';
 
 export class CRMServiceCommunication {
   private eventCoordinator: EventCoordinator;
@@ -55,7 +62,6 @@ export class CRMServiceCommunication {
       setupGracefulShutdown('crm-service', this.serviceInstance.id);
 
       logger.info('CRM service inter-service communication initialized');
-
     } catch (error) {
       logger.error('Failed to initialize inter-service communication:', error);
       throw error;
@@ -65,7 +71,10 @@ export class CRMServiceCommunication {
   /**
    * Publish CRM-related events
    */
-  async publishContactCreated(contactId: string, contactData: any): Promise<void> {
+  async publishContactCreated(
+    contactId: string,
+    contactData: any
+  ): Promise<void> {
     await this.eventCoordinator.publishEvent({
       type: 'crm.contact_created',
       source: 'crm-service',
@@ -82,7 +91,11 @@ export class CRMServiceCommunication {
     });
   }
 
-  async publishContactUpdated(contactId: string, updatedData: any, userId?: string): Promise<void> {
+  async publishContactUpdated(
+    contactId: string,
+    updatedData: any,
+    userId?: string
+  ): Promise<void> {
     await this.eventCoordinator.publishEvent({
       type: 'crm.contact_updated',
       source: 'crm-service',
@@ -95,7 +108,11 @@ export class CRMServiceCommunication {
     });
   }
 
-  async publishContactSegmentChanged(contactId: string, segmentData: any, userId?: string): Promise<void> {
+  async publishContactSegmentChanged(
+    contactId: string,
+    segmentData: any,
+    userId?: string
+  ): Promise<void> {
     await this.eventCoordinator.publishEvent({
       type: 'crm.contact_segment_changed',
       source: 'crm-service',
@@ -109,7 +126,11 @@ export class CRMServiceCommunication {
     });
   }
 
-  async publishLeadScoreChanged(contactId: string, scoreData: any, userId?: string): Promise<void> {
+  async publishLeadScoreChanged(
+    contactId: string,
+    scoreData: any,
+    userId?: string
+  ): Promise<void> {
     await this.eventCoordinator.publishEvent({
       type: 'crm.lead_score_changed',
       source: 'crm-service',
@@ -124,7 +145,11 @@ export class CRMServiceCommunication {
     });
   }
 
-  async publishLifecycleStageChanged(contactId: string, lifecycleData: any, userId?: string): Promise<void> {
+  async publishLifecycleStageChanged(
+    contactId: string,
+    lifecycleData: any,
+    userId?: string
+  ): Promise<void> {
     await this.eventCoordinator.publishEvent({
       type: 'crm.lifecycle_stage_changed',
       source: 'crm-service',
@@ -141,54 +166,78 @@ export class CRMServiceCommunication {
   /**
    * Call other services
    */
-  async triggerMarketingAutomation(contactId: string, triggerType: string, triggerData: any): Promise<void> {
-    await this.eventCoordinator.callService('marketing-automation-service', '/api/v1/triggers', {
-      method: 'POST',
-      data: {
-        contactId,
-        triggerType,
-        triggerData,
-        source: 'crm-service',
-      },
-    });
+  async triggerMarketingAutomation(
+    contactId: string,
+    triggerType: string,
+    triggerData: any
+  ): Promise<void> {
+    await this.eventCoordinator.callService(
+      'marketing-automation-service',
+      '/api/v1/triggers',
+      {
+        method: 'POST',
+        data: {
+          contactId,
+          triggerType,
+          triggerData,
+          source: 'crm-service',
+        },
+      }
+    );
   }
 
   async sendToNewsletter(contactId: string, contactData: any): Promise<void> {
-    await this.eventCoordinator.callService('newsletter-service', '/api/v1/subscribers', {
-      method: 'POST',
-      data: {
-        email: contactData.email,
-        firstName: contactData.firstName,
-        lastName: contactData.lastName,
-        preferences: contactData.preferences,
-        source: 'crm',
-        contactId,
-      },
-    });
+    await this.eventCoordinator.callService(
+      'newsletter-service',
+      '/api/v1/subscribers',
+      {
+        method: 'POST',
+        data: {
+          email: contactData.email,
+          firstName: contactData.firstName,
+          lastName: contactData.lastName,
+          preferences: contactData.preferences,
+          source: 'crm',
+          contactId,
+        },
+      }
+    );
   }
 
-  async trackEngagementEvent(contactId: string, eventType: string, eventData: any): Promise<void> {
-    await this.eventCoordinator.callService('analytics-service', '/api/v1/engagement', {
-      method: 'POST',
-      data: {
-        contactId,
-        eventType,
-        eventData,
-        timestamp: new Date(),
-      },
-    });
+  async trackEngagementEvent(
+    contactId: string,
+    eventType: string,
+    eventData: any
+  ): Promise<void> {
+    await this.eventCoordinator.callService(
+      'analytics-service',
+      '/api/v1/engagement',
+      {
+        method: 'POST',
+        data: {
+          contactId,
+          eventType,
+          eventData,
+          timestamp: new Date(),
+        },
+      }
+    );
   }
 
   async enrichContactData(contactId: string, email: string): Promise<any> {
     // This could call an external enrichment service or internal analytics
-    return await this.eventCoordinator.callService('analytics-service', '/api/v1/enrichment', {
-      method: 'POST',
-      data: {
-        contactId,
-        email,
-        enrichmentType: 'contact_profile',
-      },
-    });
+    return await this.eventCoordinator.callService(
+      'analytics-service',
+      '/api/v1/enrichment',
+      {
+        method: 'POST',
+        data: {
+          contactId,
+          email,
+          enrichmentType: 'contact_profile',
+        },
+      }
+    );
   }
 
   /**
@@ -210,7 +259,7 @@ export class CRMServiceCommunication {
    */
   private setupEventHandlers(): void {
     // Handle user registration events
-    this.eventCoordinator.subscribeToEvent('user.registered', async (event) => {
+    this.eventCoordinator.subscribeToEvent('user.registered', async event => {
       logger.info('User registered, creating CRM contact', {
         userId: event.userId,
         email: event.data.email,
@@ -234,78 +283,98 @@ export class CRMServiceCommunication {
 
         // Call your CRM service to create contact
         // const contact = await crmService.createContact(contactData);
-
       } catch (error) {
-        logger.error('Failed to create CRM contact from user registration:', error);
+        logger.error(
+          'Failed to create CRM contact from user registration:',
+          error
+        );
       }
     });
 
     // Handle newsletter engagement events
-    this.eventCoordinator.subscribeToEvent('newsletter.email_opened', async (event) => {
-      logger.info('Newsletter email opened', {
-        contactId: event.data.contactId,
-        newsletterId: event.data.newsletterId,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'newsletter.email_opened',
+      async event => {
+        logger.info('Newsletter email opened', {
+          contactId: event.data.contactId,
+          newsletterId: event.data.newsletterId,
+        });
 
-      // Update engagement score and track activity
-      // This would call your CRM service methods
-    });
+        // Update engagement score and track activity
+        // This would call your CRM service methods
+      }
+    );
 
-    this.eventCoordinator.subscribeToEvent('newsletter.email_clicked', async (event) => {
-      logger.info('Newsletter email clicked', {
-        contactId: event.data.contactId,
-        newsletterId: event.data.newsletterId,
-        linkUrl: event.data.linkUrl,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'newsletter.email_clicked',
+      async event => {
+        logger.info('Newsletter email clicked', {
+          contactId: event.data.contactId,
+          newsletterId: event.data.newsletterId,
+          linkUrl: event.data.linkUrl,
+        });
 
-      // Update engagement score and track activity
-      // Higher score for clicks than opens
-    });
+        // Update engagement score and track activity
+        // Higher score for clicks than opens
+      }
+    );
 
     // Handle marketing automation events
-    this.eventCoordinator.subscribeToEvent('automation.workflow_completed', async (event) => {
-      logger.info('Marketing workflow completed', {
-        contactId: event.data.contactId,
-        workflowId: event.data.workflowId,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'automation.workflow_completed',
+      async event => {
+        logger.info('Marketing workflow completed', {
+          contactId: event.data.contactId,
+          workflowId: event.data.workflowId,
+        });
 
-      // Update contact lifecycle stage or add tags based on workflow completion
-    });
+        // Update contact lifecycle stage or add tags based on workflow completion
+      }
+    );
 
     // Handle analytics events for lead scoring
-    this.eventCoordinator.subscribeToEvent('analytics.behavior_scored', async (event) => {
-      logger.info('Behavior scored for contact', {
-        contactId: event.data.contactId,
-        behaviorType: event.data.behaviorType,
-        score: event.data.score,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'analytics.behavior_scored',
+      async event => {
+        logger.info('Behavior scored for contact', {
+          contactId: event.data.contactId,
+          behaviorType: event.data.behaviorType,
+          score: event.data.score,
+        });
 
-      // Update lead score based on behavior analytics
-      // This would call your CRM service methods to update lead score
-    });
+        // Update lead score based on behavior analytics
+        // This would call your CRM service methods to update lead score
+      }
+    );
 
     // Handle content engagement events
-    this.eventCoordinator.subscribeToEvent('content.article_viewed', async (event) => {
-      logger.info('Content article viewed', {
-        contactId: event.data.contactId,
-        articleId: event.data.articleId,
-        category: event.data.category,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'content.article_viewed',
+      async event => {
+        logger.info('Content article viewed', {
+          contactId: event.data.contactId,
+          articleId: event.data.articleId,
+          category: event.data.category,
+        });
 
-      // Track content preferences and update contact interests
-    });
+        // Track content preferences and update contact interests
+      }
+    );
 
     // Handle subscription changes
-    this.eventCoordinator.subscribeToEvent('user.subscription_changed', async (event) => {
-      logger.info('User subscription changed', {
-        userId: event.userId,
-        oldPlan: event.data.oldPlan,
-        newPlan: event.data.newPlan,
-      });
+    this.eventCoordinator.subscribeToEvent(
+      'user.subscription_changed',
+      async event => {
+        logger.info('User subscription changed', {
+          userId: event.userId,
+          oldPlan: event.data.oldPlan,
+          newPlan: event.data.newPlan,
+        });
 
-      // Update contact lifecycle stage and custom fields
-      // Upgrade/downgrade might affect lead scoring and segmentation
-    });
+        // Update contact lifecycle stage and custom fields
+        // Upgrade/downgrade might affect lead scoring and segmentation
+      }
+    );
   }
 }
 

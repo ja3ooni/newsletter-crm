@@ -1,13 +1,10 @@
-import axios from 'axios';
 import { EventRepository } from '../../src/repositories/EventRepository';
 import { WorkflowRepository } from '../../src/repositories/WorkflowRepository';
 import { WorkflowService } from '../../src/services/WorkflowService';
 import {
-    CreateWorkflowRequest,
-    TriggerWorkflowRequest,
-    Workflow,
-    WorkflowExecution,
-    WorkflowStep
+  CreateWorkflowRequest,
+  TriggerWorkflowRequest,
+  WorkflowStep
 } from '../../src/types';
 import { queueManager } from '../../src/utils/queue';
 

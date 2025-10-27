@@ -8,7 +8,7 @@ export const apiLimiter = rateLimit({
   max: config.rateLimit.max,
   message: {
     success: false,
-    message: 'Too many requests from this IP, please try again later.'
+    message: 'Too many requests from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -18,15 +18,15 @@ export const apiLimiter = rateLimit({
       userAgent: req.get('User-Agent'),
       path: req.path,
       method: req.method,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
 
     res.status(429).json({
       success: false,
       message: 'Too many requests from this IP, please try again later.',
-      retryAfter: Math.round(config.rateLimit.windowMs / 1000)
+      retryAfter: Math.round(config.rateLimit.windowMs / 1000),
     });
-  }
+  },
 });
 
 // Stricter rate limiting for workflow triggers
@@ -35,7 +35,7 @@ export const triggerLimiter = rateLimit({
   max: 10, // 10 triggers per minute per IP
   message: {
     success: false,
-    message: 'Too many workflow triggers from this IP, please try again later.'
+    message: 'Too many workflow triggers from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -44,15 +44,16 @@ export const triggerLimiter = rateLimit({
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       path: req.path,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
 
     res.status(429).json({
       success: false,
-      message: 'Too many workflow triggers from this IP, please try again later.',
-      retryAfter: 60
+      message:
+        'Too many workflow triggers from this IP, please try again later.',
+      retryAfter: 60,
     });
-  }
+  },
 });
 
 // Rate limiting for event creation
@@ -61,7 +62,7 @@ export const eventLimiter = rateLimit({
   max: 100, // 100 events per minute per IP
   message: {
     success: false,
-    message: 'Too many events from this IP, please try again later.'
+    message: 'Too many events from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -70,15 +71,15 @@ export const eventLimiter = rateLimit({
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       path: req.path,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
 
     res.status(429).json({
       success: false,
       message: 'Too many events from this IP, please try again later.',
-      retryAfter: 60
+      retryAfter: 60,
     });
-  }
+  },
 });
 
 // Rate limiting for campaign subscriptions
@@ -87,7 +88,8 @@ export const subscriptionLimiter = rateLimit({
   max: 20, // 20 subscriptions per minute per IP
   message: {
     success: false,
-    message: 'Too many subscription requests from this IP, please try again later.'
+    message:
+      'Too many subscription requests from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -96,13 +98,14 @@ export const subscriptionLimiter = rateLimit({
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       path: req.path,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
 
     res.status(429).json({
       success: false,
-      message: 'Too many subscription requests from this IP, please try again later.',
-      retryAfter: 60
+      message:
+        'Too many subscription requests from this IP, please try again later.',
+      retryAfter: 60,
     });
-  }
+  },
 });

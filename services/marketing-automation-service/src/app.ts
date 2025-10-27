@@ -1,7 +1,12 @@
 import { config } from '@/config';
 import { authenticateToken } from '@/middleware/auth';
 import { errorHandler, notFoundHandler } from '@/middleware/errorHandler';
-import { apiLimiter, eventLimiter, subscriptionLimiter, triggerLimiter } from '@/middleware/rateLimit';
+import {
+  apiLimiter,
+  eventLimiter,
+  subscriptionLimiter,
+  triggerLimiter,
+} from '@/middleware/rateLimit';
 import routes from '@/routes';
 import { logger } from '@/utils/logger';
 import compression from 'compression';
@@ -17,46 +22,50 @@ const app = express();
 // ============================================================================
 
 // Security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 
 // CORS configuration
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, etc.)
+      if (!origin) return callback(null, true);
 
-    // In production, you should maintain a whitelist of allowed origins
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://ailert.com',
-      'https://app.ailert.com'
-    ];
+      // In production, you should maintain a whitelist of allowed origins
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://ailert.com',
+        'https://app.ailert.com',
+      ];
 
-    if (config.nodeEnv === 'development' || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+      if (config.nodeEnv === 'development' || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
 
 // ============================================================================
 // GENERAL MIDDLEWARE
@@ -73,13 +82,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (config.nodeEnv === 'development') {
   app.use(morgan('dev'));
 } else {
-  app.use(morgan('combined', {
-    stream: {
-      write: (message: string) => {
-        logger.info(message.trim());
-      }
-    }
-  }));
+  app.use(
+    morgan('combined', {
+      stream: {
+        write: (message: string) => {
+          logger.info(message.trim());
+        },
+      },
+    })
+  );
 }
 
 // Trust proxy for accurate IP addresses
@@ -107,7 +118,7 @@ app.get('/health', (req, res) => {
     message: 'Marketing Automation Service is healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    environment: config.nodeEnv
+    environment: config.nodeEnv,
   });
 });
 
@@ -117,7 +128,7 @@ app.get('/api/health', (req, res) => {
     message: 'Marketing Automation API is healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    environment: config.nodeEnv
+    environment: config.nodeEnv,
   });
 });
 
@@ -163,7 +174,7 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('Uncaught Exception:', error);
   process.exit(1);
 });

@@ -23,14 +23,27 @@ export interface WorkflowTrigger {
 
 export interface TriggerCondition {
   field: string;
-  operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
+  operator:
+    | 'equals'
+    | 'contains'
+    | 'greater_than'
+    | 'less_than'
+    | 'in'
+    | 'not_in';
   value: any;
   logicalOperator?: 'AND' | 'OR';
 }
 
 export interface WorkflowStep {
   id: string;
-  type: 'email' | 'wait' | 'condition' | 'webhook' | 'tag' | 'score' | 'segment';
+  type:
+    | 'email'
+    | 'wait'
+    | 'condition'
+    | 'webhook'
+    | 'tag'
+    | 'score'
+    | 'segment';
   config: StepConfig;
   nextSteps: string[];
   position: { x: number; y: number };
@@ -138,7 +151,13 @@ export interface EmailCondition {
 }
 
 export interface CampaignTrigger {
-  type: 'signup' | 'tag_added' | 'segment_entry' | 'behavior' | 'date' | 'manual';
+  type:
+    | 'signup'
+    | 'tag_added'
+    | 'segment_entry'
+    | 'behavior'
+    | 'date'
+    | 'manual';
   conditions: TriggerCondition[];
   settings: Record<string, any>;
 }

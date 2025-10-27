@@ -1,8 +1,5 @@
 import { EventService } from '@/services/EventService';
-import {
-    FilterParams,
-    PaginationParams
-} from '@/types';
+import { FilterParams, PaginationParams } from '@/types';
 import { logger } from '@/utils/logger';
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
@@ -21,23 +18,30 @@ export class EventController {
   async createEvent(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
       const { type, contactId, data, source } = req.body;
 
-      const event = await this.eventService.createEvent(type, contactId, data, source);
+      const event = await this.eventService.createEvent(
+        type,
+        contactId,
+        data,
+        source
+      );
 
       res.status(201).json({
         success: true,
         message: 'Event created successfully',
-        data: event
+        data: event,
       });
 
       logger.info('Event created via API', {
@@ -46,14 +50,17 @@ export class EventController {
         contactId,
         source,
         createdBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
-      logger.error('Error in createEvent controller', { error, body: req.body });
+      logger.error('Error in createEvent controller', {
+        error,
+        body: req.body,
+      });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -67,21 +74,24 @@ export class EventController {
       if (!event) {
         res.status(404).json({
           success: false,
-          message: 'Event not found'
+          message: 'Event not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
-        data: event
+        data: event,
       });
-
     } catch (error) {
-      logger.error('Error in getEvent controller', { error, eventId: req.params.id });
+      logger.error('Error in getEvent controller', {
+        error,
+        eventId: req.params.id,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -94,7 +104,7 @@ export class EventController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20,
         sortBy: req.query.sortBy as string,
-        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
+        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
       };
 
       const filters: FilterParams = {};
@@ -102,27 +112,30 @@ export class EventController {
       if (req.query.startDate && req.query.endDate) {
         filters.dateRange = {
           start: new Date(req.query.startDate as string),
-          end: new Date(req.query.endDate as string)
+          end: new Date(req.query.endDate as string),
         };
       }
 
-      const result = await this.eventService.getEventsByContact(contactId, pagination, filters);
+      const result = await this.eventService.getEventsByContact(
+        contactId,
+        pagination,
+        filters
+      );
 
       res.json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
-
     } catch (error) {
       logger.error('Error in getEventsByContact controller', {
         error,
         contactId: req.params.contactId,
-        query: req.query
+        query: req.query,
       });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -135,7 +148,7 @@ export class EventController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20,
         sortBy: req.query.sortBy as string,
-        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
+        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
       };
 
       const filters: FilterParams = {};
@@ -143,27 +156,30 @@ export class EventController {
       if (req.query.startDate && req.query.endDate) {
         filters.dateRange = {
           start: new Date(req.query.startDate as string),
-          end: new Date(req.query.endDate as string)
+          end: new Date(req.query.endDate as string),
         };
       }
 
-      const result = await this.eventService.getEventsByType(eventType, pagination, filters);
+      const result = await this.eventService.getEventsByType(
+        eventType,
+        pagination,
+        filters
+      );
 
       res.json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
-
     } catch (error) {
       logger.error('Error in getEventsByType controller', {
         error,
         eventType: req.params.eventType,
-        query: req.query
+        query: req.query,
       });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -176,23 +192,23 @@ export class EventController {
 
       res.json({
         success: true,
-        message: 'Event processed successfully'
+        message: 'Event processed successfully',
       });
 
       logger.info('Event processed via API', {
         eventId: id,
         processedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in processEvent controller', {
         error,
-        eventId: req.params.id
+        eventId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -201,29 +217,30 @@ export class EventController {
     try {
       const batchSize = parseInt(req.query.batchSize as string) || 100;
 
-      const processedCount = await this.eventService.processUnprocessedEvents(batchSize);
+      const processedCount =
+        await this.eventService.processUnprocessedEvents(batchSize);
 
       res.json({
         success: true,
         message: 'Unprocessed events processed successfully',
         data: {
           processedCount,
-          batchSize
-        }
+          batchSize,
+        },
       });
 
       logger.info('Unprocessed events processed via API', {
         processedCount,
         batchSize,
         triggeredBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in processUnprocessedEvents controller', { error });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -235,12 +252,14 @@ export class EventController {
   async createEventTrigger(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
@@ -257,7 +276,7 @@ export class EventController {
       res.status(201).json({
         success: true,
         message: 'Event trigger created successfully',
-        data: trigger
+        data: trigger,
       });
 
       logger.info('Event trigger created via API', {
@@ -267,14 +286,17 @@ export class EventController {
         workflowId,
         campaignId,
         createdBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
-      logger.error('Error in createEventTrigger controller', { error, body: req.body });
+      logger.error('Error in createEventTrigger controller', {
+        error,
+        body: req.body,
+      });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -288,21 +310,24 @@ export class EventController {
       if (!trigger) {
         res.status(404).json({
           success: false,
-          message: 'Event trigger not found'
+          message: 'Event trigger not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
-        data: trigger
+        data: trigger,
       });
-
     } catch (error) {
-      logger.error('Error in getEventTrigger controller', { error, triggerId: req.params.id });
+      logger.error('Error in getEventTrigger controller', {
+        error,
+        triggerId: req.params.id,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -313,7 +338,7 @@ export class EventController {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 20,
         sortBy: req.query.sortBy as string,
-        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
+        sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
       };
 
       const filters: FilterParams = {};
@@ -321,23 +346,28 @@ export class EventController {
       if (req.query.startDate && req.query.endDate) {
         filters.dateRange = {
           start: new Date(req.query.startDate as string),
-          end: new Date(req.query.endDate as string)
+          end: new Date(req.query.endDate as string),
         };
       }
 
-      const result = await this.eventService.getEventTriggers(pagination, filters);
+      const result = await this.eventService.getEventTriggers(
+        pagination,
+        filters
+      );
 
       res.json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
-
     } catch (error) {
-      logger.error('Error in getEventTriggers controller', { error, query: req.query });
+      logger.error('Error in getEventTriggers controller', {
+        error,
+        query: req.query,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -345,12 +375,14 @@ export class EventController {
   async updateEventTrigger(req: Request, res: Response): Promise<void> {
     try {
       const errors = validationResult(req);
+
       if (!errors.isEmpty()) {
         res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: errors.array()
+          errors: errors.array(),
         });
+
         return;
       }
 
@@ -360,38 +392,39 @@ export class EventController {
       const trigger = await this.eventService.updateEventTrigger(id, {
         name,
         conditions,
-        isActive
+        isActive,
       });
 
       if (!trigger) {
         res.status(404).json({
           success: false,
-          message: 'Event trigger not found'
+          message: 'Event trigger not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Event trigger updated successfully',
-        data: trigger
+        data: trigger,
       });
 
       logger.info('Event trigger updated via API', {
         triggerId: id,
         updatedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in updateEventTrigger controller', {
         error,
         triggerId: req.params.id,
-        body: req.body
+        body: req.body,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -405,30 +438,31 @@ export class EventController {
       if (!deleted) {
         res.status(404).json({
           success: false,
-          message: 'Event trigger not found'
+          message: 'Event trigger not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
-        message: 'Event trigger deleted successfully'
+        message: 'Event trigger deleted successfully',
       });
 
       logger.info('Event trigger deleted via API', {
         triggerId: id,
         deletedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in deleteEventTrigger controller', {
         error,
-        triggerId: req.params.id
+        triggerId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -442,31 +476,32 @@ export class EventController {
       if (!trigger) {
         res.status(404).json({
           success: false,
-          message: 'Event trigger not found'
+          message: 'Event trigger not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Event trigger activated successfully',
-        data: trigger
+        data: trigger,
       });
 
       logger.info('Event trigger activated via API', {
         triggerId: id,
         activatedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in activateEventTrigger controller', {
         error,
-        triggerId: req.params.id
+        triggerId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -480,31 +515,32 @@ export class EventController {
       if (!trigger) {
         res.status(404).json({
           success: false,
-          message: 'Event trigger not found'
+          message: 'Event trigger not found',
         });
+
         return;
       }
 
       res.json({
         success: true,
         message: 'Event trigger deactivated successfully',
-        data: trigger
+        data: trigger,
       });
 
       logger.info('Event trigger deactivated via API', {
         triggerId: id,
         deactivatedBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in deactivateEventTrigger controller', {
         error,
-        triggerId: req.params.id
+        triggerId: req.params.id,
       });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -520,7 +556,7 @@ export class EventController {
       if (req.query.startDate && req.query.endDate) {
         dateRange = {
           start: new Date(req.query.startDate as string),
-          end: new Date(req.query.endDate as string)
+          end: new Date(req.query.endDate as string),
         };
       }
 
@@ -528,14 +564,16 @@ export class EventController {
 
       res.json({
         success: true,
-        data: stats
+        data: stats,
       });
-
     } catch (error) {
-      logger.error('Error in getEventStats controller', { error, query: req.query });
+      logger.error('Error in getEventStats controller', {
+        error,
+        query: req.query,
+      });
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
       });
     }
   }
@@ -548,29 +586,30 @@ export class EventController {
     try {
       const olderThanDays = parseInt(req.query.olderThanDays as string) || 90;
 
-      const deletedCount = await this.eventService.cleanupOldEvents(olderThanDays);
+      const deletedCount =
+        await this.eventService.cleanupOldEvents(olderThanDays);
 
       res.json({
         success: true,
         message: 'Old events cleaned up successfully',
         data: {
           deletedCount,
-          olderThanDays
-        }
+          olderThanDays,
+        },
       });
 
       logger.info('Old events cleaned up via API', {
         deletedCount,
         olderThanDays,
         triggeredBy: req.user?.id || 'system',
-        ip: req.ip
+        ip: req.ip,
       });
-
     } catch (error) {
       logger.error('Error in cleanupOldEvents controller', { error });
       res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Internal server error'
+        message:
+          error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }

@@ -66,6 +66,7 @@ describe('Security Integration Tests', () => {
 
       // 2. Retrieve and verify the secret
       const retrievedSecret = await secretManager.getSecret(secretName);
+
       expect(retrievedSecret.value).toBe(originalValue);
       expect(retrievedSecret.metadata?.description).toBe(
         'End-to-end test secret'
@@ -73,11 +74,13 @@ describe('Security Integration Tests', () => {
 
       // 3. Encrypt sensitive data using the encryption service
       const encrypted = await encryptionService.encrypt(sensitiveData);
+
       expect(encrypted.ciphertext).toBeDefined();
       expect(encrypted.algorithm).toBe('AES-256-GCM');
 
       // 4. Decrypt the data
       const decrypted = await encryptionService.decrypt(encrypted);
+
       expect(decrypted).toBe(sensitiveData);
 
       // 5. Test field-level encryption
@@ -128,6 +131,7 @@ describe('Security Integration Tests', () => {
         });
 
       const rotationResult = await keyRotationService.rotateSecret(secretName);
+
       expect(rotationResult.success).toBe(true);
       expect(rotationResult.oldVersion).toBe('v1');
       expect(rotationResult.newVersion).toBe('v2');
@@ -139,6 +143,7 @@ describe('Security Integration Tests', () => {
       // Test local encryption
       const localEncrypted = await encryptionService.encrypt(testData);
       const localDecrypted = await encryptionService.decrypt(localEncrypted);
+
       expect(localDecrypted).toBe(testData);
 
       // Test with different encryption service instance
@@ -149,6 +154,7 @@ describe('Security Integration Tests', () => {
       const anotherEncrypted = await anotherEncryptionService.encrypt(testData);
       const anotherDecrypted =
         await anotherEncryptionService.decrypt(anotherEncrypted);
+
       expect(anotherDecrypted).toBe(testData);
 
       // Verify that different instances produce different ciphertexts
@@ -188,6 +194,7 @@ describe('Security Integration Tests', () => {
 
       // Test JWT token generation and verification
       const token = await (secureComm as any).generateJWT();
+
       expect(typeof token).toBe('string');
 
       // Test HMAC signature generation and verification
@@ -195,6 +202,7 @@ describe('Security Integration Tests', () => {
       const signature = await (secureComm as any).generateHMACSignature(
         headers
       );
+
       expect(typeof signature).toBe('string');
 
       const isValidSignature = SecureServiceCommunication.verifyHMACSignature(
@@ -203,6 +211,7 @@ describe('Security Integration Tests', () => {
         authConfig.serviceId,
         authConfig.privateKey
       );
+
       expect(isValidSignature).toBe(true);
     });
   });
@@ -222,6 +231,7 @@ describe('Security Integration Tests', () => {
 
       // Test that all middleware components are available
       const basicMiddlewares = securityMiddleware.applySecurityMiddleware();
+
       expect(Array.isArray(basicMiddlewares)).toBe(true);
       expect(basicMiddlewares.length).toBeGreaterThan(0);
 
@@ -290,6 +300,7 @@ describe('Security Integration Tests', () => {
       );
 
       const result = await faultyRotationService.rotateSecret('faulty-secret');
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -332,6 +343,7 @@ describe('Security Integration Tests', () => {
       // Each middleware should work independently
       const sanitizationMiddleware =
         securityMiddleware.requestSanitizationMiddleware();
+
       sanitizationMiddleware(mockReq as any, mockRes as any, mockNext);
       expect(mockNext).toHaveBeenCalled();
 
@@ -339,6 +351,7 @@ describe('Security Integration Tests', () => {
 
       const securityHeadersMiddleware =
         securityMiddleware.securityHeadersMiddleware();
+
       securityHeadersMiddleware(mockReq as any, mockRes as any, mockNext);
       expect(mockNext).toHaveBeenCalled();
       expect(mockRes.setHeader).toHaveBeenCalled();
@@ -364,6 +377,7 @@ describe('Security Integration Tests', () => {
       // Verify all encryptions are unique
       const ciphertexts = results.map(r => r.ciphertext);
       const uniqueCiphertexts = new Set(ciphertexts);
+
       expect(uniqueCiphertexts.size).toBe(100);
 
       // Test decryption of all results
@@ -392,6 +406,7 @@ describe('Security Integration Tests', () => {
 
       // Retrieve all secrets concurrently
       const retrieveOperations = [];
+
       for (let i = 0; i < 50; i++) {
         retrieveOperations.push(
           secretManager.getSecret(`concurrent-secret-${i}`)

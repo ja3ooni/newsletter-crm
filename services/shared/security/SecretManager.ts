@@ -137,9 +137,8 @@ export class SecretManager {
         provider: this.config.provider,
       });
     } catch (error) {
-      logger.error('Failed to store secret', {
+      logger.error('Failed to store secret', error as Error, {
         name,
-        error,
         provider: this.config.provider,
       });
       throw error;
@@ -174,9 +173,8 @@ export class SecretManager {
 
       return secret;
     } catch (error) {
-      logger.error('Failed to retrieve secret', {
+      logger.error('Failed to retrieve secret', error as Error, {
         name,
-        error,
         provider: this.config.provider,
       });
       throw error;
@@ -209,9 +207,8 @@ export class SecretManager {
         provider: this.config.provider,
       });
     } catch (error) {
-      logger.error('Failed to update secret', {
+      logger.error('Failed to update secret', error as Error, {
         name,
-        error,
         provider: this.config.provider,
       });
       throw error;
@@ -240,9 +237,8 @@ export class SecretManager {
         provider: this.config.provider,
       });
     } catch (error) {
-      logger.error('Failed to delete secret', {
+      logger.error('Failed to delete secret', error as Error, {
         name,
-        error,
         provider: this.config.provider,
       });
       throw error;
@@ -271,9 +267,8 @@ export class SecretManager {
         provider: this.config.provider,
       });
     } catch (error) {
-      logger.error('Failed to rotate secret', {
+      logger.error('Failed to rotate secret', error as Error, {
         name,
-        error,
         provider: this.config.provider,
       });
       throw error;
@@ -308,8 +303,7 @@ export class SecretManager {
 
       return result;
     } catch (error) {
-      logger.error('Failed to encrypt data', {
-        error,
+      logger.error('Failed to encrypt data', error as Error, {
         provider: this.config.provider,
       });
       throw error;
@@ -348,8 +342,7 @@ export class SecretManager {
 
       return result;
     } catch (error) {
-      logger.error('Failed to decrypt data', {
-        error,
+      logger.error('Failed to decrypt data', error as Error, {
         provider: this.config.provider,
       });
       throw error;
@@ -508,11 +501,7 @@ export class SecretManager {
 
   private async encryptLocal(data: string): Promise<EncryptionResult> {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipherGCM(
-      'aes-256-gcm',
-      this.localEncryptionKey!,
-      iv
-    );
+    const cipher = crypto.createCipher('aes-256-gcm', this.localEncryptionKey!);
 
     cipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));
 
@@ -541,10 +530,9 @@ export class SecretManager {
     const authTag = Buffer.from(authTagHex, 'hex');
     const ivBuffer = Buffer.from(iv, 'hex');
 
-    const decipher = crypto.createDecipherGCM(
+    const decipher = crypto.createDecipher(
       'aes-256-gcm',
-      this.localEncryptionKey!,
-      ivBuffer
+      this.localEncryptionKey!
     );
 
     decipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));

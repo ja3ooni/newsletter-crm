@@ -16,7 +16,7 @@ class RedisClient {
       database: config.redis.db,
     });
 
-    this.client.on('error', (err) => {
+    this.client.on('error', err => {
       logger.error('Redis Client Error', err);
       this.isConnected = false;
     });
@@ -163,9 +163,11 @@ class RedisClient {
   async healthCheck(): Promise<boolean> {
     try {
       const result = await this.client.ping();
+
       return result === 'PONG';
     } catch (error) {
       logger.error('Redis health check failed', error);
+
       return false;
     }
   }

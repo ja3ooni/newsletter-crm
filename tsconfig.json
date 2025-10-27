@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "module": "commonjs",
     "moduleResolution": "node",
     "allowJs": true,
@@ -29,24 +27,12 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@shared/*": [
-        "./shared/*"
-      ],
-      "@types/*": [
-        "./types/*"
-      ]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"],
+      "@types/*": ["./types/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "types/**/*",
-    "shared/**/*",
-    "*.ts",
-    "*.js"
-  ],
+  "include": ["src/**/*", "types/**/*", "shared/**/*", "services/shared/**/*", "*.ts", "*.js"],
   "exclude": [
     "node_modules",
     "dist",
@@ -55,10 +41,15 @@
     "**/*.spec.ts",
     "services/*/node_modules",
     "services/*/dist",
+    "services/*/src",
     "frontend/node_modules",
-    "frontend/.next"
+    "frontend/.next",
+    "frontend/src"
   ],
   "references": [
+    {
+      "path": "./services/shared"
+    },
     {
       "path": "./services/user-service"
     },
@@ -73,6 +64,9 @@
     },
     {
       "path": "./services/analytics-service"
+    },
+    {
+      "path": "./services/marketing-automation-service"
     },
     {
       "path": "./frontend"

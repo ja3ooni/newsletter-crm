@@ -60,11 +60,13 @@ describe('SecurityMiddleware', () => {
     it('should create singleton instance', () => {
       const instance1 = SecurityMiddleware.getInstance();
       const instance2 = SecurityMiddleware.getInstance();
+
       expect(instance1).toBe(instance2);
     });
 
     it('should create instance with factory function', () => {
       const instance = createSecurityMiddleware();
+
       expect(instance).toBeInstanceOf(SecurityMiddleware);
     });
   });
@@ -160,6 +162,7 @@ describe('SecurityMiddleware', () => {
 
       // Mock InputValidator to return invalid result
       const InputValidator = require('../InputValidator');
+
       jest.spyOn(InputValidator, 'sanitizeString').mockReturnValue({
         isValid: false,
         errors: ['Malicious content detected'],
@@ -186,6 +189,7 @@ describe('SecurityMiddleware', () => {
 
       // Mock InputValidator to throw error
       const InputValidator = require('../InputValidator');
+
       jest.spyOn(InputValidator, 'sanitizeString').mockImplementation(() => {
         throw new Error('Sanitization failed');
       });
@@ -403,6 +407,7 @@ describe('SecurityMiddleware', () => {
       });
 
       const middleware = securityMiddleware.rateLimitMiddleware();
+
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(429);
@@ -419,6 +424,7 @@ describe('SecurityMiddleware', () => {
       const middleware = securityMiddleware.slowDownMiddleware();
 
       const startTime = Date.now();
+
       middleware(mockReq as Request, mockRes as Response, mockNext);
       const endTime = Date.now();
 
@@ -435,8 +441,10 @@ describe('SecurityMiddleware', () => {
       }
 
       const startTime = Date.now();
+
       middleware(mockReq as Request, mockRes as Response, () => {
         const endTime = Date.now();
+
         expect(endTime - startTime).toBeGreaterThan(400); // Should be delayed
         done();
       });

@@ -1,0 +1,224 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AiLert Business Metrics",
+    "tags": [
+      "ailert",
+      "business",
+      "kpi"
+    ],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Newsletter Generation Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(newsletters_generated_total[1h])",
+            "legendFormat": "Newsletters/hour"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Email Delivery Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(emails_sent_total{status=\"sent\"}[1h])",
+            "legendFormat": "Emails/hour"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "User Registrations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(user_registrations_total[1h])",
+            "legendFormat": "Registrations/hour"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Subscription Changes",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(subscription_changes_total[1h])",
+            "legendFormat": "Changes/hour"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "Newsletter Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(newsletters_generated_total{status=\"success\"}[5m]) / rate(newsletters_generated_total[5m])",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Email Delivery Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(emails_sent_total{status=\"sent\"}[5m]) / rate(emails_sent_total[5m])",
+            "legendFormat": "Delivery Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 7,
+        "title": "User Registration by Source",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (source) (rate(user_registrations_total[1h]))",
+            "legendFormat": "{{source}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Subscription Plan Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (plan) (rate(user_registrations_total[1h]))",
+            "legendFormat": "{{plan}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 9,
+        "title": "API Error Rate by Service",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(api_errors_total[5m])",
+            "legendFormat": "{{service}} - {{error_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Errors/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      }
+    ]
+  }
+}

@@ -41,8 +41,12 @@ export const config = {
   // Queue configuration
   queue: {
     redis: {
-      host: process.env.QUEUE_REDIS_HOST || process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.QUEUE_REDIS_PORT || process.env.REDIS_PORT || '6379', 10),
+      host:
+        process.env.QUEUE_REDIS_HOST || process.env.REDIS_HOST || 'localhost',
+      port: parseInt(
+        process.env.QUEUE_REDIS_PORT || process.env.REDIS_PORT || '6379',
+        10
+      ),
       password: process.env.QUEUE_REDIS_PASSWORD || process.env.REDIS_PASSWORD,
       db: parseInt(process.env.QUEUE_REDIS_DB || '3', 10),
     },
@@ -95,7 +99,10 @@ export const config = {
 
   // Automation settings
   automation: {
-    maxConcurrentExecutions: parseInt(process.env.MAX_CONCURRENT_EXECUTIONS || '100', 10),
+    maxConcurrentExecutions: parseInt(
+      process.env.MAX_CONCURRENT_EXECUTIONS || '100',
+      10
+    ),
     executionTimeout: parseInt(process.env.EXECUTION_TIMEOUT || '300000', 10), // 5 minutes
     retryDelay: parseInt(process.env.RETRY_DELAY || '60000', 10), // 1 minute
     maxRetries: parseInt(process.env.MAX_RETRIES || '3', 10),

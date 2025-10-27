@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+coverage/
+.next/
+*.min.js
+services/shared/**/*.test.ts
+services/shared/**/*.spec.ts

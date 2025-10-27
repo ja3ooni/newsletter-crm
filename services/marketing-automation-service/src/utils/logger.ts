@@ -11,7 +11,10 @@ const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
+    const metaStr = Object.keys(meta).length
+      ? JSON.stringify(meta, null, 2)
+      : '';
+
     return `${timestamp} [${level}]: ${message} ${metaStr}`;
   })
 );
@@ -37,9 +40,11 @@ export const logger = winston.createLogger({
 
 // Add console transport for non-production environments
 if (config.nodeEnv !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: consoleFormat,
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: consoleFormat,
+    })
+  );
 }
 
 // Create logs directory if it doesn't exist
@@ -47,6 +52,7 @@ import fs from 'fs';
 import path from 'path';
 
 const logsDir = path.join(process.cwd(), 'logs');
+
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }

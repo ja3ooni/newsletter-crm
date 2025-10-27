@@ -26,12 +26,14 @@ describe('EncryptionService', () => {
       const plaintext = 'Hello, World!';
 
       const encrypted = await encryptionService.encrypt(plaintext);
+
       expect(encrypted.ciphertext).toBeDefined();
       expect(encrypted.algorithm).toBe('AES-256-GCM');
       expect(encrypted.iv).toBeDefined();
       expect(encrypted.authTag).toBeDefined();
 
       const decrypted = await encryptionService.decrypt(encrypted);
+
       expect(decrypted).toBe(plaintext);
     });
 
@@ -48,6 +50,7 @@ describe('EncryptionService', () => {
       };
 
       const encrypted = await encryptionService.encryptFields(data, config);
+
       expect(encrypted.name).toBe('John Doe'); // Not encrypted
       expect(encrypted.age).toBe(30); // Not encrypted
       expect(encrypted.email).not.toBe('john@example.com'); // Encrypted
@@ -57,6 +60,7 @@ describe('EncryptionService', () => {
         encrypted,
         config
       );
+
       expect(decrypted.email).toBe('john@example.com');
       expect(decrypted.password).toBe('secret123');
       expect(decrypted.name).toBe('John Doe');
@@ -76,6 +80,7 @@ describe('EncryptionService', () => {
       };
 
       const encrypted = await encryptionService.encryptFields(data, config);
+
       expect(encrypted.email).toBeNull();
       expect(encrypted.password).toBeUndefined();
 
@@ -83,6 +88,7 @@ describe('EncryptionService', () => {
         encrypted,
         config
       );
+
       expect(decrypted.email).toBeNull();
       expect(decrypted.password).toBeUndefined();
     });
@@ -102,6 +108,7 @@ describe('EncryptionService', () => {
       (kmsEncryptionService as any).kmsClient = { send: mockSend };
 
       const dataKey = await kmsEncryptionService.generateDataKey();
+
       expect(dataKey.plaintext).toBeInstanceOf(Buffer);
       expect(dataKey.ciphertext).toBeInstanceOf(Buffer);
     });
@@ -164,6 +171,7 @@ describe('EncryptionService', () => {
 
       // This should not throw, but keep original value
       const decrypted = await encryptionService.decryptFields(data, config);
+
       expect(decrypted.field1).toBe('invalid-encrypted-data');
     });
   });

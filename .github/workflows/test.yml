@@ -1,0 +1,412 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          [
+            'user-service',
+            'newsletter-service',
+            'content-service',
+            'crm-service',
+            'analytics-service',
+            'billing-service',
+            'deliverability-service',
+            'marketing-automation-service',
+            'monitoring-service',
+          ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd services/${{ matrix.service }}
+          npm ci
+
+      - name: Run unit tests
+        run: |
+          cd services/${{ matrix.service }}
+          npm test -- --coverage --silent --ci
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: services/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}-coverage
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: testuser
+          POSTGRES_DB: ailert_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      elasticsearch:
+        image: elasticsearch:8.11.0
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: false
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        options: >-
+          --health-cmd "curl -f http://localhost:9200/_cluster/health"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+        ports:
+          - 9200:9200
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Setup test environment
+        run: |
+          cp .env.test.example .env.test
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/ailert_test" >> .env.test
+          echo "REDIS_URL=redis://localhost:6379" >> .env.test
+          echo "ELASTICSEARCH_URL=http://localhost:9200" >> .env.test
+
+      - name: Run database migrations
+        run: |
+          npm run db:migrate:test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/ailert_test
+
+      - name: Start services for integration tests
+        run: |
+          docker-compose -f docker-compose.test.yml up -d --build
+          sleep 30 # Wait for services to be ready
+
+      - name: Run integration tests
+        run: |
+          npm run test:integration -- --silent --ci
+        env:
+          NODE_ENV: test
+          API_BASE_URL: http://localhost:8000
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: TestPassword123!
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-results
+          path: test-results/integration-test-results.xml
+
+      - name: Stop services
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: testuser
+          POSTGRES_DB: ailert_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Setup test environment
+        run: |
+          cp .env.test.example .env.test
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/ailert_test" >> .env.test
+          echo "REDIS_URL=redis://localhost:6379" >> .env.test
+
+      - name: Build and start full application
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
+          sleep 60 # Wait for full application to be ready
+
+      - name: Run E2E tests
+        run: |
+          npm run test:e2e -- --silent --ci
+        env:
+          NODE_ENV: test
+          API_BASE_URL: http://localhost:8000
+          FRONTEND_URL: http://localhost:3000
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: TestPassword123!
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: test-results/e2e-test-results.xml
+
+      - name: Upload E2E screenshots
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2e-screenshots
+          path: test-results/screenshots/
+
+      - name: Stop application
+        if: always()
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: Run security linting
+        run: |
+          npx eslint . --ext .ts,.js --config .eslintrc.security.js
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: testuser
+          POSTGRES_DB: ailert_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Start application for performance testing
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
+          sleep 60
+
+      - name: Run performance tests
+        run: |
+          npm run test:performance
+        env:
+          API_BASE_URL: http://localhost:8000
+
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-test-results
+          path: test-results/performance/
+
+      - name: Stop application
+        if: always()
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.test.yml down -v
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, security-tests]
+    if: always()
+
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate test summary
+        run: |
+          echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.unit-tests.result }}" == "success" ]; then
+            echo "✅ Unit Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Unit Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.integration-tests.result }}" == "success" ]; then
+            echo "✅ Integration Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Integration Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "✅ E2E Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ E2E Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.security-tests.result }}" == "success" ]; then
+            echo "✅ Security Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Security Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check overall test status
+        run: |
+          if [ "${{ needs.unit-tests.result }}" != "success" ] ||
+             [ "${{ needs.integration-tests.result }}" != "success" ] ||
+             [ "${{ needs.e2e-tests.result }}" != "success" ] ||
+             [ "${{ needs.security-tests.result }}" != "success" ]; then
+            echo "Some tests failed. Please check the individual job results."
+            exit 1
+          else
+            echo "All tests passed successfully!"
+          fi

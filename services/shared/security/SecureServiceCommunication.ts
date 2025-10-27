@@ -177,15 +177,16 @@ export class SecureServiceCommunication {
     headers: Record<string, string>
   ): Promise<Record<string, string>> {
     switch (this.config.authentication.method) {
-      case 'jwt':
+      case 'jwt': {
         const token = await this.generateJWT();
 
         return {
           ...headers,
           Authorization: `Bearer ${token}`,
         };
+      }
 
-      case 'hmac':
+      case 'hmac': {
         const signature = await this.generateHMACSignature(headers);
 
         return {
@@ -193,6 +194,7 @@ export class SecureServiceCommunication {
           'X-Signature': signature,
           'X-Service-ID': this.authConfig.serviceId,
         };
+      }
 
       case 'mutual-tls':
         // Mutual TLS would be handled at the HTTP client level
@@ -411,7 +413,9 @@ export const defaultSecureCommunicationConfig: SecureCommunicationConfig = {
   },
   authentication: {
     enabled: true,
-    method: (process.env.SERVICE_AUTH_METHOD as unknown) || 'jwt',
+    method:
+      (process.env.SERVICE_AUTH_METHOD as 'jwt' | 'hmac' | 'mutual-tls') ||
+      'jwt',
   },
   timeout: parseInt(process.env.SERVICE_TIMEOUT || '30000'),
   retries: parseInt(process.env.SERVICE_RETRIES || '3'),

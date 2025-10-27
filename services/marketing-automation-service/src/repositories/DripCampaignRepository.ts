@@ -1,19 +1,22 @@
 import {
-    CampaignMetrics,
-    CampaignSubscription,
-    CreateDripCampaignRequest,
-    DripCampaign,
-    FilterParams,
-    PaginatedResponse,
-    PaginationParams,
-    UpdateDripCampaignRequest
+  CampaignMetrics,
+  CampaignSubscription,
+  CreateDripCampaignRequest,
+  DripCampaign,
+  FilterParams,
+  PaginatedResponse,
+  PaginationParams,
+  UpdateDripCampaignRequest,
 } from '@/types';
 import { database } from '@/utils/database';
 import { logger } from '@/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 export class DripCampaignRepository {
-  async create(data: CreateDripCampaignRequest, createdBy: string): Promise<DripCampaign> {
+  async create(
+    data: CreateDripCampaignRequest,
+    createdBy: string
+  ): Promise<DripCampaign> {
     const id = uuidv4();
     const now = new Date();
 
@@ -49,18 +52,20 @@ export class DripCampaignRepository {
         totalOpens: 0,
         totalClicks: 0,
         conversionRate: 0,
-        emailMetrics: {}
+        emailMetrics: {},
       }),
       data.targetSegments,
       createdBy,
       now,
-      now
+      now,
     ];
 
     try {
       const result = await database.query(query, values);
       const campaign = this.mapRowToCampaign(result.rows[0]);
+
       logger.info('Drip campaign created', { campaignId: id, name: data.name });
+
       return campaign;
     } catch (error) {
       logger.error('Error creating drip campaign', { error, data });
@@ -73,6 +78,7 @@ export class DripCampaignRepository {
 
     try {
       const result = await database.query(query, [id, 'drip']);
+
       return result.rows[0] ? this.mapRowToCampaign(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding drip campaign by ID', { error, id });
@@ -114,9 +120,9 @@ export class DripCampaignRepository {
 
     // Data query with pagination
     const offset = (pagination.page - 1) * pagination.limit;
-    const orderBy = pagination.sortBy ?
-      `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}` :
-      'ORDER BY created_at DESC';
+    const orderBy = pagination.sortBy
+      ? `ORDER BY ${pagination.sortBy} ${pagination.sortOrder}`
+      : 'ORDER BY created_at DESC';
 
     const dataQuery = `
       SELECT * FROM email_campaigns
@@ -143,12 +149,19 @@ export class DripCampaignRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding drip campaigns', { error, pagination, filters });
+      logger.error('Error finding drip campaigns', {
+        error,
+        pagination,
+        filters,
+      });
       throw error;
     }
   }
 
-  async update(id: string, data: UpdateDripCampaignRequest): Promise<DripCampaign | null> {
+  async update(
+    id: string,
+    data: UpdateDripCampaignRequest
+  ): Promise<DripCampaign | null> {
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -208,11 +221,15 @@ export class DripCampaignRepository {
 
     try {
       const result = await database.query(query, values);
+
       if (result.rows[0]) {
         const campaign = this.mapRowToCampaign(result.rows[0]);
+
         logger.info('Drip campaign updated', { campaignId: id });
+
         return campaign;
       }
+
       return null;
     } catch (error) {
       logger.error('Error updating drip campaign', { error, id, data });
@@ -226,9 +243,11 @@ export class DripCampaignRepository {
     try {
       const result = await database.query(query, [id, 'drip']);
       const deleted = result.rowCount > 0;
+
       if (deleted) {
         logger.info('Drip campaign deleted', { campaignId: id });
       }
+
       return deleted;
     } catch (error) {
       logger.error('Error deleting drip campaign', { error, id });
@@ -247,7 +266,11 @@ export class DripCampaignRepository {
       await database.query(query, [JSON.stringify(metrics), new Date(), id]);
       logger.debug('Drip campaign metrics updated', { campaignId: id });
     } catch (error) {
-      logger.error('Error updating drip campaign metrics', { error, id, metrics });
+      logger.error('Error updating drip campaign metrics', {
+        error,
+        id,
+        metrics,
+      });
       throw error;
     }
   }
@@ -277,16 +300,26 @@ export class DripCampaignRepository {
       0,
       null, // Will be calculated based on first email delay
       now,
-      JSON.stringify(metadata || {})
+      JSON.stringify(metadata || {}),
     ];
 
     try {
       const result = await database.query(query, values);
       const subscription = this.mapRowToSubscription(result.rows[0]);
-      logger.info('Campaign subscription created', { subscriptionId: id, campaignId, contactId });
+
+      logger.info('Campaign subscription created', {
+        subscriptionId: id,
+        campaignId,
+        contactId,
+      });
+
       return subscription;
     } catch (error) {
-      logger.error('Error creating campaign subscription', { error, campaignId, contactId });
+      logger.error('Error creating campaign subscription', {
+        error,
+        campaignId,
+        contactId,
+      });
       throw error;
     }
   }
@@ -296,6 +329,7 @@ export class DripCampaignRepository {
 
     try {
       const result = await database.query(query, [id]);
+
       return result.rows[0] ? this.mapRowToSubscription(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error finding subscription by ID', { error, id });
@@ -310,7 +344,8 @@ export class DripCampaignRepository {
     const offset = (pagination.page - 1) * pagination.limit;
 
     // Count query
-    const countQuery = 'SELECT COUNT(*) FROM campaign_subscriptions WHERE campaign_id = $1';
+    const countQuery =
+      'SELECT COUNT(*) FROM campaign_subscriptions WHERE campaign_id = $1';
     const countResult = await database.query(countQuery, [campaignId]);
     const total = parseInt(countResult.rows[0].count);
 
@@ -323,8 +358,14 @@ export class DripCampaignRepository {
     `;
 
     try {
-      const result = await database.query(dataQuery, [campaignId, pagination.limit, offset]);
-      const subscriptions = result.rows.map(row => this.mapRowToSubscription(row));
+      const result = await database.query(dataQuery, [
+        campaignId,
+        pagination.limit,
+        offset,
+      ]);
+      const subscriptions = result.rows.map(row =>
+        this.mapRowToSubscription(row)
+      );
 
       return {
         data: subscriptions,
@@ -338,14 +379,26 @@ export class DripCampaignRepository {
         },
       };
     } catch (error) {
-      logger.error('Error finding subscriptions by campaign', { error, campaignId });
+      logger.error('Error finding subscriptions by campaign', {
+        error,
+        campaignId,
+      });
       throw error;
     }
   }
 
   async updateSubscription(
     id: string,
-    updates: Partial<Pick<CampaignSubscription, 'status' | 'currentEmailIndex' | 'nextEmailAt' | 'completedAt' | 'metadata'>>
+    updates: Partial<
+      Pick<
+        CampaignSubscription,
+        | 'status'
+        | 'currentEmailIndex'
+        | 'nextEmailAt'
+        | 'completedAt'
+        | 'metadata'
+      >
+    >
   ): Promise<CampaignSubscription | null> {
     const updateFields: string[] = [];
     const values: any[] = [];
@@ -396,6 +449,7 @@ export class DripCampaignRepository {
 
     try {
       const result = await database.query(query, values);
+
       return result.rows[0] ? this.mapRowToSubscription(result.rows[0]) : null;
     } catch (error) {
       logger.error('Error updating subscription', { error, id, updates });
@@ -414,6 +468,7 @@ export class DripCampaignRepository {
 
     try {
       const result = await database.query(query);
+
       return result.rows.map(row => this.mapRowToSubscription(row));
     } catch (error) {
       logger.error('Error finding active subscriptions', { error });

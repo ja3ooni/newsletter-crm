@@ -49,6 +49,7 @@ describe('CacheManager', () => {
 
     it('should return value from Redis cache', async () => {
       const testData = { message: 'hello' };
+
       mockRedisClient.get.mockResolvedValue(JSON.stringify(testData));
 
       const result = await cacheManager.get('test-key');
@@ -69,6 +70,7 @@ describe('CacheManager', () => {
   describe('set', () => {
     it('should set value in Redis cache', async () => {
       const testData = { message: 'hello' };
+
       mockRedisClient.setEx.mockResolvedValue('OK');
 
       await cacheManager.set('test-key', testData);
@@ -82,6 +84,7 @@ describe('CacheManager', () => {
 
     it('should use custom TTL when provided', async () => {
       const testData = { message: 'hello' };
+
       mockRedisClient.setEx.mockResolvedValue('OK');
 
       await cacheManager.set('test-key', testData, 600);
@@ -123,6 +126,7 @@ describe('CacheManager', () => {
   describe('getOrSet', () => {
     it('should return cached value if exists', async () => {
       const cachedData = { message: 'cached' };
+
       mockRedisClient.get.mockResolvedValue(JSON.stringify(cachedData));
 
       const fetchFunction = jest.fn().mockResolvedValue({ message: 'fresh' });
@@ -134,6 +138,7 @@ describe('CacheManager', () => {
 
     it('should fetch and cache value if not exists', async () => {
       const freshData = { message: 'fresh' };
+
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.setEx.mockResolvedValue('OK');
 
@@ -153,6 +158,7 @@ describe('CacheManager', () => {
   describe('invalidatePattern', () => {
     it('should delete keys matching pattern', async () => {
       const keys = ['test:key1', 'test:key2'];
+
       mockRedisClient.keys.mockResolvedValue(keys);
       mockRedisClient.del.mockResolvedValue(2);
 
@@ -175,6 +181,7 @@ describe('CacheManager', () => {
   describe('setWithTags', () => {
     it('should set value and associate with tags', async () => {
       const testData = { message: 'hello' };
+
       mockRedisClient.setEx.mockResolvedValue('OK');
       mockRedisClient.sAdd.mockResolvedValue(1);
       mockRedisClient.expire.mockResolvedValue(1);
@@ -202,6 +209,7 @@ describe('CacheManager', () => {
   describe('invalidateByTags', () => {
     it('should invalidate keys associated with tags', async () => {
       const taggedKeys = ['test:key1', 'test:key2'];
+
       mockRedisClient.sMembers.mockResolvedValue(taggedKeys);
       mockRedisClient.del.mockResolvedValue(2);
 
@@ -216,6 +224,7 @@ describe('CacheManager', () => {
   describe('clear', () => {
     it('should clear all cache data with prefix', async () => {
       const keys = ['test:key1', 'test:key2'];
+
       mockRedisClient.keys.mockResolvedValue(keys);
       mockRedisClient.del.mockResolvedValue(2);
 
@@ -268,9 +277,11 @@ describe('CacheManager', () => {
         { key: 'key1', value: 'value1' },
         { key: 'key2', value: 'value2', ttl: 600 },
       ];
+
       mockRedisClient.setEx.mockResolvedValue('OK');
 
       const warmUpFunction = jest.fn().mockResolvedValue(warmUpData);
+
       await cacheManager.warmUp(warmUpFunction);
 
       expect(warmUpFunction).toHaveBeenCalled();
@@ -284,6 +295,58 @@ describe('CacheManager', () => {
         600,
         JSON.stringify('value2')
       );
+    });
+  });
+
+  describe('optimizeCache', () => {
+    it('should optimize cache and return optimization results', async () => {
+      // Set up some cache entries first
+      await cacheManager.set('key1', 'value1');
+      await cacheManager.set('key2', 'value2');
+      await cacheManager.set('key3', 'value3');
+
+      const result = await cacheManager.optimizeCache();
+
+      expect(result).toHaveProperty('expiredEntriesRemoved');
+      expect(result).toHaveProperty('memoryFreed');
+      expect(result).toHaveProperty('lruEvictionsPerformed');
+      expect(typeof result.expiredEntriesRemoved).toBe('number');
+      expect(typeof result.memoryFreed).toBe('number');
+      expect(typeof result.lruEvictionsPerformed).toBe('boolean');
+      expect(result.expiredEntriesRemoved).toBeGreaterThanOrEqual(0);
+      expect(result.memoryFreed).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle optimization when cache is empty', async () => {
+      // Clear cache first
+      await cacheManager.clear();
+
+      const result = await cacheManager.optimizeCache();
+
+      expect(result).toEqual({
+        expiredEntriesRemoved: 0,
+        memoryFreed: 0,
+        lruEvictionsPerformed: false,
+      });
+    });
+
+    it('should log optimization results', async () => {
+      const loggerSpy = jest.spyOn(require('../utils/logger').logger, 'info');
+
+      await cacheManager.optimizeCache();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Cache optimization completed',
+        expect.objectContaining({
+          expiredEntriesRemoved: expect.any(Number),
+          memoryFreed: expect.any(Number),
+          lruEvictionsPerformed: expect.any(Boolean),
+          finalMemoryUsage: expect.any(Number),
+          finalCacheSize: expect.any(Number),
+        })
+      );
+
+      loggerSpy.mockRestore();
     });
   });
 });

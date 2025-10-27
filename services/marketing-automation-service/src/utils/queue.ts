@@ -1,8 +1,5 @@
 import { config } from '@/config';
-import {
-    CampaignSubscription,
-    DripCampaign
-} from '@/types';
+import { CampaignSubscription, DripCampaign } from '@/types';
 import Bull, { Job, JobOptions, Queue } from 'bull';
 import { logger } from './logger';
 
@@ -66,66 +63,84 @@ class QueueManager {
 
   private setupEventHandlers(): void {
     // Workflow queue events
-    this.workflowQueue.on('completed', (job: Job<WorkflowExecutionJobData>, result: any) => {
-      logger.info('Workflow execution job completed', {
-        jobId: job.id,
-        executionId: job.data.executionId
-      });
-    });
+    this.workflowQueue.on(
+      'completed',
+      (job: Job<WorkflowExecutionJobData>, result: any) => {
+        logger.info('Workflow execution job completed', {
+          jobId: job.id,
+          executionId: job.data.executionId,
+        });
+      }
+    );
 
-    this.workflowQueue.on('failed', (job: Job<WorkflowExecutionJobData>, err: Error) => {
-      logger.error('Workflow execution job failed', {
-        jobId: job.id,
-        executionId: job.data.executionId,
-        error: err.message
-      });
-    });
+    this.workflowQueue.on(
+      'failed',
+      (job: Job<WorkflowExecutionJobData>, err: Error) => {
+        logger.error('Workflow execution job failed', {
+          jobId: job.id,
+          executionId: job.data.executionId,
+          error: err.message,
+        });
+      }
+    );
 
     // Drip queue events
-    this.dripQueue.on('completed', (job: Job<DripEmailJobData>, result: any) => {
-      logger.info('Drip email job completed', {
-        jobId: job.id,
-        subscriptionId: job.data.subscriptionId
-      });
-    });
+    this.dripQueue.on(
+      'completed',
+      (job: Job<DripEmailJobData>, result: any) => {
+        logger.info('Drip email job completed', {
+          jobId: job.id,
+          subscriptionId: job.data.subscriptionId,
+        });
+      }
+    );
 
     this.dripQueue.on('failed', (job: Job<DripEmailJobData>, err: Error) => {
       logger.error('Drip email job failed', {
         jobId: job.id,
         subscriptionId: job.data.subscriptionId,
-        error: err.message
+        error: err.message,
       });
     });
 
     // Event queue events
-    this.eventQueue.on('completed', (job: Job<EventProcessingJobData>, result: any) => {
-      logger.info('Event processing job completed', {
-        jobId: job.id,
-        eventId: job.data.eventId
-      });
-    });
+    this.eventQueue.on(
+      'completed',
+      (job: Job<EventProcessingJobData>, result: any) => {
+        logger.info('Event processing job completed', {
+          jobId: job.id,
+          eventId: job.data.eventId,
+        });
+      }
+    );
 
-    this.eventQueue.on('failed', (job: Job<EventProcessingJobData>, err: Error) => {
-      logger.error('Event processing job failed', {
-        jobId: job.id,
-        eventId: job.data.eventId,
-        error: err.message
-      });
-    });
+    this.eventQueue.on(
+      'failed',
+      (job: Job<EventProcessingJobData>, err: Error) => {
+        logger.error('Event processing job failed', {
+          jobId: job.id,
+          eventId: job.data.eventId,
+          error: err.message,
+        });
+      }
+    );
 
     // Webhook queue events
-    this.webhookQueue.on('completed', (job: Job<WebhookJobData>, result: any) => {
-      logger.info('Webhook job completed', {
-        jobId: job.id,
-        url: job.data.url
-      });
-    });
+    this.webhookQueue.on(
+      'completed',
+      (job: Job<WebhookJobData>, result: any) => {
+        logger.info('Webhook job completed', {
+          jobId: job.id,
+          url: job.data.url,
+        });
+      }
+    );
 
     this.webhookQueue.on('failed', (job: Job<WebhookJobData>, err: Error) => {
       logger.error('Webhook job failed', {
         jobId: job.id,
         url: job.data.url,
-        error: err.message
+        error: err.message,
       });
     });
   }
@@ -167,23 +182,28 @@ class QueueManager {
     campaign: DripCampaign
   ): Promise<void> {
     const currentEmail = campaign.emails[subscription.currentEmailIndex];
+
     if (!currentEmail) {
       logger.warn('No current email found for subscription', {
         subscriptionId: subscription.id,
-        currentEmailIndex: subscription.currentEmailIndex
+        currentEmailIndex: subscription.currentEmailIndex,
       });
+
       return;
     }
 
     const delayMs = currentEmail.delay * 60 * 60 * 1000; // Convert hours to milliseconds
 
-    await this.addDripEmail({
-      subscriptionId: subscription.id,
-      campaignId: subscription.campaignId,
-      contactId: subscription.contactId,
-      emailIndex: subscription.currentEmailIndex,
-      emailId: currentEmail.id,
-    }, delayMs);
+    await this.addDripEmail(
+      {
+        subscriptionId: subscription.id,
+        campaignId: subscription.campaignId,
+        contactId: subscription.contactId,
+        emailIndex: subscription.currentEmailIndex,
+        emailId: currentEmail.id,
+      },
+      delayMs
+    );
   }
 
   // Event processing methods
@@ -197,15 +217,16 @@ class QueueManager {
 
   private getEventPriority(eventType: string): number {
     const priorities: Record<string, number> = {
-      'signup': 1,
-      'purchase': 1,
-      'email_open': 3,
-      'email_click': 2,
-      'website_visit': 4,
-      'form_submit': 2,
-      'tag_added': 3,
-      'segment_entry': 3,
+      signup: 1,
+      purchase: 1,
+      email_open: 3,
+      email_click: 2,
+      website_visit: 4,
+      form_submit: 2,
+      tag_added: 3,
+      segment_entry: 3,
     };
+
     return priorities[eventType] || 5;
   }
 
@@ -224,8 +245,8 @@ class QueueManager {
   // Queue management methods
   async pauseWorkflowExecution(executionId: string): Promise<void> {
     const jobs = await this.workflowQueue.getJobs(['waiting', 'delayed']);
-    const executionJobs = jobs.filter(job =>
-      job.data.executionId === executionId
+    const executionJobs = jobs.filter(
+      job => job.data.executionId === executionId
     );
 
     for (const job of executionJobs) {
@@ -253,8 +274,8 @@ class QueueManager {
 
   async cancelDripSubscription(subscriptionId: string): Promise<void> {
     const jobs = await this.dripQueue.getJobs(['waiting', 'delayed']);
-    const subscriptionJobs = jobs.filter(job =>
-      job.data.subscriptionId === subscriptionId
+    const subscriptionJobs = jobs.filter(
+      job => job.data.subscriptionId === subscriptionId
     );
 
     for (const job of subscriptionJobs) {
@@ -266,12 +287,13 @@ class QueueManager {
 
   // Health check and monitoring
   async getQueueStats(): Promise<Record<string, any>> {
-    const [workflowStats, dripStats, eventStats, webhookStats] = await Promise.all([
-      this.getQueueCounts(this.workflowQueue),
-      this.getQueueCounts(this.dripQueue),
-      this.getQueueCounts(this.eventQueue),
-      this.getQueueCounts(this.webhookQueue),
-    ]);
+    const [workflowStats, dripStats, eventStats, webhookStats] =
+      await Promise.all([
+        this.getQueueCounts(this.workflowQueue),
+        this.getQueueCounts(this.dripQueue),
+        this.getQueueCounts(this.eventQueue),
+        this.getQueueCounts(this.webhookQueue),
+      ]);
 
     return {
       workflow: workflowStats,
@@ -307,9 +329,11 @@ class QueueManager {
         this.eventQueue.isReady(),
         this.webhookQueue.isReady(),
       ]);
+
       return true;
     } catch (error) {
       logger.error('Queue health check failed', error);
+
       return false;
     }
   }

@@ -147,13 +147,14 @@ export class EngagementBasedPrioritization {
           batchEmails.length
         );
 
+        const sendWindow = this.calculateOptimalSendWindow(batchEmails);
         const batch: PrioritizedBatch = {
           id: `batch_${batchId++}`,
-          priority: batchEmails[0].priority,
+          priority: batchEmails[0]!.priority,
           emails: batchEmails,
           estimatedSendTime,
           avgEngagementScore,
-          sendWindow: this.calculateOptimalSendWindow(batchEmails),
+          ...(sendWindow && { sendWindow }),
         };
 
         batches.push(batch);
@@ -253,9 +254,18 @@ export class EngagementBasedPrioritization {
 
     if (engagement?.preferredSendTime && engagement.timezone) {
       try {
-        const [hours, minutes] = engagement.preferredSendTime
-          .split(':')
-          .map(Number);
+        const timeParts = engagement.preferredSendTime.split(':').map(Number);
+        const hours = timeParts[0];
+        const minutes = timeParts[1];
+
+        if (hours === undefined || minutes === undefined) {
+          logger.warn('Invalid preferred send time format', {
+            subscriberId,
+            preferredSendTime: engagement.preferredSendTime,
+          });
+
+          return defaultTime || new Date(now.getTime() + 5 * 60 * 1000);
+        }
         const optimalTime = new Date(now);
 
         optimalTime.setHours(hours, minutes, 0, 0);
@@ -398,17 +408,23 @@ export class EngagementBasedPrioritization {
       priority = 'low';
     }
 
-    return {
+    const result: PrioritizedEmail = {
       subscriberId: engagement.subscriberId,
       email: engagement.email,
       priority,
       engagementScore: engagement.engagementScore,
       finalScore,
       reasons,
-      optimalSendTime: sendTime
-        ? this.getOptimalSendTime(engagement.subscriberId, sendTime)
-        : undefined,
     };
+
+    if (sendTime) {
+      result.optimalSendTime = this.getOptimalSendTime(
+        engagement.subscriberId,
+        sendTime
+      );
+    }
+
+    return result;
   }
 
   private async getEngagementData(

@@ -137,6 +137,7 @@ describe('SecureServiceCommunication', () => {
 
     it('should handle request failures', async () => {
       const error = new Error('Network error');
+
       mockAxiosInstance.request.mockRejectedValue(error);
 
       const request = {
@@ -153,6 +154,7 @@ describe('SecureServiceCommunication', () => {
   describe('Authentication', () => {
     it('should generate JWT token for authentication', async () => {
       const mockToken = 'mock-jwt-token';
+
       mockedJwt.sign.mockReturnValue(mockToken);
 
       // Access private method for testing
@@ -186,6 +188,7 @@ describe('SecureServiceCommunication', () => {
 
     it('should verify JWT tokens', () => {
       const mockPayload = { serviceId: 'test-service' };
+
       mockedJwt.verify.mockReturnValue(mockPayload);
 
       const result = SecureServiceCommunication.verifyJWT(
@@ -226,6 +229,7 @@ describe('SecureServiceCommunication', () => {
 
       // Mock crypto.timingSafeEqual to return true
       const crypto = require('crypto');
+
       jest.spyOn(crypto, 'timingSafeEqual').mockReturnValue(true);
       jest.spyOn(crypto, 'createHmac').mockReturnValue({
         update: jest.fn().mockReturnThis(),
@@ -261,6 +265,7 @@ describe('SecureServiceCommunication', () => {
   describe('Circuit Breaker', () => {
     it('should open circuit breaker after threshold failures', async () => {
       const error = new Error('Service unavailable');
+
       mockAxiosInstance.request.mockRejectedValue(error);
 
       const request = {
@@ -285,6 +290,7 @@ describe('SecureServiceCommunication', () => {
 
     it('should reset circuit breaker on successful request', async () => {
       const error = new Error('Service unavailable');
+
       mockAxiosInstance.request
         .mockRejectedValueOnce(error)
         .mockResolvedValue({ data: 'success', status: 200, headers: {} });
@@ -303,6 +309,7 @@ describe('SecureServiceCommunication', () => {
 
       // Successful request should reset circuit breaker
       const response = await secureComm.request(request);
+
       expect(response.data).toBe('success');
     });
 
@@ -321,6 +328,7 @@ describe('SecureServiceCommunication', () => {
         mockAuthConfig
       );
       const error = new Error('Service unavailable');
+
       mockAxiosInstance.request.mockRejectedValue(error);
 
       const request = {
@@ -343,6 +351,7 @@ describe('SecureServiceCommunication', () => {
         mockConfig,
         mockAuthConfig
       );
+
       expect(instance).toBeInstanceOf(SecureServiceCommunication);
     });
 
@@ -359,6 +368,7 @@ describe('SecureServiceCommunication', () => {
         hmacConfig,
         mockAuthConfig
       );
+
       expect(hmacSecureComm).toBeInstanceOf(SecureServiceCommunication);
     });
 
@@ -375,6 +385,7 @@ describe('SecureServiceCommunication', () => {
         noEncryptionConfig,
         mockAuthConfig
       );
+
       expect(noEncryptionSecureComm).toBeInstanceOf(SecureServiceCommunication);
     });
   });

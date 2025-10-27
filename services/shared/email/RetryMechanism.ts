@@ -73,8 +73,6 @@ export class RetryMechanism {
 
     try {
       for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
-        const attemptStart = Date.now();
-
         try {
           const result = await operation();
 
@@ -119,10 +117,9 @@ export class RetryMechanism {
 
           // Check if error is retryable
           if (!this.isRetryableError(err, config)) {
-            logger.error('Non-retryable error encountered', {
+            logger.error('Non-retryable error encountered', err, {
               operationId: id,
               attempt,
-              error: err.message,
             });
 
             const totalTime = Date.now() - startTime;
@@ -140,10 +137,9 @@ export class RetryMechanism {
 
           // If this was the last attempt, fail
           if (attempt >= config.maxAttempts) {
-            logger.error('Max retry attempts reached', {
+            logger.error('Max retry attempts reached', err, {
               operationId: id,
               maxAttempts: config.maxAttempts,
-              error: err.message,
             });
 
             const totalTime = Date.now() - startTime;
@@ -299,7 +295,7 @@ export class RetryMechanism {
           id,
           attempts: [...attempts],
           currentAttempt: attempts.length,
-          startTime: attempts[0].timestamp,
+          startTime: attempts[0]?.timestamp || new Date(),
         });
       }
     }
@@ -507,7 +503,7 @@ export function withRetry<T extends any[], R>(
       const result = await retryMechanism.executeWithRetry(operation, id);
 
       if (result.success) {
-        return result.result!;
+        return result.result as R;
       } else {
         throw result.error;
       }
@@ -520,7 +516,7 @@ export function withRetry<T extends any[], R>(
 /**
  * Utility function to create retry-enabled version of any async function
  */
-export function createRetryableFunction<T extends any[], R>(
+export function createRetryableFunction<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   retryMechanism: RetryMechanism,
   operationName?: string

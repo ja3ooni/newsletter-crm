@@ -19,14 +19,18 @@ export class DripEmailProcessor {
         subscriptionId,
         emailIndex,
         emailId,
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Update job progress
       await job.progress(10);
 
       // Process the drip email
-      await this.dripCampaignService.processDripEmail(subscriptionId, emailIndex, emailId);
+      await this.dripCampaignService.processDripEmail(
+        subscriptionId,
+        emailIndex,
+        emailId
+      );
 
       // Update job progress to completion
       await job.progress(100);
@@ -35,9 +39,8 @@ export class DripEmailProcessor {
         jobId: job.id,
         subscriptionId,
         emailIndex,
-        emailId
+        emailId,
       });
-
     } catch (error) {
       logger.error('Drip email job failed', {
         jobId: job.id,
@@ -45,7 +48,7 @@ export class DripEmailProcessor {
         emailIndex,
         emailId,
         error: error instanceof Error ? error.message : 'Unknown error',
-        attempts: job.attemptsMade + 1
+        attempts: job.attemptsMade + 1,
       });
 
       // Re-throw error to let Bull handle retries
@@ -60,7 +63,7 @@ export class DripEmailProcessor {
       emailIndex: job.data.emailIndex,
       emailId: job.data.emailId,
       processingTime: Date.now() - job.processedOn!,
-      result
+      result,
     });
   }
 
@@ -72,7 +75,7 @@ export class DripEmailProcessor {
       emailId: job.data.emailId,
       error: error.message,
       attempts: job.attemptsMade,
-      failedReason: job.failedReason
+      failedReason: job.failedReason,
     });
 
     // Here you could implement additional failure handling:
@@ -88,17 +91,20 @@ export class DripEmailProcessor {
       emailIndex: job.data.emailIndex,
       emailId: job.data.emailId,
       processedOn: job.processedOn,
-      stalledInterval: Date.now() - (job.processedOn || 0)
+      stalledInterval: Date.now() - (job.processedOn || 0),
     });
   }
 
-  async onProgress(job: Job<DripEmailJobData>, progress: number): Promise<void> {
+  async onProgress(
+    job: Job<DripEmailJobData>,
+    progress: number
+  ): Promise<void> {
     logger.debug('Drip email job progress', {
       jobId: job.id,
       subscriptionId: job.data.subscriptionId,
       emailIndex: job.data.emailIndex,
       emailId: job.data.emailId,
-      progress
+      progress,
     });
   }
 }

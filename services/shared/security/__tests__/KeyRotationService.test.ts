@@ -94,6 +94,7 @@ describe('KeyRotationService', () => {
         stop: jest.fn(),
         destroy: jest.fn(),
       };
+
       mockCron.schedule.mockReturnValue(mockJob);
 
       keyRotationService.start();
@@ -107,6 +108,7 @@ describe('KeyRotationService', () => {
   describe('Secret Rotation', () => {
     it('should rotate a secret that needs rotation', async () => {
       const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000); // 31 days ago
+
       mockSecretManager.getSecret.mockResolvedValue({
         name: 'test-secret',
         value: 'old-value',
@@ -140,6 +142,7 @@ describe('KeyRotationService', () => {
 
     it('should not rotate a secret that does not need rotation', async () => {
       const recentDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000); // 10 days ago
+
       mockSecretManager.getSecret.mockResolvedValue({
         name: 'test-secret',
         value: 'current-value',
@@ -192,6 +195,7 @@ describe('KeyRotationService', () => {
 
       // Mock both secrets as needing rotation
       const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+
       mockSecretManager.getSecret
         .mockResolvedValueOnce({
           name: 'secret1',
@@ -275,6 +279,7 @@ describe('KeyRotationService', () => {
 
       // Mock secret as needing rotation
       const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+
       mockSecretManager.getSecret
         .mockResolvedValueOnce({
           name: 'custom-secret',
@@ -302,6 +307,7 @@ describe('KeyRotationService', () => {
   describe('Rotation Strategies', () => {
     it('should handle immediate rotation strategy', async () => {
       const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+
       mockSecretManager.getSecret
         .mockResolvedValueOnce({
           name: 'test-secret',
@@ -348,6 +354,7 @@ describe('KeyRotationService', () => {
       );
 
       const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+
       mockSecretManager.getSecret
         .mockResolvedValueOnce({
           name: 'test-secret',

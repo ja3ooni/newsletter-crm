@@ -1,51 +1,60 @@
 import {
-    CampaignTrigger,
-    CreateDripCampaignRequest,
-    CreateWorkflowRequest,
-    DripEmail,
-    StepConfig,
-    TriggerCondition,
-    TriggerWorkflowRequest,
-    UpdateDripCampaignRequest,
-    UpdateWorkflowRequest,
-    WorkflowStep,
-    WorkflowTrigger
+  CampaignTrigger,
+  CreateDripCampaignRequest,
+  CreateWorkflowRequest,
+  DripEmail,
+  StepConfig,
+  TriggerCondition,
+  TriggerWorkflowRequest,
+  UpdateDripCampaignRequest,
+  UpdateWorkflowRequest,
+  WorkflowStep,
+  WorkflowTrigger,
 } from '@/types';
 import { z } from 'zod';
 
 // Base schemas
 const triggerConditionSchema = z.object({
   field: z.string().min(1),
-  operator: z.enum(['equals', 'contains', 'greater_than', 'less_than', 'in', 'not_in']),
+  operator: z.enum([
+    'equals',
+    'contains',
+    'greater_than',
+    'less_than',
+    'in',
+    'not_in',
+  ]),
   value: z.any(),
   logicalOperator: z.enum(['AND', 'OR']).optional(),
 }) satisfies z.ZodType<TriggerCondition>;
 
-const stepConfigSchema = z.object({
-  // Email step config
-  templateId: z.string().optional(),
-  subject: z.string().optional(),
-  content: z.string().optional(),
-  // Wait step config
-  duration: z.number().positive().optional(),
-  unit: z.enum(['minutes', 'hours', 'days', 'weeks']).optional(),
-  // Condition step config
-  conditions: z.array(triggerConditionSchema).optional(),
-  // Webhook step config
-  url: z.string().url().optional(),
-  method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
-  headers: z.record(z.string()).optional(),
-  payload: z.record(z.any()).optional(),
-  // Tag step config
-  action: z.enum(['add', 'remove']).optional(),
-  tags: z.array(z.string()).optional(),
-  // Score step config
-  points: z.number().optional(),
-  reason: z.string().optional(),
-  // Segment step config
-  segmentId: z.string().optional(),
-  segmentAction: z.enum(['add', 'remove']).optional(),
-}).passthrough() satisfies z.ZodType<StepConfig>;
+const stepConfigSchema = z
+  .object({
+    // Email step config
+    templateId: z.string().optional(),
+    subject: z.string().optional(),
+    content: z.string().optional(),
+    // Wait step config
+    duration: z.number().positive().optional(),
+    unit: z.enum(['minutes', 'hours', 'days', 'weeks']).optional(),
+    // Condition step config
+    conditions: z.array(triggerConditionSchema).optional(),
+    // Webhook step config
+    url: z.string().url().optional(),
+    method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
+    headers: z.record(z.string()).optional(),
+    payload: z.record(z.any()).optional(),
+    // Tag step config
+    action: z.enum(['add', 'remove']).optional(),
+    tags: z.array(z.string()).optional(),
+    // Score step config
+    points: z.number().optional(),
+    reason: z.string().optional(),
+    // Segment step config
+    segmentId: z.string().optional(),
+    segmentAction: z.enum(['add', 'remove']).optional(),
+  })
+  .passthrough() satisfies z.ZodType<StepConfig>;
 
 const workflowTriggerSchema = z.object({
   type: z.enum(['event', 'schedule', 'manual', 'api']),
@@ -55,7 +64,15 @@ const workflowTriggerSchema = z.object({
 
 const workflowStepSchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['email', 'wait', 'condition', 'webhook', 'tag', 'score', 'segment']),
+  type: z.enum([
+    'email',
+    'wait',
+    'condition',
+    'webhook',
+    'tag',
+    'score',
+    'segment',
+  ]),
   config: stepConfigSchema,
   nextSteps: z.array(z.string()),
   position: z.object({
@@ -65,7 +82,14 @@ const workflowStepSchema = z.object({
 }) satisfies z.ZodType<WorkflowStep>;
 
 const campaignTriggerSchema = z.object({
-  type: z.enum(['signup', 'tag_added', 'segment_entry', 'behavior', 'date', 'manual']),
+  type: z.enum([
+    'signup',
+    'tag_added',
+    'segment_entry',
+    'behavior',
+    'date',
+    'manual',
+  ]),
   conditions: z.array(triggerConditionSchema),
   settings: z.record(z.any()),
 }) satisfies z.ZodType<CampaignTrigger>;
@@ -77,12 +101,16 @@ const dripEmailSchema = z.object({
   content: z.string().min(1),
   templateId: z.string().optional(),
   delay: z.number().min(0),
-  conditions: z.array(z.object({
-    type: z.enum(['engagement', 'behavior', 'attribute', 'time']),
-    field: z.string(),
-    operator: z.string(),
-    value: z.any(),
-  })).optional(),
+  conditions: z
+    .array(
+      z.object({
+        type: z.enum(['engagement', 'behavior', 'attribute', 'time']),
+        field: z.string(),
+        operator: z.string(),
+        value: z.any(),
+      })
+    )
+    .optional(),
   abTest: z.any().optional(), // ABTest schema would be defined separately
   order: z.number().min(0),
 }) satisfies z.ZodType<DripEmail>;
@@ -137,10 +165,12 @@ export const paginationSchema = z.object({
 export const filterSchema = z.object({
   status: z.array(z.string()).optional(),
   createdBy: z.string().uuid().optional(),
-  dateRange: z.object({
-    start: z.coerce.date(),
-    end: z.coerce.date(),
-  }).optional(),
+  dateRange: z
+    .object({
+      start: z.coerce.date(),
+      end: z.coerce.date(),
+    })
+    .optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -151,7 +181,10 @@ export const campaignIdSchema = uuidSchema;
 export const executionIdSchema = uuidSchema;
 
 // Step validation by type
-export const validateStepConfig = (stepType: string, config: StepConfig): boolean => {
+export const validateStepConfig = (
+  stepType: string,
+  config: StepConfig
+): boolean => {
   switch (stepType) {
     case 'email':
       return !!(config.subject && config.content);
@@ -186,13 +219,17 @@ export const validateWorkflowSteps = (steps: WorkflowStep[]): string[] => {
 
     // Validate step configuration
     if (!validateStepConfig(step.type, step.config)) {
-      errors.push(`Invalid configuration for step ${step.id} of type ${step.type}`);
+      errors.push(
+        `Invalid configuration for step ${step.id} of type ${step.type}`
+      );
     }
 
     // Validate next steps exist
     for (const nextStepId of step.nextSteps) {
       if (!steps.find(s => s.id === nextStepId)) {
-        errors.push(`Step ${step.id} references non-existent next step: ${nextStepId}`);
+        errors.push(
+          `Step ${step.id} references non-existent next step: ${nextStepId}`
+        );
       }
     }
   }
@@ -206,9 +243,12 @@ export const validateEmailSequence = (emails: DripEmail[]): string[] => {
 
   // Check for proper ordering
   const sortedEmails = [...emails].sort((a, b) => a.order - b.order);
+
   for (let i = 0; i < sortedEmails.length; i++) {
     if (sortedEmails[i]?.order !== i) {
-      errors.push(`Email order should be sequential starting from 0, found order ${sortedEmails[i]?.order} at position ${i}`);
+      errors.push(
+        `Email order should be sequential starting from 0, found order ${sortedEmails[i]?.order} at position ${i}`
+      );
     }
   }
 
@@ -216,8 +256,11 @@ export const validateEmailSequence = (emails: DripEmail[]): string[] => {
   for (let i = 1; i < sortedEmails.length; i++) {
     const currentEmail = sortedEmails[i];
     const previousEmail = sortedEmails[i - 1];
+
     if (currentEmail && previousEmail && currentEmail.delay < 1) {
-      errors.push(`Email ${currentEmail.id} should have a delay of at least 1 hour`);
+      errors.push(
+        `Email ${currentEmail.id} should have a delay of at least 1 hour`
+      );
     }
   }
 

@@ -2,9 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
+    "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -26,39 +25,16 @@
     "exactOptionalPropertyTypes": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@/types": [
-        "src/types"
-      ],
-      "@/utils/*": [
-        "src/utils/*"
-      ],
-      "@/services/*": [
-        "src/services/*"
-      ],
-      "@/controllers/*": [
-        "src/controllers/*"
-      ],
-      "@/middleware/*": [
-        "src/middleware/*"
-      ],
-      "@/repositories/*": [
-        "src/repositories/*"
-      ],
-      "@/config": [
-        "src/config"
-      ]
+      "@/*": ["src/*"],
+      "@/types": ["src/types"],
+      "@/utils/*": ["src/utils/*"],
+      "@/services/*": ["src/services/*"],
+      "@/controllers/*": ["src/controllers/*"],
+      "@/middleware/*": ["src/middleware/*"],
+      "@/repositories/*": ["src/repositories/*"],
+      "@/config": ["src/config"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

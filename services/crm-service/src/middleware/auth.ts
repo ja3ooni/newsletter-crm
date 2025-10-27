@@ -24,7 +24,11 @@ declare global {
   }
 }
 
-export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -49,7 +53,10 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
       next();
     } catch (jwtError) {
-      logger.warn('Invalid JWT token:', { error: jwtError, token: token.substring(0, 20) + '...' });
+      logger.warn('Invalid JWT token:', {
+        error: jwtError,
+        token: token.substring(0, 20) + '...',
+      });
       throw new UnauthorizedError('Invalid token');
     }
   } catch (error) {
@@ -71,7 +78,11 @@ export const requireRole = (roles: string[]) => {
   };
 };
 
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -99,3 +110,6 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+// Alias for backward compatibility
+export const authenticateToken = authMiddleware;

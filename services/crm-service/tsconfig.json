@@ -25,6 +25,7 @@
     "exactOptionalPropertyTypes": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "composite": true,
     "baseUrl": "./src",
     "paths": {
       "@/*": [

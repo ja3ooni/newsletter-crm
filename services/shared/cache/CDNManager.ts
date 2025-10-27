@@ -1,4 +1,18 @@
-import AWS from 'aws-sdk';
+import {
+  CloudFrontClient,
+  CreateInvalidationCommand,
+  GetDistributionCommand,
+  GetInvalidationCommand,
+} from '@aws-sdk/client-cloudfront';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadBucketCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { logger } from '../utils/logger';
 
 export interface CDNConfig {
@@ -26,21 +40,27 @@ export interface InvalidationResult {
 }
 
 export class CDNManager {
-  private s3: AWS.S3;
-  private cloudFront: AWS.CloudFront;
+  private s3: S3Client;
+  private cloudFront: CloudFrontClient;
   private config: CDNConfig;
 
   constructor(config: CDNConfig) {
     this.config = config;
 
-    AWS.config.update({
+    const credentials = {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
+    };
+
+    this.s3 = new S3Client({
       region: config.region,
+      credentials,
     });
 
-    this.s3 = new AWS.S3();
-    this.cloudFront = new AWS.CloudFront();
+    this.cloudFront = new CloudFrontClient({
+      region: config.region,
+      credentials,
+    });
   }
 
   /**
@@ -55,29 +75,35 @@ export class CDNManager {
       const cacheControl =
         options.cacheControl || this.getCacheControlHeader(key);
 
-      const uploadParams: AWS.S3.PutObjectRequest = {
+      const uploadCommand = new PutObjectCommand({
         Bucket: this.config.bucketName,
         Key: key,
         Body: buffer,
         ContentType: options.contentType || this.getContentType(key),
         CacheControl: cacheControl,
         Metadata: options.metadata || {},
-        TagSet: options.tags
-          ? Object.entries(options.tags).map(([Key, Value]) => ({ Key, Value }))
+        Tagging: options.tags
+          ? Object.entries(options.tags)
+              .map(([key, value]) => `${key}=${value}`)
+              .join('&')
           : undefined,
-      };
+      });
 
-      const result = await this.s3.upload(uploadParams).promise();
+      await this.s3.send(uploadCommand);
 
       logger.info('Asset uploaded to CDN', {
         key,
-        location: result.Location,
+        location: this.getCDNUrl(key),
         cacheControl,
       });
 
       return this.getCDNUrl(key);
     } catch (error) {
-      logger.error('Asset upload failed', { key, error });
+      logger.error(
+        'Asset upload failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { key }
+      );
       throw error;
     }
   }
@@ -103,7 +129,10 @@ export class CDNManager {
 
       return results;
     } catch (error) {
-      logger.error('Batch asset upload failed', { error });
+      logger.error(
+        'Batch asset upload failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
   }
@@ -114,19 +143,23 @@ export class CDNManager {
   async deleteAsset(key: string): Promise<void> {
     try {
       // Delete from S3
-      await this.s3
-        .deleteObject({
-          Bucket: this.config.bucketName,
-          Key: key,
-        })
-        .promise();
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.config.bucketName,
+        Key: key,
+      });
+
+      await this.s3.send(deleteCommand);
 
       // Invalidate CDN cache
       await this.invalidateCache([`/${key}`]);
 
       logger.info('Asset deleted from CDN', { key });
     } catch (error) {
-      logger.error('Asset deletion failed', { key, error });
+      logger.error(
+        'Asset deletion failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { key }
+      );
       throw error;
     }
   }
@@ -136,7 +169,7 @@ export class CDNManager {
    */
   async invalidateCache(paths: string[]): Promise<InvalidationResult> {
     try {
-      const params: AWS.CloudFront.CreateInvalidationRequest = {
+      const command = new CreateInvalidationCommand({
         DistributionId: this.config.distributionId,
         InvalidationBatch: {
           Paths: {
@@ -145,9 +178,9 @@ export class CDNManager {
           },
           CallerReference: `invalidation-${Date.now()}`,
         },
-      };
+      });
 
-      const result = await this.cloudFront.createInvalidation(params).promise();
+      const result = await this.cloudFront.send(command);
 
       const invalidationResult: InvalidationResult = {
         invalidationId: result.Invalidation?.Id || '',
@@ -159,7 +192,11 @@ export class CDNManager {
 
       return invalidationResult;
     } catch (error) {
-      logger.error('CDN cache invalidation failed', { paths, error });
+      logger.error(
+        'CDN cache invalidation failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { paths }
+      );
       throw error;
     }
   }
@@ -169,19 +206,20 @@ export class CDNManager {
    */
   async getInvalidationStatus(invalidationId: string): Promise<string> {
     try {
-      const result = await this.cloudFront
-        .getInvalidation({
-          DistributionId: this.config.distributionId,
-          Id: invalidationId,
-        })
-        .promise();
+      const command = new GetInvalidationCommand({
+        DistributionId: this.config.distributionId,
+        Id: invalidationId,
+      });
+
+      const result = await this.cloudFront.send(command);
 
       return result.Invalidation?.Status || 'Unknown';
     } catch (error) {
-      logger.error('Failed to get invalidation status', {
-        invalidationId,
-        error,
-      });
+      logger.error(
+        'Failed to get invalidation status',
+        error instanceof Error ? error : new Error(String(error)),
+        { invalidationId }
+      );
       throw error;
     }
   }
@@ -210,7 +248,11 @@ export class CDNManager {
 
       return await this.uploadAsset(key, optimizedBuffer, uploadOptions);
     } catch (error) {
-      logger.error('Image optimization and upload failed', { key, error });
+      logger.error(
+        'Image optimization and upload failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { key }
+      );
       throw error;
     }
   }
@@ -218,15 +260,20 @@ export class CDNManager {
   /**
    * Generate signed URL for private assets
    */
-  getSignedUrl(key: string, expiresIn: number = 3600): string {
+  async getSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
     try {
-      return this.s3.getSignedUrl('getObject', {
+      const command = new GetObjectCommand({
         Bucket: this.config.bucketName,
         Key: key,
-        Expires: expiresIn,
       });
+
+      return await getSignedUrl(this.s3, command, { expiresIn });
     } catch (error) {
-      logger.error('Failed to generate signed URL', { key, error });
+      logger.error(
+        'Failed to generate signed URL',
+        error instanceof Error ? error : new Error(String(error)),
+        { key }
+      );
       throw error;
     }
   }
@@ -252,7 +299,11 @@ export class CDNManager {
       // 2. Use CloudFront's origin shield
       // 3. Implement cache warming strategies
     } catch (error) {
-      logger.error('Failed to preload critical assets', { assetKeys, error });
+      logger.error(
+        'Failed to preload critical assets',
+        error instanceof Error ? error : new Error(String(error)),
+        { assetKeys }
+      );
       throw error;
     }
   }
@@ -268,12 +319,12 @@ export class CDNManager {
     contentType?: string;
   }> {
     try {
-      const result = await this.s3
-        .headObject({
-          Bucket: this.config.bucketName,
-          Key: key,
-        })
-        .promise();
+      const command = new HeadObjectCommand({
+        Bucket: this.config.bucketName,
+        Key: key,
+      });
+
+      const result = await this.s3.send(command);
 
       return {
         exists: true,
@@ -282,12 +333,19 @@ export class CDNManager {
         cacheControl: result.CacheControl,
         contentType: result.ContentType,
       };
-    } catch (error) {
-      if ((error as AWS.AWSError).statusCode === 404) {
+    } catch (error: any) {
+      if (
+        error.name === 'NotFound' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         return { exists: false };
       }
 
-      logger.error('Failed to get asset info', { key, error });
+      logger.error(
+        'Failed to get asset info',
+        error instanceof Error ? error : new Error(String(error)),
+        { key }
+      );
       throw error;
     }
   }
@@ -298,14 +356,18 @@ export class CDNManager {
   async healthCheck(): Promise<{ status: string; details: any }> {
     try {
       // Test S3 connectivity
-      await this.s3.headBucket({ Bucket: this.config.bucketName }).promise();
+      const headBucketCommand = new HeadBucketCommand({
+        Bucket: this.config.bucketName,
+      });
+
+      await this.s3.send(headBucketCommand);
 
       // Test CloudFront connectivity
-      await this.cloudFront
-        .getDistribution({
-          Id: this.config.distributionId,
-        })
-        .promise();
+      const getDistributionCommand = new GetDistributionCommand({
+        Id: this.config.distributionId,
+      });
+
+      await this.cloudFront.send(getDistributionCommand);
 
       return {
         status: 'healthy',

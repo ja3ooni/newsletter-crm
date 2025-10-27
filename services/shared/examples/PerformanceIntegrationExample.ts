@@ -119,11 +119,11 @@ export class OptimizedNewsletterService {
 
     // Initialize Bull queues
     const emailQueue = new Bull('email-sending', {
-      redis: { url: process.env.REDIS_URL },
+      redis: process.env.REDIS_URL,
     });
 
     const batchQueue = new Bull('email-batching', {
-      redis: { url: process.env.REDIS_URL },
+      redis: process.env.REDIS_URL,
     });
 
     // Initialize performance optimization service

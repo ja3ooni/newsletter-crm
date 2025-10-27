@@ -86,7 +86,7 @@ export class OptimizedEmailSender {
     this.emailQueue = emailQueue;
     this.batchQueue = batchQueue;
 
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: config.smtp.host,
       port: config.smtp.port,
       secure: config.smtp.secure,
@@ -135,7 +135,10 @@ export class OptimizedEmailSender {
 
       return email.id;
     } catch (error) {
-      logger.error('Failed to queue email', { emailId: email.id, error });
+      logger.error('Failed to queue email', {
+        emailId: email.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }

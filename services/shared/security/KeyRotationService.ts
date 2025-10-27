@@ -363,7 +363,7 @@ export class KeyRotationService {
           }),
         });
       } catch (error) {
-        logger.error('Failed to send webhook notification', { error });
+        logger.error('Failed to send webhook notification', error as Error);
       }
     }
 
