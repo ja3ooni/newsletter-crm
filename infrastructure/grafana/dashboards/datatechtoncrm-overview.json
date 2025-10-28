@@ -1,9 +1,9 @@
 {
   "dashboard": {
     "id": null,
-    "title": "AiLert Platform Overview",
+    "title": "DatatechtonCRM Platform Overview",
     "tags": [
-      "ailert",
+      "datatechtoncrm",
       "overview"
     ],
     "style": "dark",

@@ -1,9 +1,9 @@
-# AiLert Platform Technology Stack
+# DatatechtonCRM Platform Technology Stack
 
 ## Overview
 
-The AiLert platform is built using a modern, cloud-native technology stack
-designed for scalability, maintainability, and developer productivity. The
+The DatatechtonCRM platform is built using a modern, cloud-native technology
+stack designed for scalability, maintainability, and developer productivity. The
 platform combines Node.js/TypeScript microservices with a Python-based AI
 component and a Next.js frontend.
 
@@ -443,5 +443,5 @@ npm run type-check
 - **Health Checks**: Container health monitoring
 
 This technology stack provides a robust foundation for building a scalable,
-maintainable, and secure newsletter CRM platform with modern development
+maintainable, and secure data-driven CRM platform with modern development
 practices and comprehensive tooling support.

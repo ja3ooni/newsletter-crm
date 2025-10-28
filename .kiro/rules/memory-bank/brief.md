@@ -1,16 +1,16 @@
-# AiLert Professional Newsletter Platform - Project Brief
+# DatatechtonCRM - Project Brief
 
 ## Project Foundation
 
-**AiLert** is an enterprise-grade newsletter and CRM platform built with modern
-microservices architecture. The platform combines powerful newsletter creation
-tools with advanced customer relationship management, marketing automation, and
-analytics capabilities to provide a comprehensive solution for businesses of all
-sizes.
+**DatatechtonCRM** is an enterprise-grade data-driven CRM and marketing
+automation platform built with modern microservices architecture. The platform
+combines powerful newsletter creation tools with advanced customer relationship
+management, marketing automation, and analytics capabilities to provide a
+comprehensive solution for businesses of all sizes.
 
 ### Core Identity
 
-- **Name**: AiLert Professional Newsletter Platform
+- **Name**: DatatechtonCRM
 - **Version**: 1.0.0
 - **Architecture**: Microservices with containerized deployment
 - **License**: MIT
@@ -29,8 +29,9 @@ sizes.
 
 ### What We're Building
 
-AiLert is a comprehensive platform that transforms how businesses manage their
-email marketing and customer relationships. The platform provides:
+DatatechtonCRM is a comprehensive platform that transforms how businesses manage
+their email marketing and customer relationships through data-driven insights.
+The platform provides:
 
 1. **Professional Newsletter Creation**: Drag-and-drop builder with responsive
    templates and real-time preview
@@ -295,6 +296,6 @@ The platform consists of 8 core microservices:
 
 ---
 
-This brief serves as the foundational document for the AiLert Professional
-Newsletter Platform, defining our vision, architecture, and roadmap for building
-a world-class newsletter and CRM solution.
+This brief serves as the foundational document for DatatechtonCRM, defining our
+vision, architecture, and roadmap for building a world-class data-driven CRM and
+marketing automation solution.

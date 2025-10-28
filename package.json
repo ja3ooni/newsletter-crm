@@ -1,7 +1,7 @@
 {
-  "name": "ailert-platform",
+  "name": "datatechtoncrm-platform",
   "version": "1.0.0",
-  "description": "AiLert Professional Newsletter Platform - Microservices Architecture",
+  "description": "DatatechtonCRM - Data-Driven CRM and Marketing Automation Platform - Microservices Architecture",
   "private": true,
   "workspaces": [
     "services/*",
@@ -40,7 +40,7 @@
     "type-check:frontend": "cd frontend && npm run type-check",
     "db:migrate": "docker-compose exec user-service npm run db:migrate",
     "db:seed": "docker-compose exec user-service npm run db:seed",
-    "db:reset": "docker-compose exec postgres psql -U ailert -d ailert -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\" && npm run db:migrate && npm run db:seed",
+    "db:reset": "docker-compose exec postgres psql -U datatechtoncrm -d datatechtoncrm -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\" && npm run db:migrate && npm run db:seed",
     "install:all": "npm install && npm run install:services && npm run install:frontend",
     "install:services": "for dir in services/*/; do (cd \"$dir\" && npm install); done",
     "install:frontend": "cd frontend && npm install",
@@ -103,18 +103,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/ailert-platform.git"
+    "url": "https://github.com/ja3ooni/datatechtoncrm-platform.git"
   },
   "keywords": [
+    "crm",
+    "marketing-automation",
+    "data-driven",
     "newsletter",
-    "ai",
+    "analytics",
     "microservices",
     "typescript",
     "nextjs",
     "docker",
     "kubernetes"
   ],
-  "author": "AiLert Team",
+  "author": "DatatechtonCRM Team",
   "license": "MIT",
   "husky": {
     "hooks": {

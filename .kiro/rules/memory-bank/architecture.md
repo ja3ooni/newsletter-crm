@@ -1,12 +1,12 @@
-# AiLert Platform Architecture
+# DatatechtonCRM Platform Architecture
 
 ## System Overview
 
-The AiLert platform is a comprehensive newsletter CRM system built on a
-**microservices architecture** using modern cloud-native technologies. The
-platform combines AI-powered content aggregation with professional newsletter
-management capabilities, designed for scalability, reliability, and
-maintainability.
+The DatatechtonCRM platform is a comprehensive data-driven CRM and marketing
+automation system built on a **microservices architecture** using modern
+cloud-native technologies. The platform combines AI-powered content aggregation
+with professional CRM management capabilities, designed for scalability,
+reliability, and maintainability.
 
 ## Architecture Principles
 
