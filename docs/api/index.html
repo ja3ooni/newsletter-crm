@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DatatechtonCRM API Explorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@graphiql/react@0.20.4/dist/style.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-tab button {
+            width: 100%;
+            padding: 1rem 2rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab button:hover {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .nav-tab button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background-color: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+            min-height: calc(100vh - 200px);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .intro-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+
+        .intro-section h2 {
+            color: #343a40;
+            margin-bottom: 1rem;
+        }
+
+        .intro-section p {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .auth-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .auth-section h3 {
+            color: #856404;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+
+        .auth-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        .auth-button:hover {
+            background: #5a6fd8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-card h3 {
+            color: #343a40;
+            margin: 0 0 1rem 0;
+        }
+
+        .feature-card ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #6c757d;
+        }
+
+        .feature-card li {
+            margin: 0.5rem 0;
+        }
+
+        .code-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-example pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        #swagger-ui {
+            max-width: none;
+        }
+
+        .graphiql-container {
+            height: calc(100vh - 140px);
+        }
+
+        .footer {
+            background: #343a40;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DatatechtonCRM API Explorer</h1>
+        <p>Interactive documentation and testing interface for the DatatechtonCRM Platform API</p>
+    </div>
+
+    <ul class="nav-tabs">
+        <li class="nav-tab">
+            <button onclick="showTab('overview')" class="active" id="overview-tab">Overview</button>
+        </li>
+        <li class="nav-tab">
+            <button onclick="showTab('rest')" id="rest-tab">REST API</button>
+        </li>
+        <li class="nav-tab">
+            <button onclick="showTab('graphql')" id="graphql-tab">GraphQL</button>
+        </li>
+        <li class="nav-tab">
+            <button onclick="showTab('examples')" id="examples-tab">Examples</button>
+        </li>
+    </ul>
+
+    <div id="overview" class="tab-content active">
+        <div class="intro-section">
+            <h2>Welcome to the DatatechtonCRM API</h2>
+            <p>
+                The DatatechtonCRM Platform provides a comprehensive set of APIs for building powerful
+                newsletter and marketing automation applications. Our API is designed with modern
+                standards in mind, offering both REST and GraphQL interfaces to suit your development needs.
+            </p>
+
+            <div class="auth-section">
+                <h3>🔐 Authentication</h3>
+                <p>To test the API endpoints, you'll need to authenticate first:</p>
+                <input type="email" id="email" class="auth-input" placeholder="Email address" />
+                <input type="password" id="password" class="auth-input" placeholder="Password" />
+                <button class="auth-button" onclick="authenticate()">Login</button>
+                <button class="auth-button" onclick="clearAuth()">Clear Token</button>
+                <div id="auth-status" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🚀 REST API</h3>
+                    <ul>
+                        <li>RESTful endpoints following OpenAPI 3.0 specification</li>
+                        <li>Comprehensive CRUD operations for all resources</li>
+                        <li>Standardized error responses and status codes</li>
+                        <li>Rate limiting and pagination support</li>
+                        <li>Interactive Swagger UI for testing</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📊 GraphQL API</h3>
+                    <ul>
+                        <li>Single endpoint for all data operations</li>
+                        <li>Strongly typed schema with introspection</li>
+                        <li>Real-time subscriptions for live updates</li>
+                        <li>Efficient data fetching with custom queries</li>
+                        <li>Built-in GraphiQL explorer</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📧 Newsletter Management</h3>
+                    <ul>
+                        <li>Create and manage newsletter campaigns</li>
+                        <li>Template system with customization</li>
+                        <li>A/B testing and analytics</li>
+                        <li>Scheduling and automation</li>
+                        <li>Deliverability monitoring</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h3>👥 CRM Features</h3>
+                    <ul>
+                        <li>Contact management and segmentation</li>
+                        <li>Lead scoring and lifecycle tracking</li>
+                        <li>Engagement history and analytics</li>
+                        <li>Custom fields and tags</li>
+                        <li>Import/export capabilities</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🤖 Marketing Automation</h3>
+                    <ul>
+                        <li>Workflow builder and execution</li>
+                        <li>Trigger-based campaigns</li>
+                        <li>Drip sequences and nurturing</li>
+                        <li>Behavioral targeting</li>
+                        <li>Performance tracking</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📈 Analytics & Reporting</h3>
+                    <ul>
+                        <li>Real-time engagement metrics</li>
+                        <li>Custom dashboard creation</li>
+                        <li>Cohort analysis and trends</li>
+                        <li>Revenue attribution</li>
+                        <li>Predictive analytics</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Getting Started</h2>
+            <p>
+                Choose your preferred API interface from the tabs above. The REST API provides traditional
+                HTTP endpoints with comprehensive OpenAPI documentation, while the GraphQL API offers a
+                more flexible query interface with real-time capabilities.
+            </p>
+
+            <div class="code-example">
+                <pre><code># Base URLs
+Production:  https://api.datatechtoncrm.com/v1
+Staging:     https://staging-api.datatechtoncrm.com/v1
+Development: http://localhost:8000/v1
+
+# Authentication
+Authorization: Bearer &lt;jwt_token&gt;
+X-API-Key: &lt;api_key&gt;</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="rest" class="tab-content">
+        <div id="swagger-ui"></div>
+    </div>
+
+    <div id="graphql" class="tab-content">
+        <div id="graphiql" class="graphiql-container"></div>
+    </div>
+
+    <div id="examples" class="tab-content">
+        <div class="intro-section">
+            <h2>API Usage Examples</h2>
+
+            <h3>Authentication</h3>
+            <div class="code-example">
+                <pre><code># Login to get JWT token
+curl -X POST https://api.datatechtoncrm.com/v1/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "your-password"
+  }'
+
+# Response
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 3600,
+  "user": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+}</code></pre>
+            </div>
+
+            <h3>Create a Newsletter</h3>
+            <div class="code-example">
+                <pre><code># REST API
+curl -X POST https://api.datatechtoncrm.com/v1/newsletters \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Weekly Tech Update",
+    "templateId": "template-uuid",
+    "content": {
+      "sections": [
+        {
+          "id": "section-1",
+          "type": "news",
+          "title": "Latest News",
+          "items": [
+            {
+              "id": "item-1",
+              "title": "AI Breakthrough in Healthcare",
+              "summary": "New AI model shows promising results...",
+              "url": "https://example.com/article",
+              "source": "TechNews"
+            }
+          ],
+          "order": 1
+        }
+      ]
+    },
+    "segments": ["segment-uuid-1", "segment-uuid-2"]
+  }'</code></pre>
+            </div>
+
+            <h3>GraphQL Query Example</h3>
+            <div class="code-example">
+                <pre><code># Get newsletters with analytics
+query GetNewsletters($first: Int, $filters: NewsletterFiltersInput) {
+  newsletters(pagination: { first: $first }, filters: $filters) {
+    edges {
+      node {
+        id
+        title
+        status
+        createdAt
+        metrics {
+          sent
+          delivered
+          openRate
+          clickRate
+        }
+        analytics(timeRange: "7d") {
+          topLinks {
+            url
+            clicks
+            clickRate
+          }
+          deviceBreakdown {
+            desktop
+            mobile
+            tablet
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}</code></pre>
+            </div>
+
+            <h3>Create and Manage Contacts</h3>
+            <div class="code-example">
+                <pre><code># Create a new contact
+curl -X POST https://api.datatechtoncrm.com/v1/crm/contacts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "contact@example.com",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "company": "Acme Corp",
+    "jobTitle": "Marketing Manager",
+    "tags": ["lead", "enterprise"],
+    "customFields": {
+      "industry": "Technology",
+      "company_size": "500-1000"
+    },
+    "preferences": {
+      "emailFrequency": "weekly",
+      "contentTypes": ["news", "research"],
+      "timezone": "America/New_York"
+    }
+  }'
+
+# Update contact lead score
+curl -X PUT https://api.datatechtoncrm.com/v1/crm/contacts/contact-uuid \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customFields": {
+      "lead_score": 85,
+      "last_interaction": "2024-01-15T10:30:00Z"
+    }
+  }'</code></pre>
+            </div>
+
+            <h3>Create Dynamic Segments</h3>
+            <div class="code-example">
+                <pre><code># Create a segment for engaged users
+curl -X POST https://api.datatechtoncrm.com/v1/crm/segments \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Highly Engaged Users",
+    "description": "Users with high engagement scores",
+    "conditions": [
+      {
+        "field": "leadScore",
+        "operator": "greater_than",
+        "value": 70
+      },
+      {
+        "field": "lifecycle",
+        "operator": "in",
+        "value": ["lead", "customer"],
+        "logicalOperator": "AND"
+      },
+      {
+        "field": "tags",
+        "operator": "contains",
+        "value": "engaged",
+        "logicalOperator": "AND"
+      }
+    ],
+    "isAutoUpdating": true
+  }'</code></pre>
+            </div>
+
+            <h3>Send Newsletter with Analytics</h3>
+            <div class="code-example">
+                <pre><code># Send newsletter to specific segments
+curl -X POST https://api.datatechtoncrm.com/v1/newsletters/newsletter-uuid/send \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "segments": ["segment-uuid-1", "segment-uuid-2"],
+    "scheduledAt": "2024-01-20T09:00:00Z"
+  }'
+
+# Response
+{
+  "jobId": "job_abc123",
+  "status": "queued",
+  "estimatedDelivery": "2024-01-20T09:05:00Z",
+  "recipientCount": 1250
+}
+
+# Check sending progress
+curl -X GET https://api.datatechtoncrm.com/v1/newsletters/newsletter-uuid/analytics \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre>
+            </div>
+
+            <h3>Real-time Updates with GraphQL Subscriptions</h3>
+            <div class="code-example">
+                <pre><code># Subscribe to newsletter sending progress
+subscription NewsletterProgress($newsletterId: UUID!) {
+  newsletterSendProgress(newsletterId: $newsletterId) {
+    newsletterId
+    status
+    progress
+    sent
+    failed
+    estimatedCompletion
+  }
+}
+
+# Subscribe to contact engagement events
+subscription ContactEngagement($contactId: UUID!) {
+  contactEngagement(contactId: $contactId) {
+    id
+    type
+    timestamp
+    metadata
+    score
+  }
+}</code></pre>
+            </div>
+
+            <h3>Error Handling</h3>
+            <div class="code-example">
+                <pre><code># Standard error response format
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request parameters",
+    "details": [
+      {
+        "field": "email",
+        "message": "Invalid email format"
+      },
+      {
+        "field": "segments",
+        "message": "At least one segment is required"
+      }
+    ],
+    "requestId": "req_1234567890"
+  }
+}
+
+# Rate limiting response
+HTTP 429 Too Many Requests
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Try again in 60 seconds.",
+    "retryAfter": 60,
+    "requestId": "req_1234567890"
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>
+            DatatechtonCRM Platform API Documentation |
+            <a href="https://docs.datatechtoncrm.com">Full Documentation</a> |
+            <a href="https://github.com/datatechtoncrm/platform">GitHub</a> |
+            <a href="mailto:api-support@datatechtoncrm.com">Support</a>
+        </p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-standalone-preset.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@graphiql/react@0.20.4/dist/index.umd.js"></script>
+
+    <script>
+        let authToken = localStorage.getItem('datatechtoncrm_token');
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-tab button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Initialize content if needed
+            if (tabName === 'rest' && !window.swaggerInitialized) {
+                initializeSwagger();
+            } else if (tabName === 'graphql' && !window.graphiqlInitialized) {
+                initializeGraphiQL();
+            }
+        }
+
+        function initializeSwagger() {
+            window.swaggerInitialized = true;
+
+            SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                requestInterceptor: (request) => {
+                    if (authToken) {
+                        request.headers['Authorization'] = `Bearer ${authToken}`;
+                    }
+                    return request;
+                },
+                onComplete: () => {
+                    console.log('Swagger UI loaded');
+                }
+            });
+        }
+
+        function initializeGraphiQL() {
+            window.graphiqlInitialized = true;
+
+            const graphQLFetcher = async (graphQLParams) => {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                    },
+                    body: JSON.stringify(graphQLParams)
+                });
+
+                return response.json();
+            };
+
+            const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+            root.render(
+                React.createElement(GraphiQL.GraphiQL, {
+                    fetcher: graphQLFetcher,
+                    defaultQuery: `# Welcome to GraphiQL
+#
+# GraphiQL is an in-browser tool for writing, validating, and
+# testing GraphQL queries.
+#
+# Type queries into this side of the screen, and you will see intelligent
+# typeaheads aware of the current GraphQL type schema and live syntax and
+# validation errors highlighted within the text.
+#
+# GraphQL queries typically start with a "{" character. Lines that start
+# with a # are ignored.
+#
+# An example GraphQL query might look like:
+#
+query GetMyProfile {
+  me {
+    id
+    email
+    firstName
+    lastName
+    preferences {
+      frequency
+      topics
+    }
+  }
+}
+
+# Try it out by clicking the play button above!
+`,
+                    headerEditorEnabled: true,
+                    shouldPersistHeaders: true
+                })
+            );
+        }
+
+        async function authenticate() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('auth-status');
+
+            if (!email || !password) {
+                statusDiv.innerHTML = '<span style="color: red;">Please enter email and password</span>';
+                return;
+            }
+
+            try {
+                statusDiv.innerHTML = '<span style="color: blue;">Authenticating...</span>';
+
+                const response = await fetch('/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.accessToken;
+                    localStorage.setItem('datatechtoncrm_token', authToken);
+                    statusDiv.innerHTML = `<span style="color: green;">✓ Authenticated as ${data.user.firstName} ${data.user.lastName}</span>`;
+
+                    // Clear password field
+                    document.getElementById('password').value = '';
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = `<span style="color: red;">✗ ${error.error.message}</span>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: red;">✗ Connection error: ${error.message}</span>`;
+            }
+        }
+
+        function clearAuth() {
+            authToken = null;
+            localStorage.removeItem('datatechtoncrm_token');
+            document.getElementById('auth-status').innerHTML = '<span style="color: gray;">Authentication cleared</span>';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Update auth status on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (authToken) {
+                document.getElementById('auth-status').innerHTML = '<span style="color: green;">✓ Token found in storage</span>';
+            }
+        });
+
+        // Handle Enter key in auth inputs
+        document.getElementById('email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') authenticate();
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') authenticate();
+        });
+    </script>
+</body>
+</html>

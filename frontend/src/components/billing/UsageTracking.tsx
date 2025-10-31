@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,25 +11,25 @@ import { formatDate } from '@/lib/utils'
 import { useBillingStore } from '@/store/billingStore'
 import { UsageTrackingData } from '@/types/billing'
 import {
-  Activity,
-  AlertTriangle,
-  Mail,
-  RefreshCw,
-  TrendingUp,
-  Users,
-  Zap
+    Activity,
+    AlertTriangle,
+    Mail,
+    RefreshCw,
+    TrendingUp,
+    Users,
+    Zap
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
+    Area,
+    AreaChart,
+    CartesianGrid,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
 } from 'recharts'
 
 interface UsageTrackingProps {
@@ -237,32 +238,38 @@ export default function UsageTracking({
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2" role="group" aria-label="Chart filters">
-                <Select
-                  id="metric-select"
-                  label="Select metric to display"
-                  className="w-40"
-                  value={selectedMetric}
-                  onChange={(e) => setSelectedMetric(e.target.value)}
-                  options={[
-                    { value: 'all', label: 'All Metrics' },
-                    { value: 'newsletters', label: 'Newsletters' },
-                    { value: 'emails', label: 'Emails' },
-                    { value: 'subscribers', label: 'Subscribers' },
-                    { value: 'automations', label: 'Automations' }
-                  ]}
-                />
-                <Select
-                  id="timerange-select"
-                  label="Select time range"
-                  className="w-32"
-                  value={timeRange}
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  options={[
-                    { value: '7d', label: '7 days' },
-                    { value: '30d', label: '30 days' },
-                    { value: '90d', label: '90 days' }
-                  ]}
-                />
+                <div className="space-y-1">
+                  <Label htmlFor="metric-select" className="sr-only">Select metric to display</Label>
+                  <Select
+                    id="metric-select"
+                    className="w-40"
+                    value={selectedMetric}
+                    onChange={(e) => setSelectedMetric(e.target.value)}
+                    options={[
+                      { value: 'all', label: 'All Metrics' },
+                      { value: 'newsletters', label: 'Newsletters' },
+                      { value: 'emails', label: 'Emails' },
+                      { value: 'subscribers', label: 'Subscribers' },
+                      { value: 'automations', label: 'Automations' }
+                    ]}
+                    aria-label="Select metric to display in chart"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="timerange-select" className="sr-only">Select time range</Label>
+                  <Select
+                    id="timerange-select"
+                    className="w-32"
+                    value={timeRange}
+                    onChange={(e) => setTimeRange(e.target.value)}
+                    options={[
+                      { value: '7d', label: '7 days' },
+                      { value: '30d', label: '30 days' },
+                      { value: '90d', label: '90 days' }
+                    ]}
+                    aria-label="Select time range for chart data"
+                  />
+                </div>
               </div>
             </div>
           </CardHeader>

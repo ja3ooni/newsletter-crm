@@ -1,0 +1,456 @@
+# Blue-Green Deployment Configuration for Production Services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blue-green-config
+  namespace: ailert-production
+data:
+  # Current active environment (blue or green)
+  active-environment: "blue"
+  # Deployment strategy configuration
+  deployment-strategy: "blue-green"
+  # Health check configuration
+  health-check-timeout: "300"
+  # Rollback configuration
+  rollback-enabled: "true"
+  rollback-timeout: "600"
+
+---
+# Blue Environment - User Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-blue
+  namespace: ailert-production
+  labels:
+    app: user-service
+    version: blue
+    environment: production
+    deployment-strategy: blue-green
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: user-service
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: user-service
+        version: blue
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        deployment.kubernetes.io/revision: "1"
+    spec:
+      serviceAccountName: ailert-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: user-service
+          image: ailert/user-service:blue-latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3001"
+            - name: DEPLOYMENT_VERSION
+              value: "blue"
+            - name: DATABASE_URL
+              value: "postgresql://ailert:$(POSTGRES_PASSWORD)@postgres-service:5432/user_db"
+            - name: REDIS_URL
+              value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: JWT_SECRET
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: REDIS_PASSWORD
+            - name: LOG_LEVEL
+              value: "info"
+            - name: METRICS_ENABLED
+              value: "true"
+            - name: GRACEFUL_SHUTDOWN_TIMEOUT
+              value: "30"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+              ephemeral-storage: "2Gi"
+            limits:
+              memory: "2Gi"
+              cpu: "1500m"
+              ephemeral-storage: "4Gi"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: cache
+              mountPath: /app/cache
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 30
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: logs
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 1Gi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - user-service
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: node-type
+                    operator: In
+                    values:
+                      - production
+      tolerations:
+        - key: "production-only"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      terminationGracePeriodSeconds: 45
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+
+---
+# Green Environment - User Service (Initially scaled to 0)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-green
+  namespace: ailert-production
+  labels:
+    app: user-service
+    version: green
+    environment: production
+    deployment-strategy: blue-green
+spec:
+  replicas: 0 # Initially scaled to 0
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: user-service
+      version: green
+  template:
+    metadata:
+      labels:
+        app: user-service
+        version: green
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: ailert-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: user-service
+          image: ailert/user-service:green-latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3001"
+            - name: DEPLOYMENT_VERSION
+              value: "green"
+            - name: DATABASE_URL
+              value: "postgresql://ailert:$(POSTGRES_PASSWORD)@postgres-service:5432/user_db"
+            - name: REDIS_URL
+              value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: JWT_SECRET
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: REDIS_PASSWORD
+            - name: LOG_LEVEL
+              value: "info"
+            - name: METRICS_ENABLED
+              value: "true"
+            - name: GRACEFUL_SHUTDOWN_TIMEOUT
+              value: "30"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+              ephemeral-storage: "2Gi"
+            limits:
+              memory: "2Gi"
+              cpu: "1500m"
+              ephemeral-storage: "4Gi"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: cache
+              mountPath: /app/cache
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 30
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: logs
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 1Gi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - user-service
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: node-type
+                    operator: In
+                    values:
+                      - production
+      tolerations:
+        - key: "production-only"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      terminationGracePeriodSeconds: 45
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+
+---
+# Service for Blue-Green Deployment (Routes to active environment)
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: ailert-production
+  labels:
+    app: user-service
+    environment: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  selector:
+    app: user-service
+    version: blue # Initially routes to blue
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+
+---
+# Blue Service (for testing during deployment)
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-blue
+  namespace: ailert-production
+  labels:
+    app: user-service
+    version: blue
+    environment: production
+spec:
+  selector:
+    app: user-service
+    version: blue
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  type: ClusterIP
+
+---
+# Green Service (for testing during deployment)
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-green
+  namespace: ailert-production
+  labels:
+    app: user-service
+    version: green
+    environment: production
+spec:
+  selector:
+    app: user-service
+    version: green
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  type: ClusterIP

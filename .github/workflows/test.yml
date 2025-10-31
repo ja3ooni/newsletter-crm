@@ -260,14 +260,25 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
-
-      - name: Run security linting
         run: |
-          npx eslint . --ext .ts,.js --config .eslintrc.security.js
+          npm ci
+          npm install --save-dev eslint-plugin-security
+
+      - name: Create test results directory
+        run: mkdir -p test-results/security
+
+      - name: Run comprehensive security scan
+        run: |
+          node scripts/security-scan.js
+        env:
+          NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+
+      - name: Run security test suite
+        run: |
+          npm test -- --testPathPattern=SecurityTestSuite --silent --ci
+          npm test -- --testPathPattern=SecurityPenetrationTests --silent --ci
+        env:
+          NODE_ENV: test
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -275,13 +286,63 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'test-results/security/trivy-results.sarif'
+        continue-on-error: true
 
-      - name: Upload Trivy scan results
+      - name: Upload Trivy scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'test-results/security/trivy-results.sarif'
+
+      - name: Run OWASP ZAP security scan
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker run --rm -v $(pwd):/zap/wrk/:rw \
+            -t owasp/zap2docker-stable zap-baseline.py \
+            -t http://localhost:8000 \
+            -J test-results/security/zap-report.json \
+            -r test-results/security/zap-report.html || true
+
+      - name: Upload security test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-test-results
+          path: test-results/security/
+
+      - name: Comment security results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'test-results/security/security-report.json';
+
+            if (fs.existsSync(path)) {
+              const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+              const comment = `## 🔒 Security Scan Results
+
+              **Overall Score:** ${report.overallScore}/100 ${report.passed ? '✅' : '❌'}
+
+              **Summary:**
+              - Dependency Vulnerabilities: ${report.summary.dependencyVulnerabilities}
+              - Code Security Issues: ${report.summary.codeSecurityIssues}
+              - Crypto Issues: ${report.summary.cryptoIssues}
+              - Configuration Issues: ${report.summary.configurationIssues}
+              - Penetration Tests: ${report.summary.penetrationTestsPassed ? '✅ PASSED' : '❌ FAILED'}
+
+              ${report.passed ? '🎉 All security checks passed!' : '⚠️ Security issues found. Please review the detailed report.'}
+              `;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
 
   performance-tests:
     name: Performance Tests

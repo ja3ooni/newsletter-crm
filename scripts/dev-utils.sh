@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# AiLert Development Utilities
+# Development Utilities Script
+# Collection of useful development commands and shortcuts
+
 set -e
 
 # Colors for output
@@ -11,7 +13,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Helper functions
+# Logging functions
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -28,505 +30,463 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check prerequisites
-check_prerequisites() {
-    log_info "Checking prerequisites..."
-
-    # Check Docker
-    if ! command -v docker &> /dev/null; then
-        log_error "Docker is not installed"
-        return 1
-    fi
-
-    # Check Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
-        log_error "Docker Compose is not installed"
-        return 1
-    fi
-
-    # Check Node.js
-    if ! command -v node &> /dev/null; then
-        log_error "Node.js is not installed"
-        return 1
-    fi
-
-    # Check Node.js version
-    NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-    if [ "$NODE_VERSION" -lt 18 ]; then
-        log_error "Node.js version 18 or higher is required. Current: $(node -v)"
-        return 1
-    fi
-
-    log_success "All prerequisites are met"
+# Show help
+show_help() {
+    echo -e "${CYAN}Development Utilities${NC}"
+    echo
+    echo "Usage: ./scripts/dev-utils.sh <command> [options]"
+    echo
+    echo "Available commands:"
+    echo "  ${GREEN}status${NC}          Show development environment status"
+    echo "  ${GREEN}logs${NC} [service]  Show logs for all services or specific service"
+    echo "  ${GREEN}restart${NC} [service] Restart all services or specific service"
+    echo "  ${GREEN}clean${NC}           Clean all build artifacts and caches"
+    echo "  ${GREEN}reset${NC}           Reset development environment"
+    echo "  ${GREEN}test${NC} [pattern]  Run tests with optional pattern"
+    echo "  ${GREEN}lint${NC}            Run linting and formatting"
+    echo "  ${GREEN}build${NC}           Build all services"
+    echo "  ${GREEN}db-reset${NC}        Reset database with fresh data"
+    echo "  ${GREEN}generate${NC}        Interactive code generation"
+    echo "  ${GREEN}debug${NC} <service> Start service in debug mode"
+    echo "  ${GREEN}profile${NC}         Run performance profiling"
+    echo "  ${GREEN}docs${NC}            Generate and serve documentation"
+    echo
+    echo "Examples:"
+    echo "  ./scripts/dev-utils.sh status"
+    echo "  ./scripts/dev-utils.sh logs user-service"
+    echo "  ./scripts/dev-utils.sh test newsletter"
+    echo "  ./scripts/dev-utils.sh debug user-service"
 }
 
-# Install dependencies for all services
-install_dependencies() {
-    log_info "Installing dependencies for all services..."
+# Check development environment status
+check_status() {
+    log_info "Checking development environment status..."
+    echo
 
-    # Root dependencies
-    npm install
+    # Check Docker services
+    echo -e "${CYAN}Docker Services:${NC}"
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose ps
+    elif docker compose version >/dev/null 2>&1; then
+        docker compose ps
+    else
+        log_error "Docker Compose not found"
+    fi
+    echo
 
-    # Service dependencies
-    for service in services/*/; do
-        if [ -f "$service/package.json" ]; then
-            log_info "Installing dependencies for $(basename "$service")..."
-            cd "$service"
-            npm install
-            cd ../..
+    # Check Node.js processes
+    echo -e "${CYAN}Node.js Processes:${NC}"
+    if pgrep -f "node.*src/index" >/dev/null; then
+        ps aux | grep "node.*src/index" | grep -v grep
+    else
+        echo "No Node.js development processes running"
+    fi
+    echo
+
+    # Check ports
+    echo -e "${CYAN}Port Usage:${NC}"
+    local ports=(3000 3001 8000 8001 8002 8003 8004 5432 6379 9200 5672 1025 8025)
+    for port in "${ports[@]}"; do
+        if lsof -i :$port >/dev/null 2>&1; then
+            local process=$(lsof -i :$port | tail -n 1 | awk '{print $1}')
+            echo "Port $port: $process"
         fi
     done
+    echo
 
-    # Frontend dependencies
-    if [ -f "frontend/package.json" ]; then
-        log_info "Installing frontend dependencies..."
-        cd frontend
+    # Check disk space
+    echo -e "${CYAN}Disk Usage:${NC}"
+    df -h . | tail -n 1
+    echo
+
+    # Check memory usage
+    echo -e "${CYAN}Memory Usage:${NC}"
+    free -h 2>/dev/null || vm_stat | head -n 5
+}
+
+# Show logs
+show_logs() {
+    local service=$1
+
+    if [ -z "$service" ]; then
+        log_info "Showing logs for all services..."
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose logs -f --tail=100
+        else
+            docker compose logs -f --tail=100
+        fi
+    else
+        log_info "Showing logs for $service..."
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose logs -f --tail=100 "$service"
+        else
+            docker compose logs -f --tail=100 "$service"
+        fi
+    fi
+}
+
+# Restart services
+restart_services() {
+    local service=$1
+
+    if [ -z "$service" ]; then
+        log_info "Restarting all services..."
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose restart
+        else
+            docker compose restart
+        fi
+
+        # Restart Node.js processes
+        if pgrep -f "node.*src/index" >/dev/null; then
+            log_info "Restarting Node.js processes..."
+            pkill -f "node.*src/index"
+            sleep 2
+            npm run dev &
+        fi
+    else
+        log_info "Restarting $service..."
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose restart "$service"
+        else
+            docker compose restart "$service"
+        fi
+    fi
+
+    log_success "Services restarted"
+}
+
+# Clean build artifacts and caches
+clean_environment() {
+    log_info "Cleaning development environment..."
+
+    # Clean Node.js artifacts
+    log_info "Cleaning Node.js artifacts..."
+    find . -name "node_modules" -type d -prune -exec rm -rf {} \; 2>/dev/null || true
+    find . -name "dist" -type d -prune -exec rm -rf {} \; 2>/dev/null || true
+    find . -name ".next" -type d -prune -exec rm -rf {} \; 2>/dev/null || true
+    find . -name "coverage" -type d -prune -exec rm -rf {} \; 2>/dev/null || true
+
+    # Clean TypeScript cache
+    find . -name "*.tsbuildinfo" -delete 2>/dev/null || true
+
+    # Clean Jest cache
+    npx jest --clearCache 2>/dev/null || true
+
+    # Clean Docker artifacts
+    log_info "Cleaning Docker artifacts..."
+    docker system prune -f >/dev/null 2>&1 || true
+
+    # Clean logs
+    log_info "Cleaning logs..."
+    find . -name "*.log" -delete 2>/dev/null || true
+
+    log_success "Environment cleaned"
+}
+
+# Reset development environment
+reset_environment() {
+    log_warning "This will reset your entire development environment!"
+    read -p "Are you sure? (y/N): " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Resetting development environment..."
+
+        # Stop all services
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose down -v
+        else
+            docker compose down -v
+        fi
+
+        # Kill Node.js processes
+        pkill -f "node.*src/index" 2>/dev/null || true
+
+        # Clean environment
+        clean_environment
+
+        # Reinstall dependencies
+        log_info "Reinstalling dependencies..."
         npm install
-        cd ..
-    fi
 
-    log_success "All dependencies installed"
-}
-
-# Update dependencies for all services
-update_dependencies() {
-    log_info "Updating dependencies for all services..."
-
-    # Root dependencies
-    npm update
-
-    # Service dependencies
-    for service in services/*/; do
-        if [ -f "$service/package.json" ]; then
-            log_info "Updating dependencies for $(basename "$service")..."
-            cd "$service"
-            npm update
-            cd ../..
+        # Restart infrastructure
+        log_info "Starting infrastructure..."
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose up -d postgres redis elasticsearch rabbitmq mailhog
+        else
+            docker compose up -d postgres redis elasticsearch rabbitmq mailhog
         fi
-    done
 
-    # Frontend dependencies
-    if [ -f "frontend/package.json" ]; then
-        log_info "Updating frontend dependencies..."
-        cd frontend
-        npm update
-        cd ..
+        # Wait for services
+        sleep 10
+
+        # Reset database
+        reset_database
+
+        log_success "Environment reset complete"
+    else
+        log_info "Reset cancelled"
     fi
-
-    log_success "All dependencies updated"
 }
 
-# Clean all node_modules and reinstall
-clean_install() {
-    log_info "Cleaning all node_modules and reinstalling..."
-
-    # Remove all node_modules
-    find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +
-
-    # Remove package-lock.json files
-    find . -name 'package-lock.json' -delete
-
-    # Reinstall
-    install_dependencies
-
-    log_success "Clean install completed"
-}
-
-# Generate service boilerplate
-generate_service() {
-    local service_name=$1
-
-    if [ -z "$service_name" ]; then
-        log_error "Service name is required"
-        echo "Usage: $0 generate-service <service-name>"
-        return 1
-    fi
-
-    local service_dir="services/$service_name"
-
-    if [ -d "$service_dir" ]; then
-        log_error "Service $service_name already exists"
-        return 1
-    fi
-
-    log_info "Generating service: $service_name"
-
-    # Create service directory structure
-    mkdir -p "$service_dir/src"/{controllers,services,models,middleware,utils,types}
-    mkdir -p "$service_dir/tests"/{unit,integration}
-    mkdir -p "$service_dir/docs"
-
-    # Create package.json
-    cat > "$service_dir/package.json" << EOF
-{
-  "name": "@ailert/$service_name",
-  "version": "1.0.0",
-  "description": "AiLert $service_name Service",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "dev:debug": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts",
-    "format:check": "prettier --check src/**/*.ts",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "dotenv": "^16.3.1",
-    "joi": "^17.11.0",
-    "winston": "^3.11.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/morgan": "^1.9.9",
-    "@types/node": "^20.9.0",
-    "@types/jest": "^29.5.8",
-    "typescript": "^5.3.2",
-    "ts-node-dev": "^2.0.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "supertest": "^6.3.3",
-    "@types/supertest": "^2.0.16"
-  }
-}
-EOF
-
-    # Create TypeScript config
-    cat > "$service_dir/tsconfig.json" << EOF
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
-}
-EOF
-
-    # Create basic index.ts
-    cat > "$service_dir/src/index.ts" << EOF
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: '$service_name',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Ready check endpoint
-app.get('/ready', (req, res) => {
-  res.status(200).json({
-    status: 'ready',
-    service: '$service_name',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(\`$service_name service running on port \${PORT}\`);
-});
-
-export default app;
-EOF
-
-    # Create Dockerfile
-    cp "services/user-service/Dockerfile" "$service_dir/Dockerfile"
-
-    # Create basic test
-    cat > "$service_dir/tests/unit/health.test.ts" << EOF
-import request from 'supertest';
-import app from '../../src/index';
-
-describe('Health Endpoints', () => {
-  it('should return healthy status', async () => {
-    const response = await request(app).get('/health');
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe('healthy');
-    expect(response.body.service).toBe('$service_name');
-  });
-
-  it('should return ready status', async () => {
-    const response = await request(app).get('/ready');
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe('ready');
-  });
-});
-EOF
-
-    # Create Jest config
-    cat > "$service_dir/jest.config.js" << EOF
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
-  },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-};
-EOF
-
-    # Create README
-    cat > "$service_dir/README.md" << EOF
-# $service_name Service
-
-## Description
-AiLert $service_name Service
-
-## Development
-
-### Prerequisites
-- Node.js 18+
-- Docker
-
-### Setup
-\`\`\`bash
-npm install
-\`\`\`
-
-### Running
-\`\`\`bash
-# Development
-npm run dev
-
-# Production
-npm run build
-npm start
-\`\`\`
-
-### Testing
-\`\`\`bash
 # Run tests
-npm test
+run_tests() {
+    local pattern=$1
 
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
-\`\`\`
-
-### Docker
-\`\`\`bash
-# Build image
-docker build -t ailert/$service_name .
-
-# Run container
-docker run -p 3000:3000 ailert/$service_name
-\`\`\`
-
-## API Endpoints
-
-### Health Check
-- \`GET /health\` - Service health status
-- \`GET /ready\` - Service readiness status
-
-## Environment Variables
-- \`PORT\` - Server port (default: 3000)
-- \`NODE_ENV\` - Environment (development/production)
-EOF
-
-    log_success "Service $service_name generated successfully"
-    log_info "Next steps:"
-    echo "  1. cd $service_dir"
-    echo "  2. npm install"
-    echo "  3. npm run dev"
+    if [ -z "$pattern" ]; then
+        log_info "Running all tests..."
+        npm test -- --silent
+    else
+        log_info "Running tests matching pattern: $pattern"
+        npm test -- --silent --testNamePattern="$pattern"
+    fi
 }
 
-# Run security audit
-security_audit() {
-    log_info "Running security audit..."
+# Run linting and formatting
+run_lint() {
+    log_info "Running code quality checks..."
+    node scripts/quality-tools/code-quality-check.js --fix
+}
 
-    # Root audit
-    npm audit --audit-level=moderate
+# Build all services
+build_services() {
+    log_info "Building all services..."
 
-    # Service audits
-    for service in services/*/; do
-        if [ -f "$service/package.json" ]; then
-            log_info "Auditing $(basename "$service")..."
-            cd "$service"
-            npm audit --audit-level=moderate
-            cd ../..
+    # Build root project
+    if [ -f "package.json" ] && grep -q "\"build\":" package.json; then
+        npm run build
+    fi
+
+    # Build services
+    for service_dir in services/*/; do
+        if [ -d "$service_dir" ] && [ -f "${service_dir}package.json" ]; then
+            service_name=$(basename "$service_dir")
+            if grep -q "\"build\":" "${service_dir}package.json"; then
+                log_info "Building $service_name..."
+                (cd "$service_dir" && npm run build)
+            fi
         fi
     done
 
-    # Frontend audit
-    if [ -f "frontend/package.json" ]; then
-        log_info "Auditing frontend..."
-        cd frontend
-        npm audit --audit-level=moderate
-        cd ..
-    fi
-
-    log_success "Security audit completed"
-}
-
-# Fix security vulnerabilities
-security_fix() {
-    log_info "Fixing security vulnerabilities..."
-
-    # Root fix
-    npm audit fix
-
-    # Service fixes
-    for service in services/*/; do
-        if [ -f "$service/package.json" ]; then
-            log_info "Fixing $(basename "$service")..."
-            cd "$service"
-            npm audit fix
-            cd ../..
+    # Build frontend
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+        if grep -q "\"build\":" "frontend/package.json"; then
+            log_info "Building frontend..."
+            (cd frontend && npm run build)
         fi
-    done
-
-    # Frontend fix
-    if [ -f "frontend/package.json" ]; then
-        log_info "Fixing frontend..."
-        cd frontend
-        npm audit fix
-        cd ..
     fi
 
-    log_success "Security fixes applied"
+    log_success "All services built successfully"
 }
 
-# Backup development data
-backup_data() {
-    local backup_dir="backups/$(date +%Y%m%d_%H%M%S)"
+# Reset database
+reset_database() {
+    log_info "Resetting database..."
 
-    log_info "Creating backup in $backup_dir..."
+    if [ -f "package.json" ] && grep -q "db:reset" package.json; then
+        npm run db:reset
+    else
+        log_warning "No db:reset script found"
 
-    mkdir -p "$backup_dir"
+        # Manual database reset
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose exec -T postgres psql -U datatechtoncrm -d datatechtoncrm -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+        else
+            docker compose exec -T postgres psql -U datatechtoncrm -d datatechtoncrm -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+        fi
 
-    # Backup databases
-    docker-compose exec -T postgres pg_dumpall -U ailert > "$backup_dir/postgres_backup.sql"
+        # Run migrations if available
+        if [ -f "package.json" ] && grep -q "db:migrate" package.json; then
+            npm run db:migrate
+        fi
 
-    # Backup Redis data
-    docker-compose exec -T redis redis-cli --rdb - > "$backup_dir/redis_backup.rdb"
+        # Seed database if available
+        if [ -f "package.json" ] && grep -q "db:seed" package.json; then
+            npm run db:seed
+        fi
+    fi
 
-    # Backup Elasticsearch data
-    docker-compose exec -T elasticsearch curl -X GET "localhost:9200/_snapshot" > "$backup_dir/elasticsearch_snapshot.json"
-
-    log_success "Backup created in $backup_dir"
+    log_success "Database reset complete"
 }
 
-# Restore development data
-restore_data() {
-    local backup_dir=$1
+# Interactive code generation
+interactive_generate() {
+    echo -e "${CYAN}Code Generation Menu${NC}"
+    echo
+    echo "1. Generate new service"
+    echo "2. Generate API endpoints"
+    echo "3. Generate React component"
+    echo "4. Generate database migration"
+    echo "5. Exit"
+    echo
 
-    if [ -z "$backup_dir" ]; then
-        log_error "Backup directory is required"
-        echo "Usage: $0 restore-data <backup-directory>"
+    read -p "Select option (1-5): " choice
+
+    case $choice in
+        1)
+            read -p "Service name: " service_name
+            node scripts/code-generators/generate-service.js "$service_name"
+            ;;
+        2)
+            read -p "Service name: " service_name
+            read -p "Resource name: " resource_name
+            node scripts/code-generators/generate-api.js "$service_name" "$resource_name"
+            ;;
+        3)
+            read -p "Component name: " component_name
+            echo "Generating React component: $component_name"
+            # Add React component generator here
+            ;;
+        4)
+            read -p "Migration name: " migration_name
+            echo "Generating migration: $migration_name"
+            # Add migration generator here
+            ;;
+        5)
+            log_info "Exiting..."
+            ;;
+        *)
+            log_error "Invalid option"
+            ;;
+    esac
+}
+
+# Debug service
+debug_service() {
+    local service=$1
+
+    if [ -z "$service" ]; then
+        log_error "Service name required"
+        echo "Available services:"
+        ls -1 services/ | grep -v "shared"
         return 1
     fi
 
-    if [ ! -d "$backup_dir" ]; then
-        log_error "Backup directory does not exist: $backup_dir"
+    local service_dir="services/$service"
+
+    if [ ! -d "$service_dir" ]; then
+        log_error "Service not found: $service"
         return 1
     fi
 
-    log_info "Restoring data from $backup_dir..."
+    log_info "Starting $service in debug mode..."
+    log_info "Debug port: 9229"
+    log_info "Attach your debugger to localhost:9229"
 
-    # Restore PostgreSQL
-    if [ -f "$backup_dir/postgres_backup.sql" ]; then
-        docker-compose exec -T postgres psql -U ailert -d ailert < "$backup_dir/postgres_backup.sql"
-    fi
-
-    # Restore Redis
-    if [ -f "$backup_dir/redis_backup.rdb" ]; then
-        docker-compose stop redis
-        docker cp "$backup_dir/redis_backup.rdb" $(docker-compose ps -q redis):/data/dump.rdb
-        docker-compose start redis
-    fi
-
-    log_success "Data restored from $backup_dir"
+    cd "$service_dir"
+    npm run dev:debug
 }
 
-# Main command handler
-case "$1" in
-    "check-prerequisites")
-        check_prerequisites
-        ;;
-    "install")
-        install_dependencies
-        ;;
-    "update")
-        update_dependencies
-        ;;
-    "clean-install")
-        clean_install
-        ;;
-    "generate-service")
-        generate_service "$2"
-        ;;
-    "security-audit")
-        security_audit
-        ;;
-    "security-fix")
-        security_fix
-        ;;
-    "backup")
-        backup_data
-        ;;
-    "restore")
-        restore_data "$2"
-        ;;
-    *)
-        echo "AiLert Development Utilities"
-        echo ""
-        echo "Usage: $0 <command> [options]"
-        echo ""
-        echo "Commands:"
-        echo "  check-prerequisites           Check if all prerequisites are installed"
-        echo "  install                      Install dependencies for all services"
-        echo "  update                       Update dependencies for all services"
-        echo "  clean-install                Clean all node_modules and reinstall"
-        echo "  generate-service <name>      Generate boilerplate for new service"
-        echo "  security-audit               Run security audit for all services"
-        echo "  security-fix                 Fix security vulnerabilities"
-        echo "  backup                       Backup development data"
-        echo "  restore <backup-dir>         Restore data from backup"
-        echo ""
-        echo "Examples:"
-        echo "  $0 generate-service billing-service"
-        echo "  $0 backup"
-        echo "  $0 restore backups/20231201_120000"
-        ;;
-esac
+# Performance profiling
+run_profiling() {
+    log_info "Running performance profiling..."
+
+    # Check if performance tests exist
+    if [ -d "tests/performance" ]; then
+        log_info "Running performance tests..."
+        npm run test:performance
+    else
+        log_warning "No performance tests found"
+    fi
+
+    # Profile memory usage
+    log_info "Profiling memory usage..."
+    node --inspect --max-old-space-size=4096 -e "
+        const used = process.memoryUsage();
+        console.log('Memory Usage:');
+        for (let key in used) {
+            console.log(\`\${key}: \${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB\`);
+        }
+    "
+}
+
+# Generate and serve documentation
+serve_docs() {
+    log_info "Generating documentation..."
+
+    # Generate API docs if available
+    if [ -f "package.json" ] && grep -q "docs:generate" package.json; then
+        npm run docs:generate
+    fi
+
+    # Generate TypeDoc if available
+    if command -v typedoc >/dev/null 2>&1; then
+        typedoc --out docs/api src
+    fi
+
+    # Serve documentation
+    if [ -d "docs" ]; then
+        log_info "Serving documentation at http://localhost:8080"
+        if command -v python3 >/dev/null 2>&1; then
+            cd docs && python3 -m http.server 8080
+        elif command -v python >/dev/null 2>&1; then
+            cd docs && python -m SimpleHTTPServer 8080
+        elif command -v npx >/dev/null 2>&1; then
+            npx serve docs -p 8080
+        else
+            log_error "No web server available to serve documentation"
+        fi
+    else
+        log_error "No documentation directory found"
+    fi
+}
+
+# Main command dispatcher
+main() {
+    local command=$1
+    shift
+
+    case $command in
+        "status")
+            check_status
+            ;;
+        "logs")
+            show_logs "$@"
+            ;;
+        "restart")
+            restart_services "$@"
+            ;;
+        "clean")
+            clean_environment
+            ;;
+        "reset")
+            reset_environment
+            ;;
+        "test")
+            run_tests "$@"
+            ;;
+        "lint")
+            run_lint
+            ;;
+        "build")
+            build_services
+            ;;
+        "db-reset")
+            reset_database
+            ;;
+        "generate")
+            interactive_generate
+            ;;
+        "debug")
+            debug_service "$@"
+            ;;
+        "profile")
+            run_profiling
+            ;;
+        "docs")
+            serve_docs
+            ;;
+        "help"|"--help"|"-h"|"")
+            show_help
+            ;;
+        *)
+            log_error "Unknown command: $command"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"

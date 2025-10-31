@@ -1,0 +1,467 @@
+# Disaster Recovery and Backup Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: disaster-recovery-config
+  namespace: ailert-production
+data:
+  # Backup configuration
+  backup-schedule: "0 2 * * *" # Daily at 2 AM
+  backup-retention-days: "30"
+  backup-storage-class: "gp3"
+
+  # Recovery configuration
+  recovery-rto: "4h" # Recovery Time Objective
+  recovery-rpo: "1h" # Recovery Point Objective
+
+  # Multi-region configuration
+  primary-region: "us-east-1"
+  secondary-region: "us-west-2"
+
+  # Database backup configuration
+  postgres-backup-enabled: "true"
+  postgres-backup-schedule: "0 */6 * * *" # Every 6 hours
+  postgres-backup-retention: "7d"
+
+  # Redis backup configuration
+  redis-backup-enabled: "true"
+  redis-backup-schedule: "0 */4 * * *" # Every 4 hours
+  redis-backup-retention: "3d"
+
+---
+# PostgreSQL Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: ailert-production
+  labels:
+    app: postgres-backup
+    component: disaster-recovery
+spec:
+  schedule: "0 */6 * * *" # Every 6 hours
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600 # 1 hour timeout
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+            component: disaster-recovery
+        spec:
+          serviceAccountName: backup-service-account
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+          containers:
+            - name: postgres-backup
+              image: postgres:15-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="postgres_backup_${TIMESTAMP}.sql.gz"
+
+                  echo "Starting PostgreSQL backup at $(date)"
+
+                  # Create backup
+                  pg_dump -h postgres-service -U ailert -d ailert_production \
+                    --no-password --verbose --format=custom --compress=9 \
+                    --file=/tmp/backup.dump
+
+                  # Compress and upload to S3
+                  gzip -c /tmp/backup.dump > /tmp/${BACKUP_FILE}
+
+                  # Upload to S3 with encryption
+                  aws s3 cp /tmp/${BACKUP_FILE} \
+                    s3://${BACKUP_BUCKET}/postgres/${BACKUP_FILE} \
+                    --server-side-encryption AES256 \
+                    --storage-class STANDARD_IA
+
+                  # Verify backup
+                  aws s3 ls s3://${BACKUP_BUCKET}/postgres/${BACKUP_FILE}
+
+                  echo "Backup completed successfully: ${BACKUP_FILE}"
+
+                  # Cleanup old backups (keep last 30 days)
+                  aws s3 ls s3://${BACKUP_BUCKET}/postgres/ --recursive | \
+                    awk '$1 < "'$(date -d '30 days ago' '+%Y-%m-%d')'" {print $4}' | \
+                    xargs -I {} aws s3 rm s3://${BACKUP_BUCKET}/{}
+
+                  echo "Backup cleanup completed"
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: POSTGRES_PASSWORD
+                - name: BACKUP_BUCKET
+                  value: "ailert-production-backups"
+                - name: AWS_DEFAULT_REGION
+                  value: "us-east-1"
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "500m"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 5Gi
+          restartPolicy: OnFailure
+
+---
+# Redis Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: ailert-production
+  labels:
+    app: redis-backup
+    component: disaster-recovery
+spec:
+  schedule: "0 */4 * * *" # Every 4 hours
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800 # 30 minutes timeout
+      template:
+        metadata:
+          labels:
+            app: redis-backup
+            component: disaster-recovery
+        spec:
+          serviceAccountName: backup-service-account
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+          containers:
+            - name: redis-backup
+              image: redis:7-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="redis_backup_${TIMESTAMP}.rdb.gz"
+
+                  echo "Starting Redis backup at $(date)"
+
+                  # Create Redis backup
+                  redis-cli -h redis-service -p 6379 -a ${REDIS_PASSWORD} \
+                    --rdb /tmp/dump.rdb
+
+                  # Compress backup
+                  gzip -c /tmp/dump.rdb > /tmp/${BACKUP_FILE}
+
+                  # Upload to S3
+                  aws s3 cp /tmp/${BACKUP_FILE} \
+                    s3://${BACKUP_BUCKET}/redis/${BACKUP_FILE} \
+                    --server-side-encryption AES256 \
+                    --storage-class STANDARD_IA
+
+                  echo "Redis backup completed: ${BACKUP_FILE}"
+
+                  # Cleanup old backups (keep last 7 days)
+                  aws s3 ls s3://${BACKUP_BUCKET}/redis/ --recursive | \
+                    awk '$1 < "'$(date -d '7 days ago' '+%Y-%m-%d')'" {print $4}' | \
+                    xargs -I {} aws s3 rm s3://${BACKUP_BUCKET}/{}
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: REDIS_PASSWORD
+                - name: BACKUP_BUCKET
+                  value: "ailert-production-backups"
+                - name: AWS_DEFAULT_REGION
+                  value: "us-east-1"
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "250m"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 2Gi
+          restartPolicy: OnFailure
+
+---
+# Application State Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: application-state-backup
+  namespace: ailert-production
+  labels:
+    app: application-state-backup
+    component: disaster-recovery
+spec:
+  schedule: "0 1 * * *" # Daily at 1 AM
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 7200 # 2 hours timeout
+      template:
+        metadata:
+          labels:
+            app: application-state-backup
+            component: disaster-recovery
+        spec:
+          serviceAccountName: backup-service-account
+          containers:
+            - name: kubectl-backup
+              image: bitnami/kubectl:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_DIR="/tmp/k8s-backup-${TIMESTAMP}"
+                  mkdir -p ${BACKUP_DIR}
+
+                  echo "Starting Kubernetes state backup at $(date)"
+
+                  # Backup ConfigMaps
+                  kubectl get configmaps -n ailert-production -o yaml > ${BACKUP_DIR}/configmaps.yaml
+
+                  # Backup Secrets (metadata only, not actual secret data)
+                  kubectl get secrets -n ailert-production -o yaml | \
+                    sed 's/data:/# data:/g' > ${BACKUP_DIR}/secrets-metadata.yaml
+
+                  # Backup Services
+                  kubectl get services -n ailert-production -o yaml > ${BACKUP_DIR}/services.yaml
+
+                  # Backup Ingress
+                  kubectl get ingress -n ailert-production -o yaml > ${BACKUP_DIR}/ingress.yaml
+
+                  # Backup PVCs
+                  kubectl get pvc -n ailert-production -o yaml > ${BACKUP_DIR}/pvcs.yaml
+
+                  # Backup HPAs
+                  kubectl get hpa -n ailert-production -o yaml > ${BACKUP_DIR}/hpas.yaml
+
+                  # Backup Network Policies
+                  kubectl get networkpolicies -n ailert-production -o yaml > ${BACKUP_DIR}/networkpolicies.yaml
+
+                  # Create archive
+                  tar -czf /tmp/k8s-state-${TIMESTAMP}.tar.gz -C /tmp k8s-backup-${TIMESTAMP}
+
+                  # Upload to S3
+                  aws s3 cp /tmp/k8s-state-${TIMESTAMP}.tar.gz \
+                    s3://${BACKUP_BUCKET}/kubernetes/k8s-state-${TIMESTAMP}.tar.gz \
+                    --server-side-encryption AES256
+
+                  echo "Kubernetes state backup completed"
+
+                  # Cleanup old backups (keep last 30 days)
+                  aws s3 ls s3://${BACKUP_BUCKET}/kubernetes/ --recursive | \
+                    awk '$1 < "'$(date -d '30 days ago' '+%Y-%m-%d')'" {print $4}' | \
+                    xargs -I {} aws s3 rm s3://${BACKUP_BUCKET}/{}
+              env:
+                - name: BACKUP_BUCKET
+                  value: "ailert-production-backups"
+                - name: AWS_DEFAULT_REGION
+                  value: "us-east-1"
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "250m"
+          restartPolicy: OnFailure
+
+---
+# Disaster Recovery Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-service-account
+  namespace: ailert-production
+  labels:
+    component: disaster-recovery
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/AilertBackupRole
+
+---
+# Disaster Recovery RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-role
+  namespace: ailert-production
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets", "services", "persistentvolumeclaims"]
+    verbs: ["get", "list"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-role-binding
+  namespace: ailert-production
+subjects:
+  - kind: ServiceAccount
+    name: backup-service-account
+    namespace: ailert-production
+roleRef:
+  kind: Role
+  name: backup-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Disaster Recovery Monitoring
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-monitoring
+  namespace: ailert-production
+  labels:
+    app: backup-monitoring
+    component: disaster-recovery
+spec:
+  selector:
+    app: backup-monitoring
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# Backup Verification Job (runs after backups)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-verification
+  namespace: ailert-production
+  labels:
+    app: backup-verification
+    component: disaster-recovery
+spec:
+  schedule: "0 4 * * *" # Daily at 4 AM (after backups)
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-service-account
+          containers:
+            - name: backup-verifier
+              image: amazon/aws-cli:latest
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+                  echo "Starting backup verification at $(date)"
+
+                  # Check if today's backups exist
+                  TODAY=$(date +%Y%m%d)
+
+                  # Verify PostgreSQL backup
+                  POSTGRES_BACKUP=$(aws s3 ls s3://${BACKUP_BUCKET}/postgres/ | grep ${TODAY} | wc -l)
+                  if [ ${POSTGRES_BACKUP} -eq 0 ]; then
+                    echo "ERROR: No PostgreSQL backup found for ${TODAY}"
+                    exit 1
+                  fi
+
+                  # Verify Redis backup
+                  REDIS_BACKUP=$(aws s3 ls s3://${BACKUP_BUCKET}/redis/ | grep ${TODAY} | wc -l)
+                  if [ ${REDIS_BACKUP} -eq 0 ]; then
+                    echo "ERROR: No Redis backup found for ${TODAY}"
+                    exit 1
+                  fi
+
+                  # Verify Kubernetes state backup
+                  K8S_BACKUP=$(aws s3 ls s3://${BACKUP_BUCKET}/kubernetes/ | grep ${TODAY} | wc -l)
+                  if [ ${K8S_BACKUP} -eq 0 ]; then
+                    echo "ERROR: No Kubernetes state backup found for ${TODAY}"
+                    exit 1
+                  fi
+
+                  echo "All backups verified successfully for ${TODAY}"
+
+                  # Send success notification (implement webhook/SNS as needed)
+                  curl -X POST ${WEBHOOK_URL} \
+                    -H "Content-Type: application/json" \
+                    -d "{\"message\": \"Backup verification successful for ${TODAY}\", \"status\": \"success\"}" || true
+              env:
+                - name: BACKUP_BUCKET
+                  value: "ailert-production-backups"
+                - name: AWS_DEFAULT_REGION
+                  value: "us-east-1"
+                - name: WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: BACKUP_WEBHOOK_URL
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure

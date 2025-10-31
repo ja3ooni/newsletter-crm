@@ -97,6 +97,20 @@ export class EncryptionService {
    * Encrypt sensitive data
    */
   async encrypt(plaintext: string, keyId?: string): Promise<EncryptedData> {
+    // Input validation
+    if (!plaintext || typeof plaintext !== 'string') {
+      throw new Error('Plaintext must be a non-empty string');
+    }
+
+    if (plaintext.length > 1024 * 1024) {
+      // 1MB limit
+      throw new Error('Plaintext exceeds maximum size limit');
+    }
+
+    if (keyId && (typeof keyId !== 'string' || keyId.trim().length === 0)) {
+      throw new Error('KeyId must be a non-empty string if provided');
+    }
+
     try {
       switch (this.config.provider) {
         case 'aws-kms':
@@ -113,6 +127,7 @@ export class EncryptionService {
     } catch (error) {
       logger.error('Encryption failed', error as Error, {
         provider: this.config.provider,
+        plaintextLength: plaintext.length,
       });
       throw error;
     }
@@ -122,6 +137,31 @@ export class EncryptionService {
    * Decrypt sensitive data
    */
   async decrypt(encryptedData: EncryptedData): Promise<string> {
+    // Input validation
+    if (!encryptedData || typeof encryptedData !== 'object') {
+      throw new Error('EncryptedData must be a valid object');
+    }
+
+    if (
+      !encryptedData.ciphertext ||
+      typeof encryptedData.ciphertext !== 'string'
+    ) {
+      throw new Error('Ciphertext must be a non-empty string');
+    }
+
+    if (
+      !encryptedData.algorithm ||
+      typeof encryptedData.algorithm !== 'string'
+    ) {
+      throw new Error('Algorithm must be specified');
+    }
+
+    // Validate algorithm is supported
+    const supportedAlgorithms = ['AWS-KMS', 'AES-256-GCM', 'Vault-Transit'];
+    if (!supportedAlgorithms.includes(encryptedData.algorithm)) {
+      throw new Error(`Unsupported algorithm: ${encryptedData.algorithm}`);
+    }
+
     try {
       switch (this.config.provider) {
         case 'aws-kms':
@@ -138,6 +178,7 @@ export class EncryptionService {
     } catch (error) {
       logger.error('Decryption failed', error as Error, {
         provider: this.config.provider,
+        algorithm: encryptedData.algorithm,
       });
       throw error;
     }

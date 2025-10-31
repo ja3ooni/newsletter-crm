@@ -1,0 +1,11 @@
+# Trivy ignore file for vulnerability scanning
+# Add CVE IDs that should be ignored (with justification)
+
+# Example: Ignore specific CVEs that are not applicable
+# CVE-2021-44228 # Log4j vulnerability - not using Java/Log4j
+
+# Development dependencies that may have vulnerabilities but are not used in production
+# Add specific CVE patterns for dev dependencies if needed
+
+# Temporary ignores (should be reviewed regularly)
+# CVE-YYYY-XXXXX # Temporary ignore until fix is available - Review by: YYYY-MM-DD

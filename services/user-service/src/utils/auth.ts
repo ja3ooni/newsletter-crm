@@ -1,11 +1,11 @@
 import { jwtConfig, securityConfig } from '@/config';
 import {
-    AuthTokens,
-    JwtPayload,
-    Permission,
-    RefreshTokenPayload,
-    UnauthorizedError,
-    User,
+  AuthTokens,
+  JwtPayload,
+  Permission,
+  RefreshTokenPayload,
+  UnauthorizedError,
+  User,
 } from '@/types';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -13,6 +13,13 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { logger, logSecurityEvent } from './logger';
 import { redis } from './redis';
+
+interface SessionData {
+  userId: string;
+  createdAt: Date;
+  lastAccessedAt: Date;
+  [key: string]: any;
+}
 
 export class AuthUtils {
   // Password hashing
@@ -25,7 +32,10 @@ export class AuthUtils {
     }
   }
 
-  static async verifyPassword(password: string, hash: string): Promise<boolean> {
+  static async verifyPassword(
+    password: string,
+    hash: string
+  ): Promise<boolean> {
     try {
       return await bcrypt.compare(password, hash);
     } catch (error) {
@@ -35,7 +45,11 @@ export class AuthUtils {
   }
 
   // JWT token generation and verification
-  static generateTokens(user: User, roles: string[], permissions: Permission[]): AuthTokens {
+  static generateTokens(
+    user: User,
+    roles: string[],
+    permissions: Permission[]
+  ): AuthTokens {
     const tokenId = uuidv4();
     const now = Math.floor(Date.now() / 1000);
 
@@ -85,7 +99,9 @@ export class AuthUtils {
       }) as JwtPayload;
 
       // Check if token is blacklisted
-      const isBlacklisted = await redis.isTokenBlacklisted(payload.userId + ':' + payload.iat);
+      const isBlacklisted = await redis.isTokenBlacklisted(
+        payload.userId + ':' + payload.iat
+      );
       if (isBlacklisted) {
         throw new UnauthorizedError('Token has been revoked');
       }
@@ -141,7 +157,9 @@ export class AuthUtils {
     });
   }
 
-  static async blacklistRefreshToken(payload: RefreshTokenPayload): Promise<void> {
+  static async blacklistRefreshToken(
+    payload: RefreshTokenPayload
+  ): Promise<void> {
     const expiresAt = new Date(payload.exp * 1000);
     await redis.blacklistToken(payload.tokenId, expiresAt);
 
@@ -169,7 +187,11 @@ export class AuthUtils {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  static async storePasswordResetToken(userId: string, token: string, expiryMinutes = 60): Promise<void> {
+  static async storePasswordResetToken(
+    userId: string,
+    token: string,
+    expiryMinutes = 60
+  ): Promise<void> {
     const key = `password_reset:${token}`;
     const ttl = expiryMinutes * 60; // Convert to seconds
     await redis.setJson(key, { userId, createdAt: new Date() }, ttl);
@@ -177,7 +199,9 @@ export class AuthUtils {
 
   static async verifyPasswordResetToken(token: string): Promise<string | null> {
     const key = `password_reset:${token}`;
-    const data = await redis.getJson<{ userId: string; createdAt: string }>(key);
+    const data = await redis.getJson<{ userId: string; createdAt: string }>(
+      key
+    );
 
     if (!data) {
       return null;
@@ -193,15 +217,23 @@ export class AuthUtils {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  static async storeEmailVerificationToken(userId: string, token: string, expiryHours = 24): Promise<void> {
+  static async storeEmailVerificationToken(
+    userId: string,
+    token: string,
+    expiryHours = 24
+  ): Promise<void> {
     const key = `email_verification:${token}`;
     const ttl = expiryHours * 3600; // Convert to seconds
     await redis.setJson(key, { userId, createdAt: new Date() }, ttl);
   }
 
-  static async verifyEmailVerificationToken(token: string): Promise<string | null> {
+  static async verifyEmailVerificationToken(
+    token: string
+  ): Promise<string | null> {
     const key = `email_verification:${token}`;
-    const data = await redis.getJson<{ userId: string; createdAt: string }>(key);
+    const data = await redis.getJson<{ userId: string; createdAt: string }>(
+      key
+    );
 
     if (!data) {
       return null;
@@ -213,7 +245,11 @@ export class AuthUtils {
   }
 
   // Rate limiting helpers
-  static async checkRateLimit(identifier: string, windowMs: number, maxRequests: number): Promise<boolean> {
+  static async checkRateLimit(
+    identifier: string,
+    windowMs: number,
+    maxRequests: number
+  ): Promise<boolean> {
     const key = `rate_limit:${identifier}`;
     const windowSeconds = Math.floor(windowMs / 1000);
 
@@ -221,29 +257,48 @@ export class AuthUtils {
     return count <= maxRequests;
   }
 
-  static async getRateLimitInfo(identifier: string): Promise<{ count: number; ttl: number }> {
+  static async getRateLimitInfo(
+    identifier: string
+  ): Promise<{ count: number; ttl: number }> {
     const key = `rate_limit:${identifier}`;
-    const count = parseInt(await redis.get(key) || '0', 10);
+    const count = parseInt((await redis.get(key)) || '0', 10);
     const ttl = await redis.getClient().ttl(key);
 
     return { count, ttl };
   }
 
   // Permission checking
-  static hasPermission(userPermissions: Permission[], requiredPermission: Permission): boolean {
-    return userPermissions.some(permission =>
-      permission.resource === requiredPermission.resource &&
-      permission.action === requiredPermission.action &&
-      this.matchesConditions(permission.conditions, requiredPermission.conditions)
+  static hasPermission(
+    userPermissions: Permission[],
+    requiredPermission: Permission
+  ): boolean {
+    return userPermissions.some(
+      permission =>
+        permission.resource === requiredPermission.resource &&
+        permission.action === requiredPermission.action &&
+        this.matchesConditions(
+          permission.conditions,
+          requiredPermission.conditions
+        )
     );
   }
 
-  static hasAnyPermission(userPermissions: Permission[], requiredPermissions: Permission[]): boolean {
-    return requiredPermissions.some(required => this.hasPermission(userPermissions, required));
+  static hasAnyPermission(
+    userPermissions: Permission[],
+    requiredPermissions: Permission[]
+  ): boolean {
+    return requiredPermissions.some(required =>
+      this.hasPermission(userPermissions, required)
+    );
   }
 
-  static hasAllPermissions(userPermissions: Permission[], requiredPermissions: Permission[]): boolean {
-    return requiredPermissions.every(required => this.hasPermission(userPermissions, required));
+  static hasAllPermissions(
+    userPermissions: Permission[],
+    requiredPermissions: Permission[]
+  ): boolean {
+    return requiredPermissions.every(required =>
+      this.hasPermission(userPermissions, required)
+    );
   }
 
   private static matchesConditions(
@@ -256,7 +311,9 @@ export class AuthUtils {
     return Object.entries(requiredConditions).every(([key, value]) => {
       const userValue = userConditions[key];
       if (Array.isArray(value)) {
-        return Array.isArray(userValue) && value.every(v => userValue.includes(v));
+        return (
+          Array.isArray(userValue) && value.every(v => userValue.includes(v))
+        );
       }
       return userValue === value;
     });
@@ -269,20 +326,28 @@ export class AuthUtils {
       throw new Error(`Invalid expiry format: ${expiry}`);
     }
 
-    const value = parseInt(match[1], 10);
+    const value = parseInt(match[1]!, 10);
     const unit = match[2];
 
     switch (unit) {
-      case 's': return value;
-      case 'm': return value * 60;
-      case 'h': return value * 3600;
-      case 'd': return value * 86400;
-      default: throw new Error(`Invalid expiry unit: ${unit}`);
+      case 's':
+        return value;
+      case 'm':
+        return value * 60;
+      case 'h':
+        return value * 3600;
+      case 'd':
+        return value * 86400;
+      default:
+        throw new Error(`Invalid expiry unit: ${unit}`);
     }
   }
 
   // Session management
-  static async createSession(userId: string, metadata: Record<string, any> = {}): Promise<string> {
+  static async createSession(
+    userId: string,
+    metadata: Record<string, any> = {}
+  ): Promise<string> {
     const sessionId = uuidv4();
     const sessionData = {
       userId,
@@ -302,7 +367,7 @@ export class AuthUtils {
   }
 
   static async updateSessionAccess(sessionId: string): Promise<void> {
-    const session = await redis.getSession(sessionId);
+    const session = await redis.getSession<SessionData>(sessionId);
     if (session) {
       session.lastAccessedAt = new Date();
       const ttl = this.parseExpiryTime(jwtConfig.refreshExpiresIn);

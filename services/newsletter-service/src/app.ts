@@ -1,48 +1,59 @@
-import { config } from '@/config'
-import { errorHandler, notFoundHandler, setupGlobalErrorHandlers } from '@/middleware/errorHandler'
-import { rateLimiters } from '@/middleware/rateLimit'
-import routes from '@/routes'
-import { logger } from '@/utils/logger'
-import compression from 'compression'
-import cors from 'cors'
-import express from 'express'
-import helmet from 'helmet'
+import { config } from '@/config';
+import {
+  errorHandler,
+  notFoundHandler,
+  setupGlobalErrorHandlers,
+} from '@/middleware/errorHandler';
+import { rateLimiters } from '@/middleware/rateLimit';
+import routes from '@/routes';
+import { logger } from '@/utils/logger';
+import compression from 'compression';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
 
 // Setup global error handlers
-setupGlobalErrorHandlers()
+setupGlobalErrorHandlers();
 
-const app = express()
+const app = express();
 
 // Trust proxy if configured
 if (config.security.trustProxy) {
-  app.set('trust proxy', 1)
+  app.set('trust proxy', 1);
 }
 
 // Security middleware
-app.use(helmet(config.security.helmetOptions))
+app.use(helmet(config.security.helmetOptions));
 
 // CORS configuration
-app.use(cors({
-  origin: config.security.corsOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Request-ID'],
-}))
+app.use(
+  cors({
+    origin: config.security.corsOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-API-Key',
+      'X-Request-ID',
+    ],
+  })
+);
 
 // Compression middleware
-app.use(compression())
+app.use(compression());
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  const startTime = Date.now()
+  const startTime = Date.now();
 
   res.on('finish', () => {
-    const duration = Date.now() - startTime
-    const logLevel = res.statusCode >= 400 ? 'warn' : 'info'
+    const duration = Date.now() - startTime;
+    const logLevel = res.statusCode >= 400 ? 'warn' : 'info';
 
     logger[logLevel]('HTTP Request', {
       method: req.method,
@@ -52,22 +63,27 @@ app.use((req, res, next) => {
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       contentLength: res.get('Content-Length'),
-    })
-  })
+    });
+  });
 
-  next()
-})
+  next();
+});
 
 // Request ID middleware
 app.use((req, res, next) => {
-  const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  req.headers['x-request-id'] = requestId
-  res.setHeader('X-Request-ID', requestId)
-  next()
-})
+  const requestId =
+    req.headers['x-request-id'] ||
+    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  next();
+});
 
 // General rate limiting
-app.use(rateLimiters.general)
+app.use(rateLimiters.general);
+
+// Memory tracking middleware for all requests
+app.use(newsletterMemoryMiddleware);
 
 // Health check endpoint (before routes)
 app.get('/health', (req, res) => {
@@ -79,16 +95,26 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     environment: config.nodeEnv,
-  })
-})
+  });
+});
+
+// Memory optimization endpoints
+app.get('/health/memory', memoryHealthCheck);
+app.post('/admin/memory/optimize', forceMemoryOptimization);
+app.get('/admin/memory/report', getMemoryPerformanceReport);
+
+// Bulk operation middleware for specific routes
+app.use('/v1/newsletters/bulk', bulkOperationMemoryMiddleware());
+app.use('/v1/subscribers/bulk', bulkOperationMemoryMiddleware());
+app.use('/v1/campaigns/bulk', bulkOperationMemoryMiddleware());
 
 // API routes
-app.use('/v1', routes)
+app.use('/v1', routes);
 
 // Catch 404 and forward to error handler
-app.use(notFoundHandler)
+app.use(notFoundHandler);
 
 // Error handling middleware (must be last)
-app.use(errorHandler)
+app.use(errorHandler);
 
-export default app
+export default app;

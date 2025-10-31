@@ -1,508 +1,544 @@
-# AiLert Development Utilities - PowerShell Version
+# Development Utilities Script for Windows PowerShell
+# Collection of useful development commands and shortcuts
+
 param(
     [Parameter(Position=0)]
     [string]$Command,
 
-    [Parameter(Position=1)]
-    [string]$Parameter1,
-
-    [Parameter(Position=2)]
-    [string]$Parameter2
+    [Parameter(Position=1, ValueFromRemainingArguments=$true)]
+    [string[]]$Arguments
 )
 
 # Colors for output
-$Colors = @{
-    Red = "Red"
-    Green = "Green"
-    Yellow = "Yellow"
-    Blue = "Blue"
-    Cyan = "Cyan"
-}
-
-# Helper functions
 function Write-Info {
     param([string]$Message)
-    Write-Host "[INFO] $Message" -ForegroundColor $Colors.Blue
+    Write-Host "🔵 [INFO] $Message" -ForegroundColor Blue
 }
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "[SUCCESS] $Message" -ForegroundColor $Colors.Green
+    Write-Host "✅ [SUCCESS] $Message" -ForegroundColor Green
 }
 
 function Write-Warning {
     param([string]$Message)
-    Write-Host "[WARNING] $Message" -ForegroundColor $Colors.Yellow
+    Write-Host "⚠️ [WARNING] $Message" -ForegroundColor Yellow
 }
 
 function Write-Error {
     param([string]$Message)
-    Write-Host "[ERROR] $Message" -ForegroundColor $Colors.Red
+    Write-Host "❌ [ERROR] $Message" -ForegroundColor Red
 }
 
-# Check prerequisites
-function Test-Prerequisites {
-    Write-Info "Checking prerequisites..."
+# Show help
+function Show-Help {
+    Write-Host "Development Utilities" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Usage: .\scripts\dev-utils.ps1 <command> [options]"
+    Write-Host ""
+    Write-Host "Available commands:" -ForegroundColor Yellow
+    Write-Host "  status          Show development environment status" -ForegroundColor Green
+    Write-Host "  logs [service]  Show logs for all services or specific service" -ForegroundColor Green
+    Write-Host "  restart [service] Restart all services or specific service" -ForegroundColor Green
+    Write-Host "  clean           Clean all build artifacts and caches" -ForegroundColor Green
+    Write-Host "  reset           Reset development environment" -ForegroundColor Green
+    Write-Host "  test [pattern]  Run tests with optional pattern" -ForegroundColor Green
+    Write-Host "  lint            Run linting and formatting" -ForegroundColor Green
+    Write-Host "  build           Build all services" -ForegroundColor Green
+    Write-Host "  db-reset        Reset database with fresh data" -ForegroundColor Green
+    Write-Host "  generate        Interactive code generation" -ForegroundColor Green
+    Write-Host "  debug <service> Start service in debug mode" -ForegroundColor Green
+    Write-Host "  profile         Run performance profiling" -ForegroundColor Green
+    Write-Host "  docs            Generate and serve documentation" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Examples:" -ForegroundColor Yellow
+    Write-Host "  .\scripts\dev-utils.ps1 status"
+    Write-Host "  .\scripts\dev-utils.ps1 logs user-service"
+    Write-Host "  .\scripts\dev-utils.ps1 test newsletter"
+    Write-Host "  .\scripts\dev-utils.ps1 debug user-service"
+}
 
-    $allGood = $true
+# Check development environment status
+function Check-Status {
+    Write-Info "Checking development environment status..."
+    Write-Host ""
 
-    # Check Docker
-    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-        Write-Error "Docker is not installed"
-        $allGood = $false
+    # Check Docker services
+    Write-Host "Docker Services:" -ForegroundColor Cyan
+    try {
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose ps
+        } elseif (Get-Command docker -ErrorAction SilentlyContinue) {
+            docker compose ps
+        } else {
+            Write-Error "Docker Compose not found"
+        }
+    } catch {
+        Write-Error "Failed to check Docker services: $_"
     }
+    Write-Host ""
 
-    # Check Docker Compose
-    if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
-        Write-Error "Docker Compose is not installed"
-        $allGood = $false
+    # Check Node.js processes
+    Write-Host "Node.js Processes:" -ForegroundColor Cyan
+    try {
+        $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
+        if ($nodeProcesses) {
+            $nodeProcesses | Format-Table -Property Id, ProcessName, CPU, WorkingSet
+        } else {
+            Write-Host "No Node.js processes running"
+        }
+    } catch {
+        Write-Host "No Node.js processes running"
     }
+    Write-Host ""
 
-    # Check Node.js
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        Write-Error "Node.js is not installed"
-        $allGood = $false
+    # Check ports
+    Write-Host "Port Usage:" -ForegroundColor Cyan
+    $ports = @(3000, 3001, 8000, 8001, 8002, 8003, 8004, 5432, 6379, 9200, 5672, 1025, 8025)
+    foreach ($port in $ports) {
+        try {
+            $connection = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+            if ($connection) {
+                $process = Get-Process -Id $connection.OwningProcess -ErrorAction SilentlyContinue
+                Write-Host "Port $port`: $($process.ProcessName)"
+            }
+        } catch {
+            # Port not in use
+        }
+    }
+    Write-Host ""
+
+    # Check disk space
+    Write-Host "Disk Usage:" -ForegroundColor Cyan
+    Get-WmiObject -Class Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} |
+        Select-Object DeviceID, @{Name="Size(GB)";Expression={[math]::Round($_.Size/1GB,2)}},
+        @{Name="FreeSpace(GB)";Expression={[math]::Round($_.FreeSpace/1GB,2)}},
+        @{Name="PercentFree";Expression={[math]::Round(($_.FreeSpace/$_.Size)*100,2)}} |
+        Format-Table
+    Write-Host ""
+
+    # Check memory usage
+    Write-Host "Memory Usage:" -ForegroundColor Cyan
+    $memory = Get-WmiObject -Class Win32_OperatingSystem
+    $totalMemory = [math]::Round($memory.TotalVisibleMemorySize/1MB, 2)
+    $freeMemory = [math]::Round($memory.FreePhysicalMemory/1MB, 2)
+    $usedMemory = $totalMemory - $freeMemory
+    Write-Host "Total: $totalMemory GB, Used: $usedMemory GB, Free: $freeMemory GB"
+}
+
+# Show logs
+function Show-Logs {
+    param([string]$Service)
+
+    if ([string]::IsNullOrEmpty($Service)) {
+        Write-Info "Showing logs for all services..."
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose logs -f --tail=100
+        } else {
+            docker compose logs -f --tail=100
+        }
     } else {
-        # Check Node.js version
-        $nodeVersion = (node -v).Substring(1).Split('.')[0]
-        if ([int]$nodeVersion -lt 18) {
-            Write-Error "Node.js version 18 or higher is required. Current: $(node -v)"
-            $allGood = $false
+        Write-Info "Showing logs for $Service..."
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose logs -f --tail=100 $Service
+        } else {
+            docker compose logs -f --tail=100 $Service
+        }
+    }
+}
+
+# Restart services
+function Restart-Services {
+    param([string]$Service)
+
+    if ([string]::IsNullOrEmpty($Service)) {
+        Write-Info "Restarting all services..."
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose restart
+        } else {
+            docker compose restart
+        }
+
+        # Restart Node.js processes
+        $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
+        if ($nodeProcesses) {
+            Write-Info "Restarting Node.js processes..."
+            $nodeProcesses | Stop-Process -Force
+            Start-Sleep -Seconds 2
+            Start-Process -FilePath "npm" -ArgumentList "run", "dev" -NoNewWindow
+        }
+    } else {
+        Write-Info "Restarting $Service..."
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose restart $Service
+        } else {
+            docker compose restart $Service
         }
     }
 
-    if ($allGood) {
-        Write-Success "All prerequisites are met"
-        return $true
-    } else {
-        return $false
-    }
+    Write-Success "Services restarted"
 }
 
-# Install dependencies for all services
-function Install-Dependencies {
-    Write-Info "Installing dependencies for all services..."
+# Clean build artifacts and caches
+function Clean-Environment {
+    Write-Info "Cleaning development environment..."
 
-    # Root dependencies
-    npm install
+    # Clean Node.js artifacts
+    Write-Info "Cleaning Node.js artifacts..."
+    Get-ChildItem -Path . -Recurse -Directory -Name "node_modules" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path . -Recurse -Directory -Name "dist" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path . -Recurse -Directory -Name ".next" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path . -Recurse -Directory -Name "coverage" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
-    # Service dependencies
-    Get-ChildItem -Path "services" -Directory | ForEach-Object {
-        $packageJsonPath = Join-Path $_.FullName "package.json"
-        if (Test-Path $packageJsonPath) {
-            Write-Info "Installing dependencies for $($_.Name)..."
-            Push-Location $_.FullName
-            npm install
-            Pop-Location
-        }
+    # Clean TypeScript cache
+    Get-ChildItem -Path . -Recurse -File -Name "*.tsbuildinfo" | Remove-Item -Force -ErrorAction SilentlyContinue
+
+    # Clean Jest cache
+    try {
+        npx jest --clearCache
+    } catch {
+        Write-Warning "Failed to clear Jest cache"
     }
 
-    # Frontend dependencies
-    if (Test-Path "frontend/package.json") {
-        Write-Info "Installing frontend dependencies..."
-        Push-Location "frontend"
+    # Clean Docker artifacts
+    Write-Info "Cleaning Docker artifacts..."
+    try {
+        docker system prune -f | Out-Null
+    } catch {
+        Write-Warning "Failed to clean Docker artifacts"
+    }
+
+    # Clean logs
+    Write-Info "Cleaning logs..."
+    Get-ChildItem -Path . -Recurse -File -Name "*.log" | Remove-Item -Force -ErrorAction SilentlyContinue
+
+    Write-Success "Environment cleaned"
+}
+
+# Reset development environment
+function Reset-Environment {
+    Write-Warning "This will reset your entire development environment!"
+    $confirmation = Read-Host "Are you sure? (y/N)"
+
+    if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
+        Write-Info "Resetting development environment..."
+
+        # Stop all services
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose down -v
+        } else {
+            docker compose down -v
+        }
+
+        # Kill Node.js processes
+        Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force
+
+        # Clean environment
+        Clean-Environment
+
+        # Reinstall dependencies
+        Write-Info "Reinstalling dependencies..."
         npm install
-        Pop-Location
-    }
 
-    Write-Success "All dependencies installed"
+        # Restart infrastructure
+        Write-Info "Starting infrastructure..."
+        if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+            docker-compose up -d postgres redis elasticsearch rabbitmq mailhog
+        } else {
+            docker compose up -d postgres redis elasticsearch rabbitmq mailhog
+        }
+
+        # Wait for services
+        Start-Sleep -Seconds 10
+
+        # Reset database
+        Reset-Database
+
+        Write-Success "Environment reset complete"
+    } else {
+        Write-Info "Reset cancelled"
+    }
 }
 
-# Update dependencies for all services
-function Update-Dependencies {
-    Write-Info "Updating dependencies for all services..."
+# Run tests
+function Run-Tests {
+    param([string]$Pattern)
 
-    # Root dependencies
-    npm update
+    if ([string]::IsNullOrEmpty($Pattern)) {
+        Write-Info "Running all tests..."
+        npm test -- --silent
+    } else {
+        Write-Info "Running tests matching pattern: $Pattern"
+        npm test -- --silent --testNamePattern="$Pattern"
+    }
+}
 
-    # Service dependencies
-    Get-ChildItem -Path "services" -Directory | ForEach-Object {
-        $packageJsonPath = Join-Path $_.FullName "package.json"
-        if (Test-Path $packageJsonPath) {
-            Write-Info "Updating dependencies for $($_.Name)..."
-            Push-Location $_.FullName
-            npm update
-            Pop-Location
+# Run linting and formatting
+function Run-Lint {
+    Write-Info "Running code quality checks..."
+    node scripts/quality-tools/code-quality-check.js --fix
+}
+
+# Build all services
+function Build-Services {
+    Write-Info "Building all services..."
+
+    # Build root project
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        if ($packageJson.scripts.build) {
+            npm run build
         }
     }
 
-    # Frontend dependencies
-    if (Test-Path "frontend/package.json") {
-        Write-Info "Updating frontend dependencies..."
-        Push-Location "frontend"
-        npm update
-        Pop-Location
-    }
-
-    Write-Success "All dependencies updated"
-}
-
-# Clean all node_modules and reinstall
-function Reset-Dependencies {
-    Write-Info "Cleaning all node_modules and reinstalling..."
-
-    # Remove all node_modules
-    Get-ChildItem -Path . -Name "node_modules" -Recurse -Directory | ForEach-Object {
-        $fullPath = Join-Path (Get-Location) $_
-        Write-Info "Removing $fullPath"
-        Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    # Remove package-lock.json files
-    Get-ChildItem -Path . -Name "package-lock.json" -Recurse -File | ForEach-Object {
-        Remove-Item $_ -Force
-    }
-
-    # Reinstall
-    Install-Dependencies
-
-    Write-Success "Clean install completed"
-}
-
-# Generate service boilerplate
-function New-Service {
-    param([string]$ServiceName)
-
-    if (-not $ServiceName) {
-        Write-Error "Service name is required"
-        Write-Host "Usage: .\dev-utils.ps1 generate-service <service-name>"
-        return
-    }
-
-    $serviceDir = "services\$ServiceName"
-
-    if (Test-Path $serviceDir) {
-        Write-Error "Service $ServiceName already exists"
-        return
-    }
-
-    Write-Info "Generating service: $ServiceName"
-
-    # Create service directory structure
-    New-Item -ItemType Directory -Path "$serviceDir\src\controllers" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\src\services" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\src\models" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\src\middleware" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\src\utils" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\src\types" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\tests\unit" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\tests\integration" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$serviceDir\docs" -Force | Out-Null
-
-    # Create package.json
-    $packageJson = @"
-{
-  "name": "@ailert/$ServiceName",
-  "version": "1.0.0",
-  "description": "AiLert $ServiceName Service",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "dev:debug": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts",
-    "format:check": "prettier --check src/**/*.ts",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "morgan": "^1.10.0",
-    "dotenv": "^16.3.1",
-    "joi": "^17.11.0",
-    "winston": "^3.11.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/morgan": "^1.9.9",
-    "@types/node": "^20.9.0",
-    "@types/jest": "^29.5.8",
-    "typescript": "^5.3.2",
-    "ts-node-dev": "^2.0.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "supertest": "^6.3.3",
-    "@types/supertest": "^2.0.16"
-  }
-}
-"@
-
-    Set-Content -Path "$serviceDir\package.json" -Value $packageJson
-
-    # Create TypeScript config
-    $tsConfig = @"
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
-}
-"@
-
-    Set-Content -Path "$serviceDir\tsconfig.json" -Value $tsConfig
-
-    # Create basic index.ts
-    $indexTs = @"
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: '$ServiceName',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Ready check endpoint
-app.get('/ready', (req, res) => {
-  res.status(200).json({
-    status: 'ready',
-    service: '$ServiceName',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`$ServiceName service running on port `${PORT}`);
-});
-
-export default app;
-"@
-
-    Set-Content -Path "$serviceDir\src\index.ts" -Value $indexTs
-
-    # Copy Dockerfile
-    Copy-Item "services\user-service\Dockerfile" "$serviceDir\Dockerfile"
-
-    # Create basic test
-    $healthTest = @"
-import request from 'supertest';
-import app from '../../src/index';
-
-describe('Health Endpoints', () => {
-  it('should return healthy status', async () => {
-    const response = await request(app).get('/health');
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe('healthy');
-    expect(response.body.service).toBe('$ServiceName');
-  });
-
-  it('should return ready status', async () => {
-    const response = await request(app).get('/ready');
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe('ready');
-  });
-});
-"@
-
-    Set-Content -Path "$serviceDir\tests\unit\health.test.ts" -Value $healthTest
-
-    # Create Jest config
-    $jestConfig = @"
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  transform: {
-    '^.+\.ts$': 'ts-jest',
-  },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-};
-"@
-
-    Set-Content -Path "$serviceDir\jest.config.js" -Value $jestConfig
-
-    Write-Success "Service $ServiceName generated successfully"
-    Write-Info "Next steps:"
-    Write-Host "  1. cd $serviceDir"
-    Write-Host "  2. npm install"
-    Write-Host "  3. npm run dev"
-}
-
-# Run security audit
-function Test-Security {
-    Write-Info "Running security audit..."
-
-    # Root audit
-    npm audit --audit-level=moderate
-
-    # Service audits
+    # Build services
     Get-ChildItem -Path "services" -Directory | ForEach-Object {
-        $packageJsonPath = Join-Path $_.FullName "package.json"
+        $serviceDir = $_.FullName
+        $packageJsonPath = Join-Path $serviceDir "package.json"
+
         if (Test-Path $packageJsonPath) {
-            Write-Info "Auditing $($_.Name)..."
-            Push-Location $_.FullName
-            npm audit --audit-level=moderate
-            Pop-Location
+            $packageJson = Get-Content $packageJsonPath | ConvertFrom-Json
+            if ($packageJson.scripts.build) {
+                Write-Info "Building $($_.Name)..."
+                Push-Location $serviceDir
+                try {
+                    npm run build
+                } finally {
+                    Pop-Location
+                }
+            }
         }
     }
 
-    # Frontend audit
+    # Build frontend
     if (Test-Path "frontend/package.json") {
-        Write-Info "Auditing frontend..."
-        Push-Location "frontend"
-        npm audit --audit-level=moderate
-        Pop-Location
-    }
-
-    Write-Success "Security audit completed"
-}
-
-# Fix security vulnerabilities
-function Repair-Security {
-    Write-Info "Fixing security vulnerabilities..."
-
-    # Root fix
-    npm audit fix
-
-    # Service fixes
-    Get-ChildItem -Path "services" -Directory | ForEach-Object {
-        $packageJsonPath = Join-Path $_.FullName "package.json"
-        if (Test-Path $packageJsonPath) {
-            Write-Info "Fixing $($_.Name)..."
-            Push-Location $_.FullName
-            npm audit fix
-            Pop-Location
+        $packageJson = Get-Content "frontend/package.json" | ConvertFrom-Json
+        if ($packageJson.scripts.build) {
+            Write-Info "Building frontend..."
+            Push-Location "frontend"
+            try {
+                npm run build
+            } finally {
+                Pop-Location
+            }
         }
     }
 
-    # Frontend fix
-    if (Test-Path "frontend/package.json") {
-        Write-Info "Fixing frontend..."
-        Push-Location "frontend"
-        npm audit fix
+    Write-Success "All services built successfully"
+}
+
+# Reset database
+function Reset-Database {
+    Write-Info "Resetting database..."
+
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        if ($packageJson.scripts."db:reset") {
+            npm run db:reset
+        } else {
+            Write-Warning "No db:reset script found"
+
+            # Manual database reset
+            if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+                docker-compose exec -T postgres psql -U datatechtoncrm -d datatechtoncrm -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+            } else {
+                docker compose exec -T postgres psql -U datatechtoncrm -d datatechtoncrm -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+            }
+
+            # Run migrations if available
+            if ($packageJson.scripts."db:migrate") {
+                npm run db:migrate
+            }
+
+            # Seed database if available
+            if ($packageJson.scripts."db:seed") {
+                npm run db:seed
+            }
+        }
+    }
+
+    Write-Success "Database reset complete"
+}
+
+# Interactive code generation
+function Interactive-Generate {
+    Write-Host "Code Generation Menu" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "1. Generate new service"
+    Write-Host "2. Generate API endpoints"
+    Write-Host "3. Generate React component"
+    Write-Host "4. Generate database migration"
+    Write-Host "5. Exit"
+    Write-Host ""
+
+    $choice = Read-Host "Select option (1-5)"
+
+    switch ($choice) {
+        "1" {
+            $serviceName = Read-Host "Service name"
+            node scripts/code-generators/generate-service.js $serviceName
+        }
+        "2" {
+            $serviceName = Read-Host "Service name"
+            $resourceName = Read-Host "Resource name"
+            node scripts/code-generators/generate-api.js $serviceName $resourceName
+        }
+        "3" {
+            $componentName = Read-Host "Component name"
+            Write-Host "Generating React component: $componentName"
+            # Add React component generator here
+        }
+        "4" {
+            $migrationName = Read-Host "Migration name"
+            Write-Host "Generating migration: $migrationName"
+            # Add migration generator here
+        }
+        "5" {
+            Write-Info "Exiting..."
+        }
+        default {
+            Write-Error "Invalid option"
+        }
+    }
+}
+
+# Debug service
+function Debug-Service {
+    param([string]$Service)
+
+    if ([string]::IsNullOrEmpty($Service)) {
+        Write-Error "Service name required"
+        Write-Host "Available services:"
+        Get-ChildItem -Path "services" -Directory | Where-Object { $_.Name -ne "shared" } | ForEach-Object { Write-Host "  $($_.Name)" }
+        return
+    }
+
+    $serviceDir = "services/$Service"
+
+    if (-not (Test-Path $serviceDir)) {
+        Write-Error "Service not found: $Service"
+        return
+    }
+
+    Write-Info "Starting $Service in debug mode..."
+    Write-Info "Debug port: 9229"
+    Write-Info "Attach your debugger to localhost:9229"
+
+    Push-Location $serviceDir
+    try {
+        npm run dev:debug
+    } finally {
         Pop-Location
     }
-
-    Write-Success "Security fixes applied"
 }
 
-# Backup development data
-function Backup-Data {
-    $backupDir = "backups\$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+# Performance profiling
+function Run-Profiling {
+    Write-Info "Running performance profiling..."
 
-    Write-Info "Creating backup in $backupDir..."
+    # Check if performance tests exist
+    if (Test-Path "tests/performance") {
+        Write-Info "Running performance tests..."
+        npm run test:performance
+    } else {
+        Write-Warning "No performance tests found"
+    }
 
-    New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
-
-    # Backup databases
-    docker-compose exec -T postgres pg_dumpall -U ailert | Out-File -FilePath "$backupDir\postgres_backup.sql" -Encoding UTF8
-
-    # Backup Redis data
-    docker-compose exec -T redis redis-cli --rdb - | Set-Content -Path "$backupDir\redis_backup.rdb" -AsByteStream
-
-    Write-Success "Backup created in $backupDir"
+    # Profile memory usage
+    Write-Info "Profiling memory usage..."
+    node --inspect --max-old-space-size=4096 -e "
+        const used = process.memoryUsage();
+        console.log('Memory Usage:');
+        for (let key in used) {
+            console.log(\`\${key}: \${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB\`);
+        }
+    "
 }
 
-# Restore development data
-function Restore-Data {
-    param([string]$BackupDir)
+# Generate and serve documentation
+function Serve-Docs {
+    Write-Info "Generating documentation..."
 
-    if (-not $BackupDir) {
-        Write-Error "Backup directory is required"
-        Write-Host "Usage: .\dev-utils.ps1 restore-data <backup-directory>"
-        return
+    # Generate API docs if available
+    if (Test-Path "package.json") {
+        $packageJson = Get-Content "package.json" | ConvertFrom-Json
+        if ($packageJson.scripts."docs:generate") {
+            npm run docs:generate
+        }
     }
 
-    if (-not (Test-Path $BackupDir)) {
-        Write-Error "Backup directory does not exist: $BackupDir"
-        return
+    # Generate TypeDoc if available
+    if (Get-Command typedoc -ErrorAction SilentlyContinue) {
+        typedoc --out docs/api src
     }
 
-    Write-Info "Restoring data from $BackupDir..."
-
-    # Restore PostgreSQL
-    $postgresBackup = Join-Path $BackupDir "postgres_backup.sql"
-    if (Test-Path $postgresBackup) {
-        Get-Content $postgresBackup | docker-compose exec -T postgres psql -U ailert -d ailert
+    # Serve documentation
+    if (Test-Path "docs") {
+        Write-Info "Serving documentation at http://localhost:8080"
+        if (Get-Command python -ErrorAction SilentlyContinue) {
+            Push-Location "docs"
+            try {
+                python -m http.server 8080
+            } finally {
+                Pop-Location
+            }
+        } elseif (Get-Command npx -ErrorAction SilentlyContinue) {
+            npx serve docs -p 8080
+        } else {
+            Write-Error "No web server available to serve documentation"
+        }
+    } else {
+        Write-Error "No documentation directory found"
     }
-
-    Write-Success "Data restored from $BackupDir"
 }
 
-# Main command handler
+# Main command dispatcher
 switch ($Command.ToLower()) {
-    "check-prerequisites" {
-        Test-Prerequisites
+    "status" {
+        Check-Status
     }
-    "install" {
-        Install-Dependencies
+    "logs" {
+        Show-Logs $Arguments[0]
     }
-    "update" {
-        Update-Dependencies
+    "restart" {
+        Restart-Services $Arguments[0]
     }
-    "clean-install" {
-        Reset-Dependencies
+    "clean" {
+        Clean-Environment
     }
-    "generate-service" {
-        New-Service -ServiceName $Parameter1
+    "reset" {
+        Reset-Environment
     }
-    "security-audit" {
-        Test-Security
+    "test" {
+        Run-Tests $Arguments[0]
     }
-    "security-fix" {
-        Repair-Security
+    "lint" {
+        Run-Lint
     }
-    "backup" {
-        Backup-Data
+    "build" {
+        Build-Services
     }
-    "restore" {
-        Restore-Data -BackupDir $Parameter1
+    "db-reset" {
+        Reset-Database
+    }
+    "generate" {
+        Interactive-Generate
+    }
+    "debug" {
+        Debug-Service $Arguments[0]
+    }
+    "profile" {
+        Run-Profiling
+    }
+    "docs" {
+        Serve-Docs
+    }
+    { $_ -in @("help", "--help", "-h", "") } {
+        Show-Help
     }
     default {
-        Write-Host "AiLert Development Utilities - PowerShell Version"
-        Write-Host ""
-        Write-Host "Usage: .\dev-utils.ps1 <command> [options]"
-        Write-Host ""
-        Write-Host "Commands:"
-        Write-Host "  check-prerequisites           Check if all prerequisites are installed"
-        Write-Host "  install                      Install dependencies for all services"
-        Write-Host "  update                       Update dependencies for all services"
-        Write-Host "  clean-install                Clean all node_modules and reinstall"
-        Write-Host "  generate-service <name>      Generate boilerplate for new service"
-        Write-Host "  security-audit               Run security audit for all services"
-        Write-Host "  security-fix                 Fix security vulnerabilities"
-        Write-Host "  backup                       Backup development data"
-        Write-Host "  restore <backup-dir>         Restore data from backup"
-        Write-Host ""
-        Write-Host "Examples:"
-        Write-Host "  .\dev-utils.ps1 generate-service billing-service"
-        Write-Host "  .\dev-utils.ps1 backup"
-        Write-Host "  .\dev-utils.ps1 restore backups\20231201_120000"
+        Write-Error "Unknown command: $Command"
+        Show-Help
+        exit 1
     }
 }

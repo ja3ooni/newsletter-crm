@@ -119,26 +119,54 @@ export class SecretManager {
     value: string,
     metadata?: Record<string, any>
   ): Promise<void> {
+    // Input validation
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      throw new Error('Secret name must be a non-empty string');
+    }
+
+    if (!value || typeof value !== 'string') {
+      throw new Error('Secret value must be a non-empty string');
+    }
+
+    // Validate secret name format (alphanumeric, hyphens, underscores only)
+    if (!/^[a-zA-Z0-9_-]+$/.test(name.trim())) {
+      throw new Error(
+        'Secret name can only contain alphanumeric characters, hyphens, and underscores'
+      );
+    }
+
+    if (name.length > 255) {
+      throw new Error('Secret name cannot exceed 255 characters');
+    }
+
+    if (value.length > 65536) {
+      // 64KB limit
+      throw new Error('Secret value exceeds maximum size limit');
+    }
+
+    const sanitizedName = name.trim();
+
     try {
       switch (this.config.provider) {
         case 'aws':
-          await this.storeSecretAWS(name, value, metadata);
+          await this.storeSecretAWS(sanitizedName, value, metadata);
           break;
         case 'local':
-          await this.storeSecretLocal(name, value, metadata);
+          await this.storeSecretLocal(sanitizedName, value, metadata);
           break;
         case 'hashicorp':
-          await this.storeSecretHashiCorp(name, value, metadata);
+          await this.storeSecretHashiCorp(sanitizedName, value, metadata);
           break;
       }
 
       logger.info('Secret stored successfully', {
-        name,
+        name: sanitizedName,
         provider: this.config.provider,
+        valueLength: value.length,
       });
     } catch (error) {
       logger.error('Failed to store secret', error as Error, {
-        name,
+        name: sanitizedName,
         provider: this.config.provider,
       });
       throw error;
@@ -379,9 +407,7 @@ export class SecretManager {
       value: response.SecretString!,
       version: response.VersionId,
       createdAt: response.CreatedDate,
-      metadata: response.Tags
-        ? Object.fromEntries(response.Tags.map(tag => [tag.Key!, tag.Value!]))
-        : undefined,
+      metadata: undefined, // Tags are not available in GetSecretValueCommandOutput
     };
   }
 
@@ -501,7 +527,11 @@ export class SecretManager {
 
   private async encryptLocal(data: string): Promise<EncryptionResult> {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher('aes-256-gcm', this.localEncryptionKey!);
+    const cipher = crypto.createCipheriv(
+      'aes-256-gcm',
+      this.localEncryptionKey!,
+      iv
+    );
 
     cipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));
 
@@ -527,12 +557,18 @@ export class SecretManager {
     }
 
     const [encrypted, authTagHex] = encryptedData.split(':');
+
+    if (!encrypted || !authTagHex) {
+      throw new Error('Invalid encrypted data format');
+    }
+
     const authTag = Buffer.from(authTagHex, 'hex');
     const ivBuffer = Buffer.from(iv, 'hex');
 
-    const decipher = crypto.createDecipher(
+    const decipher = crypto.createDecipheriv(
       'aes-256-gcm',
-      this.localEncryptionKey!
+      this.localEncryptionKey!,
+      ivBuffer
     );
 
     decipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));

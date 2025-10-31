@@ -1,0 +1,274 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/health"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "status": "healthy",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "services": {
+          "database": "up",
+          "redis": "up",
+          "elasticsearch": "up"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/services"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": [
+        {
+          "id": "service-1",
+          "name": "user-service",
+          "status": "running",
+          "port": 3001,
+          "health": "healthy"
+        },
+        {
+          "id": "service-2",
+          "name": "newsletter-service",
+          "status": "running",
+          "port": 3002,
+          "health": "healthy"
+        },
+        {
+          "id": "service-3",
+          "name": "analytics-service",
+          "status": "stopped",
+          "port": 3003,
+          "health": "unhealthy"
+        }
+      ]
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/api/services/start",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "serviceName": "analytics-service"
+        }
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "success": true,
+        "message": "Service started successfully",
+        "serviceName": "analytics-service",
+        "status": "running"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/api/services/stop",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "serviceName": "analytics-service"
+        }
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "success": true,
+        "message": "Service stopped successfully",
+        "serviceName": "analytics-service",
+        "status": "stopped"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/diagnostics"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "system": {
+          "platform": "linux",
+          "arch": "x64",
+          "nodeVersion": "v18.19.0",
+          "uptime": 3600,
+          "memory": {
+            "total": 8589934592,
+            "free": 4294967296,
+            "used": 4294967296
+          },
+          "cpu": {
+            "count": 4,
+            "usage": 25.5
+          }
+        },
+        "services": [
+          {
+            "name": "redis",
+            "status": "running",
+            "responseTime": 2,
+            "memoryUsage": 52428800
+          },
+          {
+            "name": "postgres",
+            "status": "running",
+            "responseTime": 5,
+            "memoryUsage": 104857600
+          }
+        ],
+        "performance": {
+          "averageResponseTime": 150,
+          "requestsPerSecond": 100,
+          "errorRate": 0.01
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/metrics"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "timestamp": "2024-01-01T00:00:00Z",
+        "metrics": {
+          "requests_total": 10000,
+          "requests_per_second": 100,
+          "response_time_avg": 150,
+          "response_time_p95": 300,
+          "response_time_p99": 500,
+          "error_rate": 0.01,
+          "memory_usage": 536870912,
+          "cpu_usage": 25.5,
+          "disk_usage": 0.75
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/logs",
+      "queryStringParameters": {
+        "level": [
+          "error"
+        ],
+        "limit": [
+          "10"
+        ]
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "logs": [
+          {
+            "timestamp": "2024-01-01T00:00:00Z",
+            "level": "error",
+            "message": "Database connection failed",
+            "service": "user-service",
+            "error": "Connection timeout"
+          },
+          {
+            "timestamp": "2024-01-01T00:01:00Z",
+            "level": "error",
+            "message": "Redis connection lost",
+            "service": "newsletter-service",
+            "error": "ECONNREFUSED"
+          }
+        ],
+        "total": 2,
+        "hasMore": false
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/api/test/error"
+    },
+    "httpResponse": {
+      "statusCode": 500,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "error": "Internal Server Error",
+        "message": "Simulated error for testing",
+        "code": "TEST_ERROR_500"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/test/timeout"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "message": "Delayed response for timeout testing"
+      },
+      "delay": {
+        "timeUnit": "SECONDS",
+        "value": 10
+      }
+    }
+  }
+]

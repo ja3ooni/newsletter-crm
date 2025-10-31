@@ -7,19 +7,17 @@ jest.mock('../../src/repositories/UserRepository');
 jest.mock('../../src/utils/logger');
 
 // Mock auth utilities
-const mockHashPassword = jest.fn();
-const mockVerifyPassword = jest.fn();
 jest.mock('../../src/utils/auth', () => ({
-  hashPassword: mockHashPassword,
-  verifyPassword: mockVerifyPassword
+  AuthUtils: {
+    hashPassword: jest.fn(),
+    verifyPassword: jest.fn(),
+  },
 }));
 
 // Mock validation utilities
-const mockValidateEmail = jest.fn();
-const mockIsValidPassword = jest.fn();
 jest.mock('../../src/utils/validation', () => ({
-  validateEmail: mockValidateEmail,
-  isValidPassword: mockIsValidPassword
+  isValidEmail: jest.fn(),
+  isValidPassword: jest.fn(),
 }));
 
 describe('UserService', () => {
@@ -38,7 +36,7 @@ describe('UserService', () => {
       updateLastLogin: jest.fn(),
       updateEngagementMetrics: jest.fn(),
       findMany: jest.fn(),
-      mapDatabaseUserToUser: jest.fn()
+      mapDatabaseUserToUser: jest.fn(),
     } as any;
 
     userService = new UserService(mockUserRepository);
@@ -61,8 +59,8 @@ describe('UserService', () => {
         firstName: 'John',
         lastName: 'Doe',
         timezone: 'UTC',
-        language: 'en'
-      }
+        language: 'en',
+      },
     };
 
     it('should create user with valid data', async () => {
@@ -77,19 +75,19 @@ describe('UserService', () => {
           contentTypes: [],
           theme: 'light' as const,
           timezone: 'UTC',
-          language: 'en'
+          language: 'en',
         },
         engagementMetrics: {
           totalLogins: 0,
           newslettersOpened: 0,
           linksClicked: 0,
           engagementScore: 0,
-          averageSessionDuration: 0
+          averageSessionDuration: 0,
         },
         status: 'active' as const,
         emailVerified: false,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(null);
@@ -101,17 +99,19 @@ describe('UserService', () => {
       expect(mockHashPassword).toHaveBeenCalledWith(validUserData.password);
       expect(mockUserRepository.create).toHaveBeenCalledWith({
         ...validUserData,
-        passwordHash: 'hashed-password'
+        passwordHash: 'hashed-password',
       });
     });
 
     it('should throw ValidationError for invalid email', async () => {
       mockValidateEmail.mockReturnValue(false);
 
-      await expect(userService.createUser({
-        ...validUserData,
-        email: 'invalid-email'
-      })).rejects.toThrow(ValidationError);
+      await expect(
+        userService.createUser({
+          ...validUserData,
+          email: 'invalid-email',
+        })
+      ).rejects.toThrow(ValidationError);
 
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
@@ -120,8 +120,9 @@ describe('UserService', () => {
       const existingUser = { id: 'existing-user', email: validUserData.email };
       mockUserRepository.findByEmail.mockResolvedValue(existingUser as any);
 
-      await expect(userService.createUser(validUserData))
-        .rejects.toThrow(ValidationError);
+      await expect(userService.createUser(validUserData)).rejects.toThrow(
+        ValidationError
+      );
 
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
@@ -133,7 +134,12 @@ describe('UserService', () => {
       const expectedUser = {
         id: userId,
         email: 'test@example.com',
-        profile: { firstName: 'John', lastName: 'Doe', timezone: 'UTC', language: 'en' },
+        profile: {
+          firstName: 'John',
+          lastName: 'Doe',
+          timezone: 'UTC',
+          language: 'en',
+        },
         preferences: {
           emailNotifications: true,
           marketingEmails: true,
@@ -141,19 +147,19 @@ describe('UserService', () => {
           contentTypes: [],
           theme: 'light' as const,
           timezone: 'UTC',
-          language: 'en'
+          language: 'en',
         },
         engagementMetrics: {
           totalLogins: 0,
           newslettersOpened: 0,
           linksClicked: 0,
           engagementScore: 0,
-          averageSessionDuration: 0
+          averageSessionDuration: 0,
         },
         status: 'active' as const,
         emailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       mockUserRepository.findById.mockResolvedValue(expectedUser);
@@ -168,15 +174,16 @@ describe('UserService', () => {
       const userId = 'non-existent';
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(userService.getUserById(userId))
-        .rejects.toThrow(NotFoundError);
+      await expect(userService.getUserById(userId)).rejects.toThrow(
+        NotFoundError
+      );
     });
   });
 
   describe('authenticateUser', () => {
     const credentials = {
       email: 'test@example.com',
-      password: 'Password123!'
+      password: 'Password123!',
     };
 
     it('should authenticate user with valid credentials', async () => {
@@ -184,7 +191,12 @@ describe('UserService', () => {
         id: 'user-123',
         email: credentials.email,
         passwordHash: 'hashed-password',
-        profile: { firstName: 'John', lastName: 'Doe', timezone: 'UTC', language: 'en' },
+        profile: {
+          firstName: 'John',
+          lastName: 'Doe',
+          timezone: 'UTC',
+          language: 'en',
+        },
         preferences: {
           emailNotifications: true,
           marketingEmails: true,
@@ -192,19 +204,19 @@ describe('UserService', () => {
           contentTypes: [],
           theme: 'light' as const,
           timezone: 'UTC',
-          language: 'en'
+          language: 'en',
         },
         engagementMetrics: {
           totalLogins: 5,
           newslettersOpened: 10,
           linksClicked: 3,
           engagementScore: 75,
-          averageSessionDuration: 300
+          averageSessionDuration: 300,
         },
         status: 'active' as const,
         emailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(user);
@@ -213,28 +225,33 @@ describe('UserService', () => {
       const result = await userService.authenticateUser(credentials);
 
       expect(result).toEqual(user);
-      expect(mockVerifyPassword).toHaveBeenCalledWith(credentials.password, user.passwordHash);
+      expect(mockVerifyPassword).toHaveBeenCalledWith(
+        credentials.password,
+        user.passwordHash
+      );
     });
 
     it('should throw ValidationError for non-existent user', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(userService.authenticateUser(credentials))
-        .rejects.toThrow(ValidationError);
+      await expect(userService.authenticateUser(credentials)).rejects.toThrow(
+        ValidationError
+      );
     });
 
     it('should throw ValidationError for invalid password', async () => {
       const user = {
         id: 'user-123',
         email: credentials.email,
-        passwordHash: 'hashed-password'
+        passwordHash: 'hashed-password',
       };
 
       mockUserRepository.findByEmail.mockResolvedValue(user as any);
       mockVerifyPassword.mockResolvedValue(false);
 
-      await expect(userService.authenticateUser(credentials))
-        .rejects.toThrow(ValidationError);
+      await expect(userService.authenticateUser(credentials)).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 });

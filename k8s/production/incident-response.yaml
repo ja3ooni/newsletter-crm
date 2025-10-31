@@ -1,0 +1,511 @@
+# Incident Response and Runbook Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incident-response-config
+  namespace: ailert-production
+data:
+  # Incident response procedures
+  incident-procedures.json: |
+    {
+      "procedures": {
+        "service-down": {
+          "title": "Service Down Response",
+          "severity": "critical",
+          "steps": [
+            {
+              "step": 1,
+              "action": "Check service health endpoints",
+              "command": "kubectl get pods -n ailert-production -l app=<service-name>",
+              "timeout": "2m"
+            },
+            {
+              "step": 2,
+              "action": "Check service logs",
+              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=100",
+              "timeout": "2m"
+            },
+            {
+              "step": 3,
+              "action": "Check resource usage",
+              "command": "kubectl top pods -n ailert-production -l app=<service-name>",
+              "timeout": "1m"
+            },
+            {
+              "step": 4,
+              "action": "Restart service if needed",
+              "command": "kubectl rollout restart deployment/<service-name> -n ailert-production",
+              "timeout": "5m"
+            },
+            {
+              "step": 5,
+              "action": "Verify service recovery",
+              "command": "kubectl rollout status deployment/<service-name> -n ailert-production",
+              "timeout": "10m"
+            }
+          ],
+          "escalation": {
+            "level1": "platform-team",
+            "level2": "senior-engineers",
+            "level3": "engineering-manager"
+          }
+        },
+        "high-error-rate": {
+          "title": "High Error Rate Response",
+          "severity": "critical",
+          "steps": [
+            {
+              "step": 1,
+              "action": "Check error logs",
+              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=200 | grep -i error",
+              "timeout": "3m"
+            },
+            {
+              "step": 2,
+              "action": "Check recent deployments",
+              "command": "kubectl rollout history deployment/<service-name> -n ailert-production",
+              "timeout": "1m"
+            },
+            {
+              "step": 3,
+              "action": "Check database connectivity",
+              "command": "kubectl exec -n ailert-production deployment/<service-name> -- nc -zv postgres-service 5432",
+              "timeout": "1m"
+            },
+            {
+              "step": 4,
+              "action": "Consider rollback if recent deployment",
+              "command": "kubectl rollout undo deployment/<service-name> -n ailert-production",
+              "timeout": "5m"
+            }
+          ]
+        },
+        "database-issues": {
+          "title": "Database Issues Response",
+          "severity": "critical",
+          "steps": [
+            {
+              "step": 1,
+              "action": "Check PostgreSQL status",
+              "command": "kubectl exec -n ailert-production statefulset/postgres -- pg_isready",
+              "timeout": "1m"
+            },
+            {
+              "step": 2,
+              "action": "Check database connections",
+              "command": "kubectl exec -n ailert-production statefulset/postgres -- psql -U ailert -c 'SELECT count(*) FROM pg_stat_activity;'",
+              "timeout": "2m"
+            },
+            {
+              "step": 3,
+              "action": "Check disk space",
+              "command": "kubectl exec -n ailert-production statefulset/postgres -- df -h /var/lib/postgresql/data",
+              "timeout": "1m"
+            },
+            {
+              "step": 4,
+              "action": "Check slow queries",
+              "command": "kubectl exec -n ailert-production statefulset/postgres -- psql -U ailert -c 'SELECT query, calls, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;'",
+              "timeout": "2m"
+            }
+          ]
+        },
+        "high-memory-usage": {
+          "title": "High Memory Usage Response",
+          "severity": "warning",
+          "steps": [
+            {
+              "step": 1,
+              "action": "Identify memory-intensive pods",
+              "command": "kubectl top pods -n ailert-production --sort-by=memory",
+              "timeout": "1m"
+            },
+            {
+              "step": 2,
+              "action": "Check for memory leaks",
+              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=100 | grep -i 'memory\\|heap\\|gc'",
+              "timeout": "2m"
+            },
+            {
+              "step": 3,
+              "action": "Scale up if needed",
+              "command": "kubectl scale deployment/<service-name> --replicas=<new-count> -n ailert-production",
+              "timeout": "3m"
+            }
+          ]
+        }
+      }
+    }
+
+  # Runbook templates
+  runbook-templates.yaml: |
+    service_down_runbook: |
+      # Service Down Runbook
+
+      ## Immediate Actions (0-5 minutes)
+      1. **Acknowledge the alert** in PagerDuty/Slack
+      2. **Check service status**: `kubectl get pods -n ailert-production -l app=<service>`
+      3. **Check recent deployments**: `kubectl rollout history deployment/<service> -n ailert-production`
+
+      ## Investigation (5-15 minutes)
+      1. **Check logs**: `kubectl logs -n ailert-production deployment/<service> --tail=100`
+      2. **Check resource usage**: `kubectl top pods -n ailert-production -l app=<service>`
+      3. **Check dependencies**: Verify database, Redis, and external services
+
+      ## Resolution Actions
+      1. **If recent deployment caused issue**: `kubectl rollout undo deployment/<service> -n ailert-production`
+      2. **If resource exhaustion**: Scale up the deployment
+      3. **If configuration issue**: Update ConfigMap and restart
+
+      ## Verification
+      1. **Check health endpoint**: `curl http://<service>:port/health`
+      2. **Monitor metrics**: Check Grafana dashboard
+      3. **Verify user impact**: Check error rates and response times
+
+      ## Post-Incident
+      1. **Document root cause** in incident report
+      2. **Create follow-up tasks** for prevention
+      3. **Update runbook** if needed
+
+    high_error_rate_runbook: |
+      # High Error Rate Runbook
+
+      ## Immediate Actions (0-5 minutes)
+      1. **Check error logs**: `kubectl logs -n ailert-production deployment/<service> | grep ERROR`
+      2. **Identify error patterns**: Look for common error messages
+      3. **Check recent changes**: Deployments, configuration updates
+
+      ## Investigation (5-15 minutes)
+      1. **Check database connectivity**: `kubectl exec deployment/<service> -- nc -zv postgres-service 5432`
+      2. **Check external dependencies**: APIs, third-party services
+      3. **Review application metrics**: Response times, throughput
+
+      ## Resolution Actions
+      1. **If database issues**: Check connection pool, slow queries
+      2. **If external API issues**: Implement circuit breaker, retry logic
+      3. **If code issues**: Consider rollback or hotfix
+
+      ## Monitoring
+      1. **Track error rate trends**: Use Grafana dashboard
+      2. **Monitor user impact**: Check conversion rates, user complaints
+      3. **Set up additional alerts**: If new error patterns emerge
+
+    database_issues_runbook: |
+      # Database Issues Runbook
+
+      ## Immediate Actions (0-5 minutes)
+      1. **Check PostgreSQL status**: `kubectl exec statefulset/postgres -- pg_isready`
+      2. **Check connection count**: `SELECT count(*) FROM pg_stat_activity;`
+      3. **Check disk space**: `df -h /var/lib/postgresql/data`
+
+      ## Investigation (5-15 minutes)
+      1. **Identify slow queries**: Check pg_stat_statements
+      2. **Check locks**: `SELECT * FROM pg_locks WHERE NOT granted;`
+      3. **Review recent changes**: Schema changes, configuration updates
+
+      ## Resolution Actions
+      1. **If connection exhaustion**: Restart connection pools, scale services
+      2. **If slow queries**: Add indexes, optimize queries
+      3. **If disk space**: Clean up logs, extend storage
+
+      ## Prevention
+      1. **Set up query monitoring**: pg_stat_statements
+      2. **Implement connection pooling**: PgBouncer
+      3. **Regular maintenance**: VACUUM, ANALYZE
+
+---
+# Incident Response Automation
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-responder
+  namespace: ailert-production
+  labels:
+    app: incident-responder
+    component: automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: incident-responder
+  template:
+    metadata:
+      labels:
+        app: incident-responder
+        component: automation
+    spec:
+      serviceAccountName: incident-responder-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: incident-responder
+          image: ailert/incident-responder:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: NAMESPACE
+              value: "ailert-production"
+            - name: CONFIG_PATH
+              value: "/etc/incident-response"
+            - name: SLACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: SLACK_BOT_TOKEN
+            - name: PAGERDUTY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ailert-secrets
+                  key: PAGERDUTY_TOKEN
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: incident-response-config
+              mountPath: /etc/incident-response
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: incident-response-config
+          configMap:
+            name: incident-response-config
+        - name: tmp
+          emptyDir: {}
+
+---
+# Incident Response Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-responder-service
+  namespace: ailert-production
+  labels:
+    app: incident-responder
+    component: automation
+spec:
+  selector:
+    app: incident-responder
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# Service Account for Incident Responder
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: incident-responder-service-account
+  namespace: ailert-production
+  labels:
+    component: automation
+
+---
+# RBAC for Incident Responder
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-responder-role
+  namespace: ailert-production
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-responder-role-binding
+  namespace: ailert-production
+subjects:
+  - kind: ServiceAccount
+    name: incident-responder-service-account
+    namespace: ailert-production
+roleRef:
+  kind: Role
+  name: incident-responder-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Incident Response Webhook
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-config
+  namespace: ailert-production
+data:
+  webhook-handlers.json: |
+    {
+      "handlers": {
+        "alertmanager": {
+          "path": "/webhook/alertmanager",
+          "method": "POST",
+          "actions": [
+            {
+              "condition": "alert.labels.severity == 'critical'",
+              "action": "create_incident",
+              "parameters": {
+                "title": "{{ alert.annotations.summary }}",
+                "description": "{{ alert.annotations.description }}",
+                "severity": "high",
+                "service": "{{ alert.labels.job }}"
+              }
+            },
+            {
+              "condition": "alert.labels.alertname == 'ServiceDown'",
+              "action": "auto_remediate",
+              "parameters": {
+                "procedure": "service-down",
+                "service": "{{ alert.labels.job }}"
+              }
+            }
+          ]
+        },
+        "pagerduty": {
+          "path": "/webhook/pagerduty",
+          "method": "POST",
+          "actions": [
+            {
+              "condition": "event.event_type == 'incident.triggered'",
+              "action": "notify_team",
+              "parameters": {
+                "channel": "#incidents",
+                "message": "🚨 Incident triggered: {{ event.incident.title }}"
+              }
+            }
+          ]
+        },
+        "github": {
+          "path": "/webhook/github",
+          "method": "POST",
+          "actions": [
+            {
+              "condition": "event.action == 'opened' && event.pull_request.base.ref == 'main'",
+              "action": "trigger_deployment_check",
+              "parameters": {
+                "pr_number": "{{ event.number }}",
+                "branch": "{{ event.pull_request.head.ref }}"
+              }
+            }
+          ]
+        }
+      }
+    }
+
+---
+# Performance Monitoring CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: performance-monitor
+  namespace: ailert-production
+  labels:
+    app: performance-monitor
+    component: monitoring
+spec:
+  schedule: "*/10 * * * *" # Every 10 minutes
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: performance-monitor-service-account
+          containers:
+            - name: performance-checker
+              image: ailert/performance-checker:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  echo "Starting performance monitoring at $(date)"
+
+                  # Check API response times
+                  for service in user-service newsletter-service crm-service analytics-service content-service; do
+                    echo "Checking $service performance..."
+
+                    # Measure response time
+                    response_time=$(curl -w "%{time_total}" -s -o /dev/null "http://$service:$(kubectl get service $service -n ailert-production -o jsonpath='{.spec.ports[0].port}')/health" || echo "999")
+
+                    echo "Response time for $service: ${response_time}s"
+
+                    # Send metrics to monitoring system
+                    curl -X POST "http://prometheus-pushgateway:9091/metrics/job/performance-check/instance/$service" \
+                      --data-binary "response_time_seconds $response_time" || true
+
+                    # Alert if response time is too high
+                    if [ "$(echo "$response_time > 5" | bc -l)" -eq 1 ]; then
+                      echo "⚠️ High response time detected for $service: ${response_time}s"
+                      curl -X POST "$WEBHOOK_URL" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"alert\": \"High Response Time\", \"service\": \"$service\", \"response_time\": \"$response_time\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                    fi
+                  done
+
+                  echo "Performance monitoring completed at $(date)"
+              env:
+                - name: WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: PERFORMANCE_WEBHOOK_URL
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure
+
+---
+# Service Account for Performance Monitor
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: performance-monitor-service-account
+  namespace: ailert-production
+  labels:
+    component: monitoring

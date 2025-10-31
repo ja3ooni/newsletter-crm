@@ -2,37 +2,37 @@
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/progress'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useBillingStore } from '@/store/billingStore'
 import { Subscription } from '@/types/billing'
 import {
-  AlertTriangle,
-  Calendar,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  RefreshCw,
-  XCircle,
+    AlertTriangle,
+    Calendar,
+    CheckCircle,
+    Clock,
+    CreditCard,
+    RefreshCw,
+    XCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -70,15 +70,15 @@ export default function SubscriptionOverview({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4" aria-hidden="true" />
       case 'trialing':
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" aria-hidden="true" />
       case 'past_due':
-        return <AlertTriangle className="h-4 w-4" />
+        return <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       case 'cancelled':
-        return <XCircle className="h-4 w-4" />
+        return <XCircle className="h-4 w-4" aria-hidden="true" />
       default:
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" aria-hidden="true" />
     }
   }
 
@@ -132,9 +132,10 @@ export default function SubscriptionOverview({
     <div className="space-y-6">
       {/* Status Alert */}
       {subscription.status === 'past_due' && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>
+            <span className="sr-only">Payment Alert: </span>
             Your subscription payment is past due. Please update your payment
             method to avoid service interruption.
           </AlertDescription>
@@ -142,9 +143,10 @@ export default function SubscriptionOverview({
       )}
 
       {subscription.cancelAtPeriodEnd && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
+        <Alert role="alert" aria-live="polite">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>
+            <span className="sr-only">Cancellation Notice: </span>
             Your subscription will be cancelled at the end of the current
             billing period on {formatDate(subscription.currentPeriodEnd)}.
           </AlertDescription>
@@ -152,9 +154,10 @@ export default function SubscriptionOverview({
       )}
 
       {isTrialing && (
-        <Alert>
-          <Clock className="h-4 w-4" />
+        <Alert role="status" aria-live="polite">
+          <Clock className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>
+            <span className="sr-only">Trial Status: </span>
             You&apos;re currently on a free trial.{' '}
             {trialDaysRemaining > 0
               ? `${trialDaysRemaining} days remaining.`
@@ -167,15 +170,18 @@ export default function SubscriptionOverview({
         {/* Subscription Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
+            <CardTitle id="subscription-details-title" className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" aria-hidden="true" />
               Subscription Details
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4" role="region" aria-labelledby="subscription-details-title">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Status</span>
-              <Badge className={getStatusColor(subscription.status)}>
+              <Badge
+                className={getStatusColor(subscription.status)}
+                aria-label={`Subscription status: ${subscription.status}`}
+              >
                 {getStatusIcon(subscription.status)}
                 <span className="ml-1 capitalize">{subscription.status}</span>
               </Badge>
@@ -219,12 +225,12 @@ export default function SubscriptionOverview({
         {/* Billing Cycle */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+            <CardTitle id="billing-cycle-title" className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" aria-hidden="true" />
               Billing Cycle
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4" role="region" aria-labelledby="billing-cycle-title">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Current Period Start</span>
               <span className="text-sm">
@@ -252,6 +258,7 @@ export default function SubscriptionOverview({
                   Math.min(100, ((30 - daysUntilRenewal) / 30) * 100)
                 )}
                 className="h-2"
+                aria-label={`Billing cycle progress: ${Math.max(0, daysUntilRenewal)} days remaining until renewal`}
               />
             </div>
 
@@ -281,8 +288,10 @@ export default function SubscriptionOverview({
               variant="outline"
               onClick={handleSyncSubscription}
               disabled={isLoading}
+              aria-label="Synchronize subscription status with payment provider"
+              aria-busy={isLoading}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
               Sync Status
             </Button>
 
@@ -320,13 +329,20 @@ export default function SubscriptionOverview({
                 variant="default"
                 onClick={handleReactivateSubscription}
                 disabled={isLoading}
+                aria-label="Reactivate your cancelled subscription"
+                aria-busy={isLoading}
               >
                 Reactivate Subscription
               </Button>
             )}
 
             {subscription.status === 'past_due' && (
-              <Button variant="default">Update Payment Method</Button>
+              <Button
+                variant="default"
+                aria-label="Update payment method to resolve past due status"
+              >
+                Update Payment Method
+              </Button>
             )}
           </div>
         </CardContent>

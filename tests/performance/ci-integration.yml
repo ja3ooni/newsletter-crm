@@ -1,0 +1,246 @@
+# Performance Testing CI/CD Integration
+# GitHub Actions workflow for automated performance testing
+
+name: Performance Testing
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - quick
+          - standard
+          - comprehensive
+          - capacity
+          - benchmark
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'tests/performance/**'
+      - '.github/workflows/performance.yml'
+
+env:
+  NODE_VERSION: '18'
+  K6_VERSION: '0.47.0'
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      matrix:
+        test-suite:
+          - ${{ github.event.inputs.test_suite || 'standard' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6=${{ env.K6_VERSION }}
+
+      - name: Start services
+        run: |
+          docker-compose up -d
+          sleep 60 # Wait for services to be ready
+
+      - name: Wait for services to be healthy
+        run: |
+          timeout 300 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+
+      - name: Run performance tests
+        env:
+          BASE_URL: http://localhost:8000
+          AUTH_TOKEN: ${{ secrets.PERFORMANCE_TEST_TOKEN || 'test-token' }}
+          OUTPUT_DIR: ./performance-results
+        run: |
+          mkdir -p performance-results
+          node tests/performance/run-performance-tests.js ${{ matrix.test-suite }}
+
+      - name: Run performance monitoring
+        env:
+          BASE_URL: http://localhost:8000
+          MONITORING_ENDPOINT: http://localhost:8000/api/v1/monitoring
+        run: |
+          k6 run tests/performance/performance-monitoring.js
+
+      - name: Generate performance report
+        run: |
+          node tests/performance/generate-report.js
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-results-${{ matrix.test-suite }}-${{ github.run_number }}
+          path: performance-results/
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = './performance-results/performance-summary.json';
+
+            if (fs.existsSync(path)) {
+              const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+              const comment = `## 🚀 Performance Test Results
+
+              **Test Suite:** ${{ matrix.test-suite }}
+              **Total Tests:** ${summary.totalTests}
+              **Success Rate:** ${((summary.successfulTests / summary.totalTests) * 100).toFixed(1)}%
+              **Duration:** ${summary.totalDuration}s
+
+              ${summary.failedTests > 0 ?
+                `⚠️ **${summary.failedTests} tests failed** - Please review the detailed results.` :
+                '✅ All tests passed successfully!'}
+
+              [View detailed results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+
+      - name: Check performance thresholds
+        run: |
+          node tests/performance/check-thresholds.js
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Performance Test Failure - ${{ matrix.test-suite }}`;
+            const body = `Performance tests failed for suite: ${{ matrix.test-suite }}
+
+            **Environment:** ${{ github.event.inputs.environment || 'staging' }}
+            **Commit:** ${{ github.sha }}
+            **Workflow:** ${{ github.workflow }}
+            **Run:** ${{ github.run_id }}
+
+            Please investigate the performance degradation.`;
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['performance', 'bug', 'priority-high']
+            });
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  performance-analysis:
+    needs: performance-test
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download performance results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: performance-results-*
+          merge-multiple: true
+          path: ./all-results
+
+      - name: Analyze performance trends
+        run: |
+          node tests/performance/analyze-trends.js ./all-results
+
+      - name: Update performance dashboard
+        env:
+          DASHBOARD_API_KEY: ${{ secrets.DASHBOARD_API_KEY }}
+          DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+        run: |
+          if [ -n "$DASHBOARD_API_KEY" ]; then
+            node tests/performance/update-dashboard.js
+          fi
+
+  capacity-planning:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_suite == 'capacity' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Start services
+        run: |
+          docker-compose up -d
+          sleep 60
+
+      - name: Run capacity planning test
+        env:
+          BASE_URL: http://localhost:8000
+        run: |
+          mkdir -p capacity-results
+          k6 run --out json=capacity-results/capacity-test.json tests/performance/capacity-planning-test.js
+
+      - name: Generate capacity report
+        run: |
+          node tests/performance/generate-capacity-report.js
+
+      - name: Upload capacity planning results
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacity-planning-${{ github.run_number }}
+          path: capacity-results/
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v

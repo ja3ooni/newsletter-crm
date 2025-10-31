@@ -1,6 +1,111 @@
 {
   "version": "2.0.0",
   "tasks": [
+    // Development Tools Tasks
+    {
+      "label": "🚀 Developer Onboarding",
+      "type": "shell",
+      "command": "node scripts/dev-onboarding.js",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔍 System Diagnostics",
+      "type": "shell",
+      "command": "node scripts/debug-tools.js diagnostics",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 Performance Monitor",
+      "type": "shell",
+      "command": "node scripts/debug-tools.js performance --duration 60",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📝 Analyze Logs",
+      "type": "shell",
+      "command": "node scripts/debug-tools.js logs",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔐 Generate Secrets",
+      "type": "shell",
+      "command": "node scripts/dev-utilities.js secrets",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "✅ Validate Environment",
+      "type": "shell",
+      "command": "node scripts/dev-utilities.js validate-env",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ Generate Service",
+      "type": "shell",
+      "command": "node scripts/code-generators/generate-service.js",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔧 Quality Check (Auto-fix)",
+      "type": "shell",
+      "command": "node scripts/quality-tools/code-quality-check.js --fix",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
     {
       "label": "docker-compose up",
       "type": "shell",

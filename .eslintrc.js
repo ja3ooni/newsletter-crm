@@ -52,9 +52,19 @@ module.exports = {
     },
     {
       files: ['src/**/*.ts', '*.ts'],
-      excludedFiles: ['services/**/*'],
+      excludedFiles: ['services/**/*', 'scripts/**/*'],
       parserOptions: {
         project: './tsconfig.json',
+      },
+    },
+    {
+      files: ['scripts/**/*.ts'],
+      parserOptions: {
+        project: './scripts/tsconfig.json',
+      },
+      rules: {
+        'no-console': 'off', // Allow console in debug tools
+        '@typescript-eslint/no-explicit-any': 'warn',
       },
     },
     {
@@ -83,6 +93,5 @@ module.exports = {
     'coverage/',
     '.next/',
     '*.min.js',
-    'services/shared/',
   ],
 };

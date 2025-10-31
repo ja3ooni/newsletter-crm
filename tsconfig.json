@@ -32,19 +32,15 @@
       "@types/*": ["./types/*"]
     }
   },
-  "include": ["src/**/*", "types/**/*", "shared/**/*", "services/shared/**/*", "*.ts", "*.js"],
+  "include": ["src/**/*", "types/**/*", "shared/**/*", "*.ts", "*.js"],
   "exclude": [
     "node_modules",
     "dist",
     "coverage",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "services/*/node_modules",
-    "services/*/dist",
-    "services/*/src",
-    "frontend/node_modules",
-    "frontend/.next",
-    "frontend/src"
+    "services/**/*",
+    "frontend/**/*"
   ],
   "references": [
     {

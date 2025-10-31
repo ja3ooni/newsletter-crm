@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ailert-production
+  labels:
+    name: ailert-production
+    environment: production
+    tier: production
+    managed-by: kubernetes
+  annotations:
+    description: "Production namespace for AiLert platform"
+    contact: "devops@ailert.com"
+    cost-center: "engineering"
+
+---
+# Resource Quota for production namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: production-quota
+  namespace: ailert-production
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "20"
+    services: "20"
+    secrets: "20"
+    configmaps: "20"
+    pods: "50"
+
+---
+# Limit Range for production namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: production-limits
+  namespace: ailert-production
+spec:
+  limits:
+    - default:
+        cpu: "1000m"
+        memory: "2Gi"
+        ephemeral-storage: "2Gi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"
+        ephemeral-storage: "1Gi"
+      max:
+        cpu: "4000m"
+        memory: "8Gi"
+        ephemeral-storage: "10Gi"
+      min:
+        cpu: "50m"
+        memory: "128Mi"
+        ephemeral-storage: "500Mi"
+      type: Container
+    - default:
+        storage: "10Gi"
+      max:
+        storage: "100Gi"
+      min:
+        storage: "1Gi"
+      type: PersistentVolumeClaim
+
+---
+# Network Policy for production namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: production-network-policy
+  namespace: ailert-production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ailert-production
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: ailert-production
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

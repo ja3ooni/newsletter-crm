@@ -80,6 +80,7 @@ function testBulkEmailSending() {
   const batchSize = batchSizes[Math.floor(Math.random() * batchSizes.length)];
 
   const recipients = [];
+
   for (let i = 0; i < batchSize; i++) {
     recipients.push({
       email: `perf-test-${Math.random()}@example.com`,
@@ -94,7 +95,7 @@ function testBulkEmailSending() {
 
   const emailPayload = {
     newsletterId: 'test-newsletter-123',
-    recipients: recipients,
+    recipients,
     sendOptions: {
       enableTracking: true,
       respectTimezones: false, // Disable for performance testing
@@ -118,6 +119,7 @@ function testBulkEmailSending() {
   );
 
   const sendDuration = Date.now() - startTime;
+
   emailSendTime.add(sendDuration);
 
   const success = check(response, {
@@ -125,6 +127,7 @@ function testBulkEmailSending() {
     'bulk email send has job ID': r => {
       try {
         const body = JSON.parse(r.body);
+
         return body.jobId !== undefined;
       } catch (e) {
         return false;
@@ -158,10 +161,12 @@ function testBulkEmailSending() {
 
       if (statusResponse.status === 200) {
         const status = JSON.parse(statusResponse.body);
+
         if (status.status === 'completed' || status.status === 'failed') {
           jobComplete = true;
 
           const queueDuration = Date.now() - startTime;
+
           emailQueueTime.add(queueDuration);
 
           check(status, {
@@ -215,6 +220,7 @@ function testNewsletterGeneration() {
     'newsletter generation has job ID': r => {
       try {
         const body = JSON.parse(r.body);
+
         return body.jobId !== undefined;
       } catch (e) {
         return false;
@@ -244,6 +250,7 @@ function testNewsletterGeneration() {
 
       if (statusResponse.status === 200) {
         const status = JSON.parse(statusResponse.body);
+
         if (status.status === 'completed' || status.status === 'failed') {
           generationComplete = true;
 
@@ -337,6 +344,7 @@ function testTemplateRendering() {
     'template rendering has HTML': r => {
       try {
         const body = JSON.parse(r.body);
+
         return body.html && body.html.length > 0;
       } catch (e) {
         return false;
@@ -346,6 +354,7 @@ function testTemplateRendering() {
     'template rendering HTML size > 1KB': r => {
       try {
         const body = JSON.parse(r.body);
+
         return body.html && body.html.length > 1024;
       } catch (e) {
         return false;

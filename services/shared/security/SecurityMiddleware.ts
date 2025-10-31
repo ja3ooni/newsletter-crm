@@ -196,13 +196,14 @@ export class SecurityMiddleware {
         }
       }
 
-      const requestData = requests.get(ip) || {
+      const clientIp = ip || 'unknown';
+      const requestData = requests.get(clientIp) || {
         count: 0,
         resetTime: now + windowMs,
       };
 
       requestData.count++;
-      requests.set(ip, requestData);
+      requests.set(clientIp, requestData);
 
       if (requestData.count > delayAfter) {
         const delay = Math.min(
@@ -426,7 +427,7 @@ export class SecurityMiddleware {
     const BAN_DURATION = 15 * 60 * 1000; // 15 minutes
 
     return (req: Request, res: Response, next: NextFunction) => {
-      const ip = req.ip;
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
       const now = Date.now();
 
       // Clean old entries

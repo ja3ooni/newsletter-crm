@@ -1,0 +1,840 @@
+# DatatechtonCRM Platform GraphQL Schema
+#
+# This GraphQL API provides a unified interface for accessing all platform features
+# including user management, newsletters, CRM, analytics, and marketing automation.
+#
+# Authentication: Include JWT token in Authorization header: "Bearer <token>"
+# Rate Limiting: Applied based on subscription tier and query complexity
+
+"""
+Represents a date and time in ISO 8601 format
+"""
+scalar DateTime
+
+"""
+Represents a JSON object
+"""
+scalar JSON
+
+"""
+Represents a UUID string
+"""
+scalar UUID
+
+"""
+Represents an email address
+"""
+scalar Email
+
+"""
+Represents a URL
+"""
+scalar URL
+
+# ============================================================================
+# ENUMS
+# ============================================================================
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  SUBSCRIBER
+  API_USER
+}
+
+enum NewsletterStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum TemplateCategory {
+  BUSINESS
+  TECH
+  CREATIVE
+  MINIMAL
+}
+
+enum ContactLifecycle {
+  SUBSCRIBER
+  LEAD
+  CUSTOMER
+  EVANGELIST
+}
+
+enum EngagementEventType {
+  EMAIL_OPEN
+  EMAIL_CLICK
+  WEBSITE_VISIT
+  FORM_SUBMIT
+  PURCHASE
+}
+
+enum SegmentOperator {
+  EQUALS
+  CONTAINS
+  GREATER_THAN
+  LESS_THAN
+  IN
+  NOT_IN
+}
+
+enum LogicalOperator {
+  AND
+  OR
+}
+
+enum ContentSectionType {
+  NEWS
+  RESEARCH
+  GITHUB
+  EVENTS
+  PRODUCTS
+  CUSTOM
+}
+
+enum ContentDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum EmailFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ContentFormat {
+  HTML
+  MARKDOWN
+  PLAIN
+}
+
+# ============================================================================
+# INPUT TYPES
+# ============================================================================
+
+input PaginationInput {
+  """
+  Number of items to return (max 100)
+  """
+  first: Int = 20
+
+  """
+  Cursor for pagination
+  """
+  after: String
+
+  """
+  Number of items to return from the end (max 100)
+  """
+  last: Int
+
+  """
+  Cursor for reverse pagination
+  """
+  before: String
+}
+
+input UserRegistrationInput {
+  email: Email!
+  password: String!
+  firstName: String!
+  lastName: String!
+  company: String
+  timezone: String = "UTC"
+}
+
+input LoginInput {
+  email: Email!
+  password: String!
+}
+
+input UpdateUserProfileInput {
+  firstName: String
+  lastName: String
+  company: String
+  timezone: String
+  language: String
+  preferences: UserPreferencesInput
+}
+
+input UserPreferencesInput {
+  contentSections: [String!]
+  frequency: EmailFrequency
+  format: ContentFormat
+  topics: [String!]
+  sendTime: String
+  timezone: String
+}
+
+input CreateNewsletterInput {
+  title: String!
+  templateId: UUID
+  content: NewsletterContentInput
+  segments: [UUID!]
+  scheduledAt: DateTime
+}
+
+input UpdateNewsletterInput {
+  title: String
+  content: NewsletterContentInput
+  segments: [UUID!]
+  scheduledAt: DateTime
+}
+
+input NewsletterContentInput {
+  sections: [ContentSectionInput!]!
+  personalization: JSON
+  metadata: JSON
+  dynamicContent: [DynamicContentBlockInput!]
+}
+
+input ContentSectionInput {
+  id: String!
+  type: ContentSectionType!
+  title: String!
+  items: [ContentItemInput!]!
+  order: Int!
+  isPersonalized: Boolean = false
+}
+
+input ContentItemInput {
+  id: String!
+  title: String!
+  summary: String!
+  url: URL!
+  source: String!
+  publishedAt: DateTime
+  score: Float
+  tags: [String!]
+  sentiment: Float
+  readingTime: Int
+  difficulty: ContentDifficulty
+  category: String
+}
+
+input DynamicContentBlockInput {
+  id: String!
+  name: String!
+  conditions: [ContentConditionInput!]!
+  variants: [ContentVariantInput!]!
+}
+
+input ContentConditionInput {
+  field: String!
+  operator: SegmentOperator!
+  value: JSON!
+}
+
+input ContentVariantInput {
+  id: String!
+  content: String!
+  isDefault: Boolean = false
+}
+
+input SendNewsletterInput {
+  segments: [UUID!]
+  scheduledAt: DateTime
+  testEmail: Email
+}
+
+input CreateTemplateInput {
+  name: String!
+  category: TemplateCategory!
+  html: String!
+  css: String
+  variables: [TemplateVariableInput!]
+  isPublic: Boolean = false
+}
+
+input TemplateVariableInput {
+  name: String!
+  type: String!
+  defaultValue: JSON!
+  description: String
+}
+
+input CreateContactInput {
+  email: Email!
+  firstName: String
+  lastName: String
+  company: String
+  jobTitle: String
+  phone: String
+  customFields: JSON
+  tags: [String!]
+  source: String
+  preferences: ContactPreferencesInput
+}
+
+input UpdateContactInput {
+  firstName: String
+  lastName: String
+  company: String
+  jobTitle: String
+  phone: String
+  customFields: JSON
+  tags: [String!]
+  preferences: ContactPreferencesInput
+}
+
+input ContactPreferencesInput {
+  emailFrequency: EmailFrequency
+  contentTypes: [String!]
+  communicationChannels: [String!]
+  timezone: String
+  language: String
+}
+
+input CreateSegmentInput {
+  name: String!
+  description: String
+  conditions: [SegmentConditionInput!]!
+  isAutoUpdating: Boolean = true
+}
+
+input SegmentConditionInput {
+  field: String!
+  operator: SegmentOperator!
+  value: JSON!
+  logicalOperator: LogicalOperator
+}
+
+input NewsletterFiltersInput {
+  status: NewsletterStatus
+  search: String
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+input ContactFiltersInput {
+  segment: UUID
+  lifecycle: ContactLifecycle
+  search: String
+  tags: [String!]
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+input TemplateFiltersInput {
+  category: TemplateCategory
+  isPublic: Boolean
+  search: String
+}
+
+# ============================================================================
+# TYPES
+# ============================================================================
+
+type User {
+  id: UUID!
+  email: Email!
+  firstName: String!
+  lastName: String!
+  avatar: URL
+  company: String
+  timezone: String!
+  language: String!
+  role: UserRole!
+  preferences: UserPreferences!
+  subscription: Subscription
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type UserPreferences {
+  contentSections: [String!]!
+  frequency: EmailFrequency!
+  format: ContentFormat!
+  topics: [String!]!
+  sendTime: String!
+  timezone: String!
+}
+
+type Subscription {
+  id: UUID!
+  plan: String!
+  status: String!
+  currentPeriodStart: DateTime!
+  currentPeriodEnd: DateTime!
+  cancelAtPeriodEnd: Boolean!
+}
+
+type AuthPayload {
+  accessToken: String!
+  refreshToken: String!
+  expiresIn: Int!
+  user: User!
+}
+
+type Newsletter {
+  id: UUID!
+  title: String!
+  content: NewsletterContent!
+  template: Template
+  status: NewsletterStatus!
+  scheduledAt: DateTime
+  sentAt: DateTime
+  metrics: NewsletterMetrics!
+  segments: [Segment!]!
+  createdBy: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Computed fields
+  analytics(timeRange: String = "7d"): NewsletterAnalytics!
+  deliverabilityReport: DeliverabilityReport
+}
+
+type NewsletterContent {
+  sections: [ContentSection!]!
+  personalization: JSON
+  metadata: JSON
+  dynamicContent: [DynamicContentBlock!]!
+}
+
+type ContentSection {
+  id: String!
+  type: ContentSectionType!
+  title: String!
+  items: [ContentItem!]!
+  order: Int!
+  isPersonalized: Boolean!
+}
+
+type ContentItem {
+  id: String!
+  title: String!
+  summary: String!
+  url: URL!
+  source: String!
+  publishedAt: DateTime
+  score: Float
+  tags: [String!]!
+  sentiment: Float
+  readingTime: Int
+  difficulty: ContentDifficulty
+  category: String
+}
+
+type DynamicContentBlock {
+  id: String!
+  name: String!
+  conditions: [ContentCondition!]!
+  variants: [ContentVariant!]!
+}
+
+type ContentCondition {
+  field: String!
+  operator: SegmentOperator!
+  value: JSON!
+}
+
+type ContentVariant {
+  id: String!
+  content: String!
+  isDefault: Boolean!
+}
+
+type NewsletterMetrics {
+  sent: Int!
+  delivered: Int!
+  opens: Int!
+  uniqueOpens: Int!
+  clicks: Int!
+  uniqueClicks: Int!
+  unsubscribes: Int!
+  bounces: Int!
+  openRate: Float!
+  clickRate: Float!
+  unsubscribeRate: Float!
+}
+
+type NewsletterAnalytics {
+  newsletterId: UUID!
+  metrics: NewsletterMetrics!
+  timeSeriesData: [TimeSeriesDataPoint!]!
+  topLinks: [LinkAnalytics!]!
+  deviceBreakdown: DeviceBreakdown!
+  locationBreakdown: [LocationAnalytics!]!
+}
+
+type TimeSeriesDataPoint {
+  timestamp: DateTime!
+  opens: Int!
+  clicks: Int!
+}
+
+type LinkAnalytics {
+  url: URL!
+  clicks: Int!
+  clickRate: Float!
+}
+
+type DeviceBreakdown {
+  desktop: Float!
+  mobile: Float!
+  tablet: Float!
+}
+
+type LocationAnalytics {
+  country: String!
+  opens: Int!
+  clicks: Int!
+}
+
+type DeliverabilityReport {
+  newsletterId: UUID!
+  deliveryRate: Float!
+  bounceRate: Float!
+  spamRate: Float!
+  reputationScore: Float!
+  domainReputation: JSON!
+  recommendations: [String!]!
+  detailedMetrics: JSON!
+  createdAt: DateTime!
+}
+
+type SendNewsletterResult {
+  jobId: String!
+  status: String!
+  estimatedDelivery: DateTime
+  recipientCount: Int!
+}
+
+type Template {
+  id: UUID!
+  name: String!
+  category: TemplateCategory!
+  html: String!
+  css: String
+  variables: [TemplateVariable!]!
+  previewImage: URL
+  isPublic: Boolean!
+  createdBy: User
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Computed fields
+  usageCount: Int!
+}
+
+type TemplateVariable {
+  name: String!
+  type: String!
+  defaultValue: JSON!
+  description: String
+}
+
+type Contact {
+  id: UUID!
+  email: Email!
+  firstName: String
+  lastName: String
+  company: String
+  jobTitle: String
+  phone: String
+  customFields: JSON!
+  tags: [String!]!
+  leadScore: Int!
+  lifecycle: ContactLifecycle!
+  source: String
+  engagementHistory: [EngagementEvent!]!
+  preferences: ContactPreferences!
+  segments: [Segment!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Computed fields
+  fullName: String
+  engagementScore: Float!
+  lastEngagement: DateTime
+}
+
+type EngagementEvent {
+  id: UUID!
+  type: EngagementEventType!
+  timestamp: DateTime!
+  metadata: JSON!
+  score: Int!
+  newsletter: Newsletter
+  campaign: Campaign
+}
+
+type ContactPreferences {
+  emailFrequency: EmailFrequency!
+  contentTypes: [String!]!
+  communicationChannels: [String!]!
+  timezone: String!
+  language: String!
+}
+
+type Segment {
+  id: UUID!
+  name: String!
+  description: String
+  conditions: [SegmentCondition!]!
+  contactCount: Int!
+  isAutoUpdating: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Computed fields
+  contacts(pagination: PaginationInput): ContactConnection!
+}
+
+type SegmentCondition {
+  field: String!
+  operator: SegmentOperator!
+  value: JSON!
+  logicalOperator: LogicalOperator
+}
+
+type Campaign {
+  id: UUID!
+  name: String!
+  type: String!
+  status: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# ============================================================================
+# CONNECTION TYPES (for pagination)
+# ============================================================================
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type NewsletterConnection {
+  edges: [NewsletterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NewsletterEdge {
+  node: Newsletter!
+  cursor: String!
+}
+
+type TemplateConnection {
+  edges: [TemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type TemplateEdge {
+  node: Template!
+  cursor: String!
+}
+
+type ContactConnection {
+  edges: [ContactEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ContactEdge {
+  node: Contact!
+  cursor: String!
+}
+
+type SegmentConnection {
+  edges: [SegmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type SegmentEdge {
+  node: Segment!
+  cursor: String!
+}
+
+# ============================================================================
+# QUERY TYPE
+# ============================================================================
+
+type Query {
+  # User queries
+  me: User
+
+  # Newsletter queries
+  newsletter(id: UUID!): Newsletter
+  newsletters(
+    pagination: PaginationInput
+    filters: NewsletterFiltersInput
+  ): NewsletterConnection!
+
+  # Template queries
+  template(id: UUID!): Template
+  templates(
+    pagination: PaginationInput
+    filters: TemplateFiltersInput
+  ): TemplateConnection!
+  marketplaceTemplates(
+    pagination: PaginationInput
+    category: TemplateCategory
+  ): TemplateConnection!
+
+  # CRM queries
+  contact(id: UUID!): Contact
+  contacts(
+    pagination: PaginationInput
+    filters: ContactFiltersInput
+  ): ContactConnection!
+
+  segment(id: UUID!): Segment
+  segments(pagination: PaginationInput): SegmentConnection!
+
+  # Analytics queries
+  newsletterAnalytics(
+    newsletterId: UUID!
+    timeRange: String = "7d"
+  ): NewsletterAnalytics!
+
+  dashboardMetrics(timeRange: String = "30d"): DashboardMetrics!
+
+  # Search queries
+  searchContacts(query: String!, limit: Int = 10): [Contact!]!
+  searchNewsletters(query: String!, limit: Int = 10): [Newsletter!]!
+  searchTemplates(query: String!, limit: Int = 10): [Template!]!
+}
+
+type DashboardMetrics {
+  totalNewsletters: Int!
+  totalContacts: Int!
+  totalSegments: Int!
+  averageOpenRate: Float!
+  averageClickRate: Float!
+  recentActivity: [ActivityItem!]!
+}
+
+type ActivityItem {
+  id: UUID!
+  type: String!
+  description: String!
+  timestamp: DateTime!
+  metadata: JSON
+}
+
+# ============================================================================
+# MUTATION TYPE
+# ============================================================================
+
+type Mutation {
+  # Authentication mutations
+  register(input: UserRegistrationInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  refreshToken(refreshToken: String!): AuthPayload!
+  logout: Boolean!
+
+  # User mutations
+  updateProfile(input: UpdateUserProfileInput!): User!
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+
+  # Newsletter mutations
+  createNewsletter(input: CreateNewsletterInput!): Newsletter!
+  updateNewsletter(id: UUID!, input: UpdateNewsletterInput!): Newsletter!
+  deleteNewsletter(id: UUID!): Boolean!
+  duplicateNewsletter(id: UUID!): Newsletter!
+  sendNewsletter(id: UUID!, input: SendNewsletterInput!): SendNewsletterResult!
+  scheduleNewsletter(id: UUID!, scheduledAt: DateTime!): Newsletter!
+
+  # Template mutations
+  createTemplate(input: CreateTemplateInput!): Template!
+  updateTemplate(id: UUID!, input: CreateTemplateInput!): Template!
+  deleteTemplate(id: UUID!): Boolean!
+  duplicateTemplate(id: UUID!): Template!
+
+  # CRM mutations
+  createContact(input: CreateContactInput!): Contact!
+  updateContact(id: UUID!, input: UpdateContactInput!): Contact!
+  deleteContact(id: UUID!): Boolean!
+  addContactTags(id: UUID!, tags: [String!]!): Contact!
+  removeContactTags(id: UUID!, tags: [String!]!): Contact!
+
+  createSegment(input: CreateSegmentInput!): Segment!
+  updateSegment(id: UUID!, input: CreateSegmentInput!): Segment!
+  deleteSegment(id: UUID!): Boolean!
+
+  # Engagement tracking mutations
+  trackEngagement(
+    contactId: UUID!
+    type: EngagementEventType!
+    metadata: JSON
+  ): EngagementEvent!
+}
+
+# ============================================================================
+# SUBSCRIPTION TYPE
+# ============================================================================
+
+type Subscription {
+  # Real-time newsletter sending progress
+  newsletterSendProgress(newsletterId: UUID!): NewsletterSendProgress!
+
+  # Real-time analytics updates
+  analyticsUpdate(newsletterId: UUID!): NewsletterAnalytics!
+
+  # Contact engagement events
+  contactEngagement(contactId: UUID!): EngagementEvent!
+
+  # System notifications
+  notifications: Notification!
+}
+
+type NewsletterSendProgress {
+  newsletterId: UUID!
+  status: String!
+  progress: Float!
+  sent: Int!
+  failed: Int!
+  estimatedCompletion: DateTime
+}
+
+type Notification {
+  id: UUID!
+  type: String!
+  title: String!
+  message: String!
+  timestamp: DateTime!
+  metadata: JSON
+}
+
+# ============================================================================
+# DIRECTIVES
+# ============================================================================
+
+"""
+Requires authentication to access this field or type
+"""
+directive @auth on FIELD_DEFINITION | OBJECT
+
+"""
+Requires specific role to access this field or type
+"""
+directive @hasRole(role: UserRole!) on FIELD_DEFINITION | OBJECT
+
+"""
+Rate limit this field or type
+"""
+directive @rateLimit(max: Int!, window: Int!) on FIELD_DEFINITION | OBJECT
+
+"""
+Cache this field for the specified duration
+"""
+directive @cacheControl(maxAge: Int, scope: String) on FIELD_DEFINITION | OBJECT
+
+"""
+Deprecated field or type
+"""
+directive @deprecated(
+  reason: String = "No longer supported"
+) on FIELD_DEFINITION | ENUM_VALUE | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION

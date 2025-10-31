@@ -4,44 +4,44 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/Select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useBillingStore } from '@/store/billingStore'
 import { CreatePromoCodeRequest, PromoCode } from '@/types/billing'
 import {
-  Copy,
-  Edit,
-  Eye,
-  EyeOff,
-  MoreHorizontal,
-  Percent,
-  Plus,
-  Trash2
+    Copy,
+    Edit,
+    Eye,
+    EyeOff,
+    MoreHorizontal,
+    Percent,
+    Plus,
+    Trash2
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -146,6 +146,24 @@ export default function PromoCodeManager(): JSX.Element {
     return 'Active'
   }
 
+  const getStatusIcon = (promoCode: PromoCode) => {
+    const status = getStatusText(promoCode)
+    switch (status) {
+      case 'Active':
+        return <CheckCircle className="h-3 w-3" aria-hidden="true" />
+      case 'Expired':
+        return <XCircle className="h-3 w-3" aria-hidden="true" />
+      case 'Scheduled':
+        return <Clock className="h-3 w-3" aria-hidden="true" />
+      case 'Exhausted':
+        return <AlertCircle className="h-3 w-3" aria-hidden="true" />
+      case 'Inactive':
+        return <Circle className="h-3 w-3" aria-hidden="true" />
+      default:
+        return <Circle className="h-3 w-3" aria-hidden="true" />
+    }
+  }
+
   const formatDiscount = (promoCode: PromoCode) => {
     if (promoCode.type === 'percentage') {
       return `${promoCode.value}%`
@@ -169,8 +187,8 @@ export default function PromoCodeManager(): JSX.Element {
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button aria-label="Open dialog to create a new promotional code">
+                <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
                 Create Promo Code
               </Button>
             </DialogTrigger>
@@ -296,30 +314,40 @@ export default function PromoCodeManager(): JSX.Element {
 
                 <div className="space-y-2">
                   <Label>Applicable Plans</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {subscriptionPlans.map((plan) => (
-                      <label key={plan.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.applicablePlans.includes(plan.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                applicablePlans: [...formData.applicablePlans, plan.id]
-                              })
-                            } else {
-                              setFormData({
-                                ...formData,
-                                applicablePlans: formData.applicablePlans.filter(id => id !== plan.id)
-                              })
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{plan.name}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <fieldset>
+                    <legend className="sr-only">Select applicable subscription plans for this promotional code</legend>
+                    <div className="grid grid-cols-2 gap-2" role="group" aria-label="Subscription plan selection">
+                      {subscriptionPlans.map((plan) => (
+                        <div key={plan.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`plan-${plan.id}`}
+                            checked={formData.applicablePlans.includes(plan.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  applicablePlans: [...formData.applicablePlans, plan.id]
+                                })
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  applicablePlans: formData.applicablePlans.filter(id => id !== plan.id)
+                                })
+                              }
+                            }}
+                            aria-describedby={`plan-${plan.id}-desc`}
+                          />
+                          <label htmlFor={`plan-${plan.id}`} className="text-sm">
+                            {plan.name}
+                          </label>
+                          <span id={`plan-${plan.id}-desc`} className="sr-only">
+                            {plan.description || `${plan.name} subscription plan`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </fieldset>
                 </div>
               </div>
 
@@ -330,6 +358,8 @@ export default function PromoCodeManager(): JSX.Element {
                 <Button
                   onClick={handleCreatePromoCode}
                   disabled={isLoading || !formData.code || !formData.name}
+                  aria-busy={isLoading}
+                  aria-label={isLoading ? 'Creating promotional code, please wait' : 'Create promotional code'}
                 >
                   {isLoading ? 'Creating...' : 'Create Promo Code'}
                 </Button>
@@ -340,29 +370,36 @@ export default function PromoCodeManager(): JSX.Element {
       </CardHeader>
       <CardContent>
         {storeLoading ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8" role="status" aria-live="polite">
             <p className="text-muted-foreground">Loading promotional codes...</p>
           </div>
         ) : promoCodes.length === 0 ? (
           <div className="text-center py-8">
-            <Percent className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <Percent className="h-12 w-12 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
             <p className="text-muted-foreground mb-4">No promotional codes created yet</p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              aria-label="Create your first promotional code"
+            >
+              <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
               Create Your First Promo Code
             </Button>
           </div>
         ) : (
           <div className="rounded-md border">
-            <Table>
+            <Table role="table" aria-label="Promotional codes management table">
+              <caption className="sr-only">
+                List of promotional codes with their details, usage statistics, and management actions.
+                Use the actions menu in each row to copy, edit, activate, deactivate, or delete codes.
+              </caption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Discount</TableHead>
-                  <TableHead>Usage</TableHead>
-                  <TableHead>Valid Period</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead scope="col">Code</TableHead>
+                  <TableHead scope="col">Discount</TableHead>
+                  <TableHead scope="col">Usage</TableHead>
+                  <TableHead scope="col">Valid Period</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                  <TableHead scope="col" className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -400,41 +437,57 @@ export default function PromoCodeManager(): JSX.Element {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(promoCode)}>
-                        {getStatusText(promoCode)}
+                      <Badge
+                        className={getStatusColor(promoCode)}
+                        aria-label={`Status: ${getStatusText(promoCode)}`}
+                      >
+                        {getStatusIcon(promoCode)}
+                        <span className="ml-1">{getStatusText(promoCode)}</span>
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={`Actions for promo code ${promoCode.code}`}
+                          >
+                            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleCopyCode(promoCode.code)}>
-                            <Copy className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem
+                            onClick={() => handleCopyCode(promoCode.code)}
+                            aria-label={`Copy promo code ${promoCode.code} to clipboard`}
+                          >
+                            <Copy className="h-4 w-4 mr-2" aria-hidden="true" />
                             Copy Code
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem aria-label={`Edit promo code ${promoCode.code}`}>
+                            <Edit className="h-4 w-4 mr-2" aria-hidden="true" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            aria-label={promoCode.isActive ? `Deactivate promo code ${promoCode.code}` : `Activate promo code ${promoCode.code}`}
+                          >
                             {promoCode.isActive ? (
                               <>
-                                <EyeOff className="h-4 w-4 mr-2" />
+                                <EyeOff className="h-4 w-4 mr-2" aria-hidden="true" />
                                 Deactivate
                               </>
                             ) : (
                               <>
-                                <Eye className="h-4 w-4 mr-2" />
+                                <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
                                 Activate
                               </>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            aria-label={`Delete promo code ${promoCode.code} permanently`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>

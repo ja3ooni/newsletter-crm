@@ -1,4 +1,6 @@
 import express from 'express';
+
+import { logger } from '../../utils/logger';
 import { createEncryptionService } from '../EncryptionService';
 import {
   KeyRotationService,
@@ -121,7 +123,10 @@ app.post('/api/users', async (req, res) => {
     const userId = Math.random().toString(36).substr(2, 9);
 
     // In a real application, you would save to your database here
-    console.log('Storing encrypted user data:', { userId, ...encryptedUser });
+    logger.info('Storing encrypted user data', {
+      userId,
+      fieldsEncrypted: Object.keys(encryptedUser),
+    });
 
     res.status(201).json({
       success: true,
@@ -129,7 +134,10 @@ app.post('/api/users', async (req, res) => {
       message: 'User created successfully with encrypted sensitive data',
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    logger.error('Error creating user', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to create user',
@@ -168,7 +176,10 @@ app.get('/api/users/:userId', async (req, res) => {
       user: decryptedUser,
     });
   } catch (error) {
-    console.error('Error retrieving user:', error);
+    logger.error('Error retrieving user', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve user',
@@ -197,7 +208,10 @@ app.post('/api/services/notify', async (req, res) => {
       encrypted: response.encrypted,
     });
   } catch (error) {
-    console.error('Error in service communication:', error);
+    logger.error('Error in service communication', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Service Communication Error',
       message: 'Failed to communicate with target service',
@@ -219,7 +233,10 @@ app.post('/api/admin/secrets', async (req, res) => {
       message: 'Secret stored successfully',
     });
   } catch (error) {
-    console.error('Error storing secret:', error);
+    logger.error('Error storing secret', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Secret Management Error',
       message: 'Failed to store secret',
@@ -248,7 +265,10 @@ app.post('/api/admin/secrets/:name/rotate', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error rotating secret:', error);
+    logger.error('Error rotating secret', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Secret Rotation Error',
       message: 'Failed to rotate secret',
@@ -277,7 +297,10 @@ app.get('/api/health', async (req, res) => {
       secretManagerHealthy = retrieved.value === 'test-value';
       await secretManager.deleteSecret('health-check');
     } catch (error) {
-      console.warn('Secret manager health check failed:', error);
+      logger.warn('Secret manager health check failed', {
+        error: error.message,
+        stack: error.stack,
+      });
     }
 
     const isHealthy = encryptionHealthy && secretManagerHealthy;
@@ -292,7 +315,10 @@ app.get('/api/health', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error('Health check error', {
+      error: error.message,
+      stack: error.stack,
+    });
     res.status(503).json({
       status: 'unhealthy',
       error: 'Health check failed',
@@ -309,7 +335,10 @@ app.use(
     res: express.Response,
     next: express.NextFunction
   ) => {
-    console.error('Unhandled error:', error);
+    logger.error('Unhandled error', {
+      error: error.message,
+      stack: error.stack,
+    });
 
     res.status(500).json({
       error: 'Internal Server Error',
@@ -330,34 +359,40 @@ async function startApplication() {
     // Start key rotation service
     if (process.env.KEY_ROTATION_ENABLED === 'true') {
       keyRotationService.start();
-      console.log('Key rotation service started');
+      logger.info('Key rotation service started');
     }
 
     // Start the server
     app.listen(PORT, () => {
-      console.log(`Secure application running on port ${PORT}`);
-      console.log('Security features enabled:');
-      console.log('- Field-level encryption');
-      console.log('- Secret management');
-      console.log('- Key rotation');
-      console.log('- Secure service communication');
-      console.log('- Comprehensive security middleware');
+      logger.info('Secure application started', {
+        port: PORT,
+        securityFeatures: [
+          'Field-level encryption',
+          'Secret management',
+          'Key rotation',
+          'Secure service communication',
+          'Comprehensive security middleware',
+        ],
+      });
     });
   } catch (error) {
-    console.error('Failed to start application:', error);
+    logger.error('Failed to start application', {
+      error: error.message,
+      stack: error.stack,
+    });
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down gracefully');
+  logger.info('Received SIGTERM, shutting down gracefully');
   keyRotationService.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down gracefully');
+  logger.info('Received SIGINT, shutting down gracefully');
   keyRotationService.stop();
   process.exit(0);
 });

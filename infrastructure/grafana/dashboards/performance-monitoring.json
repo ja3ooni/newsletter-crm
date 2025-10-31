@@ -1,0 +1,586 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Performance Monitoring Dashboard",
+    "tags": [
+      "performance",
+      "monitoring",
+      "k6",
+      "api"
+    ],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Response Times (95th Percentile)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{service}} - p95"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (ms)",
+            "unit": "ms"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 1000,
+            "colorMode": "critical",
+            "op": "gt"
+          },
+          {
+            "value": 500,
+            "colorMode": "warning",
+            "op": "gt"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Throughput (Requests/sec)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{service}} - {{method}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "unit": "reqps"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Error Rate by Service",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"4..|5..\"}[5m]) / rate(http_requests_total[5m])",
+            "legendFormat": "{{service}} - Error Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Error Rate",
+            "unit": "percentunit",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 0.05,
+            "colorMode": "critical",
+            "op": "gt"
+          },
+          {
+            "value": 0.02,
+            "colorMode": "warning",
+            "op": "gt"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Performance Score",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "performance_score",
+            "legendFormat": "Overall Score"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "green",
+                  "value": 85
+                }
+              ]
+            },
+            "unit": "short",
+            "min": 0,
+            "max": 100
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "System Health Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "system_health",
+            "legendFormat": "Health Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.9
+                },
+                {
+                  "color": "green",
+                  "value": 0.95
+                }
+              ]
+            },
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Database Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "Query Duration p95"
+          },
+          {
+            "expr": "rate(database_connections_active[5m])",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration (ms) / Connections",
+            "unit": "ms"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Email Performance Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(emails_sent_total[5m])",
+            "legendFormat": "Emails Sent/sec"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(email_send_duration_seconds_bucket[5m]))",
+            "legendFormat": "Send Duration p95"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate / Duration",
+            "unit": "short"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage by Service",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{name=~\".*service.*\"} / container_spec_memory_limit_bytes{name=~\".*service.*\"}",
+            "legendFormat": "{{name}} - Memory Usage"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Memory Usage",
+            "unit": "percentunit",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 0.85,
+            "colorMode": "critical",
+            "op": "gt"
+          },
+          {
+            "value": 0.7,
+            "colorMode": "warning",
+            "op": "gt"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 9,
+        "title": "CPU Usage by Service",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{name=~\".*service.*\"}[5m])",
+            "legendFormat": "{{name}} - CPU Usage"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU Usage",
+            "unit": "percentunit"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 0.8,
+            "colorMode": "critical",
+            "op": "gt"
+          },
+          {
+            "value": 0.6,
+            "colorMode": "warning",
+            "op": "gt"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 10,
+        "title": "Performance Test Results Timeline",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "performance_test_results",
+            "legendFormat": "Test Results",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "table"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 11,
+        "title": "Load Testing Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(k6_http_reqs_total[5m])",
+            "legendFormat": "{{scenario}} - Requests/sec"
+          },
+          {
+            "expr": "k6_vus",
+            "legendFormat": "{{scenario}} - Virtual Users"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec & VUs",
+            "unit": "short"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 40
+        }
+      },
+      {
+        "id": 12,
+        "title": "Performance Thresholds Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "performance_threshold_violations",
+            "legendFormat": "Threshold Violations"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 5
+                }
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 40
+        }
+      },
+      {
+        "id": 13,
+        "title": "Email Performance Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(k6_email_send_duration_sum[5m]) / rate(k6_email_send_duration_count[5m])",
+            "legendFormat": "Average Email Send Time"
+          },
+          {
+            "expr": "rate(k6_emails_processed_total[5m])",
+            "legendFormat": "Email Processing Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Time (ms) / Rate",
+            "unit": "ms"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 40
+        }
+      },
+      {
+        "id": 14,
+        "title": "Database Connection Pool Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "database_connection_pool_active",
+            "legendFormat": "Active Connections"
+          },
+          {
+            "expr": "database_connection_pool_idle",
+            "legendFormat": "Idle Connections"
+          },
+          {
+            "expr": "database_connection_pool_waiting",
+            "legendFormat": "Waiting Connections"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Connections",
+            "unit": "short"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 80,
+            "colorMode": "critical",
+            "op": "gt"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 48
+        }
+      },
+      {
+        "id": 15,
+        "title": "Performance Test Execution Status",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"performance-tests\"}",
+            "legendFormat": "Performance Test Logs"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 48
+        }
+      },
+      {
+        "id": 16,
+        "title": "API Endpoint Performance Breakdown",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{endpoint}} - p95"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 56
+        }
+      },
+      {
+        "id": 17,
+        "title": "Performance Alerts Summary",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ALERTS{alertname=~\".*Performance.*\"}",
+            "legendFormat": "Performance Alerts",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "table"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 24,
+          "x": 0,
+          "y": 64
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Performance Tests",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "performance_test_started",
+          "iconColor": "blue",
+          "titleFormat": "Performance Test Started"
+        },
+        {
+          "name": "Alerts",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "alerts_triggered",
+          "iconColor": "red",
+          "titleFormat": "Alert: {{alertname}}"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "query": "label_values(http_requests_total, service)",
+          "refresh": 1,
+          "includeAll": true,
+          "allValue": ".*"
+        },
+        {
+          "name": "interval",
+          "type": "interval",
+          "query": "1m,5m,10m,30m,1h",
+          "current": {
+            "text": "5m",
+            "value": "5m"
+          }
+        }
+      ]
+    }
+  }
+}

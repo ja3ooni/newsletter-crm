@@ -1,178 +1,128 @@
-# Docker Compose configuration for testing
 version: '3.8'
 
 services:
-  # Test PostgreSQL Database
-  postgres-test:
-    image: postgres:15-alpine
-    container_name: ailert-postgres-test
-    environment:
-      POSTGRES_DB: ailert_test
-      POSTGRES_USER: ailert_test
-      POSTGRES_PASSWORD: ailert_test_password
-      POSTGRES_MULTIPLE_DATABASES: "user_db_test,newsletter_db_test,content_db_test,analytics_db_test,crm_db_test"
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
-    ports:
-      - "5433:5432"
-    networks:
-      - ailert-test-network
-    healthcheck:
-      test: ["CMD-EXEC", "pg_isready -U ailert_test -d ailert_test"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Test Redis Cache
+  # Redis for caching tests
   redis-test:
     image: redis:7-alpine
-    container_name: ailert-redis-test
-    command: redis-server --appendonly yes --requirepass ailert_test_redis_password
-    volumes:
-      - redis_test_data:/data
     ports:
-      - "6380:6379"
-    networks:
-      - ailert-test-network
+      - '6380:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-test-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Test Elasticsearch
+  # PostgreSQL for database tests
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: developer_tools_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+      - ./scripts/__tests__/fixtures/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test_user -d developer_tools_test']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB for document tests
+  mongo-test:
+    image: mongo:6-jammy
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: test_user
+      MONGO_INITDB_ROOT_PASSWORD: test_password
+      MONGO_INITDB_DATABASE: developer_tools_test
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo-test-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Elasticsearch for search tests
   elasticsearch-test:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: ailert-elasticsearch-test
+    image: elasticsearch:8.11.0
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
-    volumes:
-      - elasticsearch_test_data:/usr/share/elasticsearch/data
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
     ports:
-      - "9201:9200"
-    networks:
-      - ailert-test-network
+      - '9201:9200'
+    volumes:
+      - elasticsearch-test-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test:
+        ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Mock API server for integration tests
+  mock-api:
+    image: mockserver/mockserver:5.15.0
+    ports:
+      - '1081:1080'
+    environment:
+      MOCKSERVER_PROPERTY_FILE: /config/mockserver.properties
+    volumes:
+      - ./scripts/__tests__/fixtures/mockserver.properties:/config/mockserver.properties
+      - ./scripts/__tests__/fixtures/mock-expectations.json:/config/expectations.json
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -f http://localhost:1080/mockserver/status || exit 1',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Test RabbitMQ
-  rabbitmq-test:
-    image: rabbitmq:3.12-management-alpine
-    container_name: ailert-rabbitmq-test
-    environment:
-      RABBITMQ_DEFAULT_USER: ailert_test
-      RABBITMQ_DEFAULT_PASS: ailert_test_rabbitmq_password
-    volumes:
-      - rabbitmq_test_data:/var/lib/rabbitmq
-    ports:
-      - "5673:5672"   # AMQP
-      - "15673:15672" # Management UI
-    networks:
-      - ailert-test-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Test User Service
-  user-service-test:
+  # Test runner service
+  test-runner:
     build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
-      target: development
-    container_name: ailert-user-service-test
-    environment:
-      - NODE_ENV=test
-      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/user_db_test
-      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
-      - JWT_SECRET=test_jwt_secret
-      - PORT=3001
-    volumes:
-      - ./services/user-service:/app
-      - /app/node_modules
-    ports:
-      - "3011:3001"
-    networks:
-      - ailert-test-network
+      context: ./scripts
+      dockerfile: Dockerfile.test
     depends_on:
-      postgres-test:
-        condition: service_healthy
       redis-test:
         condition: service_healthy
-    command: ["dumb-init", "npm", "run", "test:watch"]
-
-  # Test Newsletter Service
-  newsletter-service-test:
-    build:
-      context: ./services/newsletter-service
-      dockerfile: Dockerfile
-      target: development
-    container_name: ailert-newsletter-service-test
-    environment:
-      - NODE_ENV=test
-      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/newsletter_db_test
-      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
-      - RABBITMQ_URL=amqp://ailert_test:ailert_test_rabbitmq_password@rabbitmq-test:5672
-      - PORT=3002
-    volumes:
-      - ./services/newsletter-service:/app
-      - /app/node_modules
-    ports:
-      - "3012:3002"
-    networks:
-      - ailert-test-network
-    depends_on:
       postgres-test:
         condition: service_healthy
-      redis-test:
-        condition: service_healthy
-      rabbitmq-test:
-        condition: service_healthy
-
-  # Test Content Service
-  content-service-test:
-    build:
-      context: ./services/content-service
-      dockerfile: Dockerfile
-      target: development
-    container_name: ailert-content-service-test
-    environment:
-      - NODE_ENV=test
-      - DATABASE_URL=postgresql://ailert_test:ailert_test_password@postgres-test:5432/content_db_test
-      - ELASTICSEARCH_URL=http://elasticsearch-test:9200
-      - REDIS_URL=redis://:ailert_test_redis_password@redis-test:6379
-      - RABBITMQ_URL=amqp://ailert_test:ailert_test_rabbitmq_password@rabbitmq-test:5672
-      - PORT=3003
-    volumes:
-      - ./services/content-service:/app
-      - /app/node_modules
-    ports:
-      - "3013:3003"
-    networks:
-      - ailert-test-network
-    depends_on:
-      postgres-test:
+      mongo-test:
         condition: service_healthy
       elasticsearch-test:
         condition: service_healthy
-      redis-test:
+      mock-api:
         condition: service_healthy
-      rabbitmq-test:
-        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      REDIS_URL: redis://redis-test:6379
+      DATABASE_URL: postgresql://test_user:test_password@postgres-test:5432/developer_tools_test
+      MONGODB_URL: mongodb://test_user:test_password@mongo-test:27017/developer_tools_test
+      ELASTICSEARCH_URL: http://elasticsearch-test:9200
+      MOCK_API_URL: http://mock-api:1080
+    volumes:
+      - ./scripts:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run test:integration:full
 
 volumes:
-  postgres_test_data:
-  redis_test_data:
-  elasticsearch_test_data:
-  rabbitmq_test_data:
+  redis-test-data:
+  postgres-test-data:
+  mongo-test-data:
+  elasticsearch-test-data:
 
 networks:
-  ailert-test-network:
-    driver: bridge
+  default:
+    name: developer-tools-test-network

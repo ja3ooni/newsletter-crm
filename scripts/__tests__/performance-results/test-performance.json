@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-10-30T20:13:57.977Z",
+  "platform": "win32",
+  "summary": {
+    "totalTests": 0,
+    "totalDuration": 0,
+    "averageDuration": 0,
+    "memoryUsage": {
+      "heapUsed": 277399232,
+      "heapTotal": 292974592,
+      "external": 2234473,
+      "rss": 337321984
+    }
+  },
+  "slowestTests": [
+    {
+      "file": "C:\\Users\\aljaunia\\Documents\\Development\\newsletter\\scripts\\shared\\__tests__\\PlatformService.test.ts",
+      "duration": 0
+    },
+    {
+      "file": "C:\\Users\\aljaunia\\Documents\\Development\\newsletter\\scripts\\__tests__\\performance-optimization.test.ts",
+      "duration": 0
+    }
+  ],
+  "thresholds": {
+    "maxTestDuration": 5000,
+    "maxSuiteDuration": 30000,
+    "maxMemoryUsage": 104857600
+  },
+  "issues": [
+    {
+      "type": "high_memory_usage",
+      "actual": 277399232,
+      "threshold": 104857600
+    }
+  ]
+}

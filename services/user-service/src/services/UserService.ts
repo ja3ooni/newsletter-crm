@@ -1,16 +1,19 @@
 import { UserRepository } from '@/repositories/UserRepository';
 import {
-    CreateUserRequest,
-    NotFoundError,
-    UpdateUserRequest,
-    User,
-    UserPreferences,
-    ValidationError
+  CreateUserRequest,
+  NotFoundError,
+  UpdateUserRequest,
+  User,
+  UserPreferences,
+  ValidationError,
 } from '@/types';
 import { AuthUtils } from '@/utils/auth';
 import { logger } from '@/utils/logger';
 import { isValidEmail, isValidPassword } from '@/utils/validation';
 
+/**
+ * User service for managing user operations
+ */
 export class UserService {
   constructor(private userRepository: UserRepository) {}
 
@@ -18,13 +21,21 @@ export class UserService {
   // USER MANAGEMENT
   // ============================================================================
 
+  /**
+   * Create a new user account
+   * @param userData - User registration data
+   * @returns Promise<User> - The created user
+   * @throws ValidationError - If user data is invalid or user already exists
+   */
   async createUser(userData: CreateUserRequest): Promise<User> {
     try {
       // Validate input data
       this.validateUserData(userData);
 
       // Check if user already exists
-      const existingUser = await this.userRepository.findByEmail(userData.email);
+      const existingUser = await this.userRepository.findByEmail(
+        userData.email
+      );
       if (existingUser) {
         throw new ValidationError('User with this email already exists');
       }
@@ -39,10 +50,13 @@ export class UserService {
 
       const user = await this.userRepository.create({
         ...userData,
-        passwordHash
+        passwordHash,
       });
 
-      logger.info('User created successfully', { userId: user.id, email: user.email });
+      logger.info('User created successfully', {
+        userId: user.id,
+        email: user.email,
+      });
       return user;
     } catch (error) {
       logger.error('Error creating user:', error);
@@ -50,6 +64,12 @@ export class UserService {
     }
   }
 
+  /**
+   * Get user by ID
+   * @param id - User ID
+   * @returns Promise<User> - The user
+   * @throws NotFoundError - If user is not found
+   */
   async getUserById(id: string): Promise<User> {
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -58,10 +78,23 @@ export class UserService {
     return user;
   }
 
+  /**
+   * Get user by email address
+   * @param email - User email address
+   * @returns Promise<User | null> - The user or null if not found
+   */
   async getUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
   }
 
+  /**
+   * Update user information
+   * @param id - User ID
+   * @param updates - User update data
+   * @returns Promise<User> - The updated user
+   * @throws NotFoundError - If user is not found
+   * @throws ValidationError - If update data is invalid
+   */
   async updateUser(id: string, updates: UpdateUserRequest): Promise<User> {
     try {
       // Validate updates
@@ -69,7 +102,9 @@ export class UserService {
         this.validateEmail(updates.email);
 
         // Check if email is already taken by another user
-        const existingUser = await this.userRepository.findByEmail(updates.email);
+        const existingUser = await this.userRepository.findByEmail(
+          updates.email
+        );
         if (existingUser && existingUser.id !== id) {
           throw new ValidationError('Email is already taken by another user');
         }
@@ -88,6 +123,12 @@ export class UserService {
     }
   }
 
+  /**
+   * Delete a user account
+   * @param id - User ID
+   * @returns Promise<void>
+   * @throws NotFoundError - If user is not found
+   */
   async deleteUser(id: string): Promise<void> {
     try {
       const deleted = await this.userRepository.delete(id);
@@ -106,27 +147,49 @@ export class UserService {
   // AUTHENTICATION
   // ============================================================================
 
-  async authenticateUser(credentials: { email: string; password: string }): Promise<User> {
+  /**
+   * Authenticate user with email and password
+   * @param credentials - User login credentials
+   * @returns Promise<User> - The authenticated user
+   * @throws ValidationError - If credentials are invalid
+   */
+  async authenticateUser(credentials: {
+    email: string;
+    password: string;
+  }): Promise<User> {
     try {
       const user = await this.userRepository.findByEmail(credentials.email);
       if (!user || !user.passwordHash) {
         throw new ValidationError('Invalid email or password');
       }
 
-      const isValidPassword = await AuthUtils.verifyPassword(credentials.password, user.passwordHash!);
+      const isValidPassword = await AuthUtils.verifyPassword(
+        credentials.password,
+        user.passwordHash!
+      );
       if (!isValidPassword) {
         throw new ValidationError('Invalid email or password');
       }
 
-      logger.info('User authenticated successfully', { userId: user.id, email: user.email });
+      logger.info('User authenticated successfully', {
+        userId: user.id,
+        email: user.email,
+      });
       return user;
     } catch (error) {
-      logger.error('Authentication failed:', { email: credentials.email, error });
+      logger.error('Authentication failed:', {
+        email: credentials.email,
+        error,
+      });
       throw error;
     }
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
     try {
       const user = await this.getUserById(userId);
 
@@ -135,7 +198,10 @@ export class UserService {
       }
 
       // Verify current password
-      const isValidPassword = await AuthUtils.verifyPassword(currentPassword, user.passwordHash!);
+      const isValidPassword = await AuthUtils.verifyPassword(
+        currentPassword,
+        user.passwordHash!
+      );
       if (!isValidPassword) {
         throw new ValidationError('Current password is incorrect');
       }
@@ -145,7 +211,9 @@ export class UserService {
 
       // Hash and update new password
       const newPasswordHash = await AuthUtils.hashPassword(newPassword);
-      await this.userRepository.update(userId, { passwordHash: newPasswordHash });
+      await this.userRepository.update(userId, {
+        passwordHash: newPasswordHash,
+      });
 
       logger.info('Password changed successfully', { userId });
     } catch (error) {
@@ -158,12 +226,18 @@ export class UserService {
   // USER PREFERENCES
   // ============================================================================
 
-  async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<User> {
+  async updatePreferences(
+    userId: string,
+    preferences: Partial<UserPreferences>
+  ): Promise<User> {
     try {
       // Validate preferences
       this.validatePreferences(preferences);
 
-      const user = await this.userRepository.updatePreferences(userId, preferences);
+      const user = await this.userRepository.updatePreferences(
+        userId,
+        preferences
+      );
       if (!user) {
         throw new NotFoundError('User');
       }
@@ -213,18 +287,26 @@ export class UserService {
 
   private validatePassword(password: string): void {
     if (!isValidPassword(password)) {
-      throw new ValidationError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
+      throw new ValidationError(
+        'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number'
+      );
     }
   }
 
   private validatePreferences(preferences: Partial<UserPreferences>): void {
     // Validate newsletter frequency
-    if (preferences.newsletterFrequency && !['daily', 'weekly', 'monthly'].includes(preferences.newsletterFrequency)) {
+    if (
+      preferences.newsletterFrequency &&
+      !['daily', 'weekly', 'monthly'].includes(preferences.newsletterFrequency)
+    ) {
       throw new ValidationError('Invalid newsletter frequency value');
     }
 
     // Validate theme
-    if (preferences.theme && !['light', 'dark', 'auto'].includes(preferences.theme)) {
+    if (
+      preferences.theme &&
+      !['light', 'dark', 'auto'].includes(preferences.theme)
+    ) {
       throw new ValidationError('Invalid theme value');
     }
 
@@ -243,7 +325,12 @@ export class UserService {
     }
 
     // Validate language
-    if (preferences.language && !['en', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh'].includes(preferences.language)) {
+    if (
+      preferences.language &&
+      !['en', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh'].includes(
+        preferences.language
+      )
+    ) {
       throw new ValidationError('Invalid language value');
     }
   }

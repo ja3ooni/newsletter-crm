@@ -1,0 +1,1618 @@
+openapi: 3.0.3
+info:
+  title: DatatechtonCRM Platform API
+  description: |
+    Comprehensive API documentation for the DatatechtonCRM platform - a professional-grade,
+    enterprise-ready newsletter and marketing automation platform.
+
+    ## Authentication
+
+    The API supports multiple authentication methods:
+    - **JWT Bearer Token**: For web application authentication
+    - **API Key**: For programmatic access (header: `X-API-Key`)
+    - **OAuth2**: For third-party integrations
+
+    ## Rate Limiting
+
+    All endpoints are rate-limited based on subscription tier:
+    - **Free Tier**: 100 requests/hour
+    - **Pro Tier**: 1,000 requests/hour
+    - **Enterprise Tier**: 10,000 requests/hour
+
+    ## Error Handling
+
+    The API uses conventional HTTP response codes and returns detailed error information:
+
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid request parameters",
+        "details": [
+          {
+            "field": "email",
+            "message": "Invalid email format"
+          }
+        ],
+        "requestId": "req_1234567890"
+      }
+    }
+    ```
+
+    ## Pagination
+
+    List endpoints support cursor-based pagination:
+
+    ```json
+    {
+      "data": [...],
+      "pagination": {
+        "hasNext": true,
+        "hasPrevious": false,
+        "nextCursor": "eyJpZCI6MTIzfQ==",
+        "previousCursor": null,
+        "total": 150
+      }
+    }
+    ```
+
+  version: 1.0.0
+  contact:
+    name: DatatechtonCRM API Support
+    email: api-support@datatechtoncrm.com
+    url: https://docs.datatechtoncrm.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://datatechtoncrm.com/terms
+
+servers:
+  - url: https://api.datatechtoncrm.com/v1
+    description: Production server
+  - url: https://staging-api.datatechtoncrm.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Health Check
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  # User Service Endpoints
+  /users/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+
+  /users/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT tokens
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: Retrieve the authenticated user's profile information
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update the authenticated user's profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  # Newsletter Service Endpoints
+  /newsletters:
+    get:
+      tags:
+        - Newsletters
+      summary: List newsletters
+      description: Retrieve a paginated list of newsletters for the authenticated user
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Cursor"
+        - name: status
+          in: query
+          description: Filter by newsletter status
+          schema:
+            type: string
+            enum: [draft, scheduled, sent, failed]
+        - name: search
+          in: query
+          description: Search newsletters by title or content
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Newsletters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      tags:
+        - Newsletters
+      summary: Create newsletter
+      description: Create a new newsletter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNewsletterRequest"
+      responses:
+        "201":
+          description: Newsletter created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Newsletter"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /newsletters/{id}:
+    get:
+      tags:
+        - Newsletters
+      summary: Get newsletter
+      description: Retrieve a specific newsletter by ID
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      responses:
+        "200":
+          description: Newsletter retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Newsletter"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    put:
+      tags:
+        - Newsletters
+      summary: Update newsletter
+      description: Update an existing newsletter
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNewsletterRequest"
+      responses:
+        "200":
+          description: Newsletter updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Newsletter"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+    delete:
+      tags:
+        - Newsletters
+      summary: Delete newsletter
+      description: Delete a newsletter
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      responses:
+        "204":
+          description: Newsletter deleted successfully
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /newsletters/{id}/send:
+    post:
+      tags:
+        - Newsletters
+      summary: Send newsletter
+      description: Send a newsletter to subscribers
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendNewsletterRequest"
+      responses:
+        "202":
+          description: Newsletter sending initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendNewsletterResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /newsletters/{id}/analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Get newsletter analytics
+      description: Retrieve detailed analytics for a specific newsletter
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+        - name: timeRange
+          in: query
+          description: Time range for analytics
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d, 90d]
+            default: 7d
+      responses:
+        "200":
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterAnalytics"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  # Template Endpoints
+  /templates:
+    get:
+      tags:
+        - Templates
+      summary: List templates
+      description: Retrieve available newsletter templates
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Cursor"
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+            enum: [business, tech, creative, minimal]
+        - name: isPublic
+          in: query
+          description: Filter by public/private templates
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateListResponse"
+
+    post:
+      tags:
+        - Templates
+      summary: Create template
+      description: Create a new newsletter template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /templates/{id}:
+    get:
+      tags:
+        - Templates
+      summary: Get template
+      description: Retrieve a specific template by ID
+      parameters:
+        - $ref: "#/components/parameters/TemplateID"
+      responses:
+        "200":
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  # CRM Endpoints
+  /crm/contacts:
+    get:
+      tags:
+        - CRM
+      summary: List contacts
+      description: Retrieve a paginated list of CRM contacts
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Cursor"
+        - name: segment
+          in: query
+          description: Filter by segment ID
+          schema:
+            type: string
+            format: uuid
+        - name: lifecycle
+          in: query
+          description: Filter by lifecycle stage
+          schema:
+            type: string
+            enum: [subscriber, lead, customer, evangelist]
+        - name: search
+          in: query
+          description: Search contacts by name or email
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      tags:
+        - CRM
+      summary: Create contact
+      description: Create a new CRM contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /crm/contacts/{id}:
+    get:
+      tags:
+        - CRM
+      summary: Get contact
+      description: Retrieve a specific contact by ID
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          description: Contact retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /crm/segments:
+    get:
+      tags:
+        - CRM
+      summary: List segments
+      description: Retrieve available contact segments
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Segments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SegmentListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      tags:
+        - CRM
+      summary: Create segment
+      description: Create a new contact segment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSegmentRequest"
+      responses:
+        "201":
+          description: Segment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Segment"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for programmatic access
+
+  parameters:
+    PageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page (max 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    Cursor:
+      name: cursor
+      in: query
+      description: Cursor for pagination
+      schema:
+        type: string
+
+    NewsletterID:
+      name: id
+      in: path
+      required: true
+      description: Newsletter ID
+      schema:
+        type: string
+        format: uuid
+
+    TemplateID:
+      name: id
+      in: path
+      required: true
+      description: Template ID
+      schema:
+        type: string
+        format: uuid
+
+    ContactID:
+      name: id
+      in: path
+      required: true
+      description: Contact ID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Invalid request parameters"
+              details:
+                - field: "email"
+                  message: "Invalid email format"
+              requestId: "req_1234567890"
+
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "UNAUTHORIZED"
+              message: "Authentication required"
+              requestId: "req_1234567890"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "Resource not found"
+              requestId: "req_1234567890"
+
+    ConflictError:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "CONFLICT"
+              message: "Resource already exists"
+              requestId: "req_1234567890"
+
+  schemas:
+    # Common Schemas
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - requestId
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: array
+              description: Detailed validation errors
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+            requestId:
+              type: string
+              description: Request ID for tracking
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        service:
+          type: string
+          description: Service name
+        version:
+          type: string
+          description: Service version
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          description: Service uptime in seconds
+        memory:
+          type: object
+          description: Memory usage statistics
+        environment:
+          type: string
+          description: Environment name
+
+    PaginationInfo:
+      type: object
+      required:
+        - hasNext
+        - hasPrevious
+      properties:
+        hasNext:
+          type: boolean
+          description: Whether there are more items
+        hasPrevious:
+          type: boolean
+          description: Whether there are previous items
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page
+        previousCursor:
+          type: string
+          nullable: true
+          description: Cursor for previous page
+        total:
+          type: integer
+          description: Total number of items
+
+    # User Schemas
+    UserRegistrationRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          minLength: 8
+          description: User password (min 8 characters)
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: User first name
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: User last name
+        company:
+          type: string
+          maxLength: 100
+          description: Company name
+        timezone:
+          type: string
+          description: User timezone
+          default: "UTC"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - profile
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        profile:
+          $ref: "#/components/schemas/UserProfile"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+        language:
+          type: string
+        preferences:
+          $ref: "#/components/schemas/UserPreferences"
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        company:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+        language:
+          type: string
+        preferences:
+          $ref: "#/components/schemas/UserPreferences"
+
+    UserPreferences:
+      type: object
+      properties:
+        contentSections:
+          type: array
+          items:
+            type: string
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly]
+        format:
+          type: string
+          enum: [html, markdown, plain]
+        topics:
+          type: array
+          items:
+            type: string
+        sendTime:
+          type: string
+          pattern: "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+        timezone:
+          type: string
+
+    # Newsletter Schemas
+    Newsletter:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          $ref: "#/components/schemas/NewsletterContent"
+        template:
+          $ref: "#/components/schemas/Template"
+        status:
+          type: string
+          enum: [draft, scheduled, sent, failed]
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        metrics:
+          $ref: "#/components/schemas/NewsletterMetrics"
+        segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewsletterContent:
+      type: object
+      required:
+        - sections
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentSection"
+        personalization:
+          type: object
+        metadata:
+          type: object
+        dynamicContent:
+          type: array
+          items:
+            $ref: "#/components/schemas/DynamicContentBlock"
+
+    ContentSection:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - items
+        - order
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [news, research, github, events, products, custom]
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentItem"
+        order:
+          type: integer
+        isPersonalized:
+          type: boolean
+
+    ContentItem:
+      type: object
+      required:
+        - id
+        - title
+        - summary
+        - url
+        - source
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        url:
+          type: string
+          format: uri
+        source:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        tags:
+          type: array
+          items:
+            type: string
+        sentiment:
+          type: number
+          minimum: -1
+          maximum: 1
+        readingTime:
+          type: integer
+          description: Reading time in minutes
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        category:
+          type: string
+
+    DynamicContentBlock:
+      type: object
+      required:
+        - id
+        - name
+        - conditions
+        - variants
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentCondition"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentVariant"
+
+    ContentCondition:
+      type: object
+      required:
+        - field
+        - operator
+        - value
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum: [equals, contains, greater_than, less_than, in, not_in]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+
+    ContentVariant:
+      type: object
+      required:
+        - id
+        - content
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        isDefault:
+          type: boolean
+
+    CreateNewsletterRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        templateId:
+          type: string
+          format: uuid
+        content:
+          $ref: "#/components/schemas/NewsletterContent"
+        segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+
+    UpdateNewsletterRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        content:
+          $ref: "#/components/schemas/NewsletterContent"
+        segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+
+    SendNewsletterRequest:
+      type: object
+      properties:
+        segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        scheduledAt:
+          type: string
+          format: date-time
+        testEmail:
+          type: string
+          format: email
+          description: Send test email to this address instead of all subscribers
+
+    SendNewsletterResponse:
+      type: object
+      required:
+        - jobId
+        - status
+      properties:
+        jobId:
+          type: string
+          description: Job ID for tracking send progress
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        estimatedDelivery:
+          type: string
+          format: date-time
+        recipientCount:
+          type: integer
+
+    NewsletterListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Newsletter"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+    NewsletterMetrics:
+      type: object
+      properties:
+        sent:
+          type: integer
+          description: Number of emails sent
+        delivered:
+          type: integer
+          description: Number of emails delivered
+        opens:
+          type: integer
+          description: Total number of opens
+        uniqueOpens:
+          type: integer
+          description: Number of unique opens
+        clicks:
+          type: integer
+          description: Total number of clicks
+        uniqueClicks:
+          type: integer
+          description: Number of unique clicks
+        unsubscribes:
+          type: integer
+          description: Number of unsubscribes
+        bounces:
+          type: integer
+          description: Number of bounces
+        openRate:
+          type: number
+          description: Open rate percentage
+        clickRate:
+          type: number
+          description: Click rate percentage
+        unsubscribeRate:
+          type: number
+          description: Unsubscribe rate percentage
+
+    NewsletterAnalytics:
+      type: object
+      required:
+        - newsletterId
+        - metrics
+      properties:
+        newsletterId:
+          type: string
+          format: uuid
+        metrics:
+          $ref: "#/components/schemas/NewsletterMetrics"
+        timeSeriesData:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              opens:
+                type: integer
+              clicks:
+                type: integer
+        topLinks:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              clicks:
+                type: integer
+              clickRate:
+                type: number
+        deviceBreakdown:
+          type: object
+          properties:
+            desktop:
+              type: number
+            mobile:
+              type: number
+            tablet:
+              type: number
+        locationBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              country:
+                type: string
+              opens:
+                type: integer
+              clicks:
+                type: integer
+
+    # Template Schemas
+    Template:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - html
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [business, tech, creative, minimal]
+        html:
+          type: string
+          description: Template HTML content
+        css:
+          type: string
+          description: Template CSS styles
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateVariable"
+        previewImage:
+          type: string
+          format: uri
+        isPublic:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplateVariable:
+      type: object
+      required:
+        - name
+        - type
+        - defaultValue
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [text, image, color, boolean]
+        defaultValue:
+          oneOf:
+            - type: string
+            - type: boolean
+        description:
+          type: string
+
+    CreateTemplateRequest:
+      type: object
+      required:
+        - name
+        - category
+        - html
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        category:
+          type: string
+          enum: [business, tech, creative, minimal]
+        html:
+          type: string
+        css:
+          type: string
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateVariable"
+        isPublic:
+          type: boolean
+          default: false
+
+    TemplateListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+    # CRM Schemas
+    Contact:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        phone:
+          type: string
+        customFields:
+          type: object
+          additionalProperties: true
+        tags:
+          type: array
+          items:
+            type: string
+        leadScore:
+          type: integer
+          minimum: 0
+        lifecycle:
+          type: string
+          enum: [subscriber, lead, customer, evangelist]
+        source:
+          type: string
+        engagementHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/EngagementEvent"
+        preferences:
+          $ref: "#/components/schemas/ContactPreferences"
+        segments:
+          type: array
+          items:
+            type: string
+            format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EngagementEvent:
+      type: object
+      required:
+        - id
+        - type
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [email_open, email_click, website_visit, form_submit, purchase]
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+        score:
+          type: integer
+
+    ContactPreferences:
+      type: object
+      properties:
+        emailFrequency:
+          type: string
+          enum: [daily, weekly, monthly]
+        contentTypes:
+          type: array
+          items:
+            type: string
+        communicationChannels:
+          type: array
+          items:
+            type: string
+        timezone:
+          type: string
+        language:
+          type: string
+
+    CreateContactRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        company:
+          type: string
+        jobTitle:
+          type: string
+        phone:
+          type: string
+        customFields:
+          type: object
+          additionalProperties: true
+        tags:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+        preferences:
+          $ref: "#/components/schemas/ContactPreferences"
+
+    ContactListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contact"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+    Segment:
+      type: object
+      required:
+        - id
+        - name
+        - conditions
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SegmentCondition"
+        contactCount:
+          type: integer
+        isAutoUpdating:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SegmentCondition:
+      type: object
+      required:
+        - field
+        - operator
+        - value
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum: [equals, contains, greater_than, less_than, in, not_in]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+        logicalOperator:
+          type: string
+          enum: [AND, OR]
+
+    CreateSegmentRequest:
+      type: object
+      required:
+        - name
+        - conditions
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SegmentCondition"
+        isAutoUpdating:
+          type: boolean
+          default: true
+
+    SegmentListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Segment"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management and profiles
+  - name: Newsletters
+    description: Newsletter creation, management, and sending
+  - name: Templates
+    description: Newsletter template management
+  - name: CRM
+    description: Customer relationship management
+  - name: Analytics
+    description: Analytics and reporting

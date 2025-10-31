@@ -1,0 +1,825 @@
+# Production Monitoring and Alerting Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-production-config
+  namespace: ailert-production
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'ailert-production'
+        environment: 'production'
+
+    rule_files:
+      - "alert_rules.yml"
+      - "recording_rules.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+          timeout: 10s
+          api_version: v2
+
+    scrape_configs:
+      # Prometheus self-monitoring
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+        scrape_interval: 10s
+
+      # Application services monitoring
+      - job_name: 'user-service'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: user-service
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      - job_name: 'newsletter-service'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: newsletter-service
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      - job_name: 'crm-service'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: crm-service
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      - job_name: 'analytics-service'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: analytics-service
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      - job_name: 'content-service'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: content-service
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      # Infrastructure monitoring
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - ailert-production
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # Database monitoring
+      - job_name: 'postgres-exporter'
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+        scrape_interval: 30s
+
+      - job_name: 'redis-exporter'
+        static_configs:
+          - targets: ['redis-exporter:9121']
+        scrape_interval: 30s
+
+      # Load balancer monitoring
+      - job_name: 'nginx-ingress'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: keep
+            regex: ingress-nginx
+
+  alert_rules.yml: |
+    groups:
+      - name: ailert.production.critical
+        rules:
+          # Service availability alerts
+          - alert: ServiceDown
+            expr: up{job=~"user-service|newsletter-service|crm-service|analytics-service|content-service"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "Service {{ $labels.job }} is down"
+              description: "Service {{ $labels.job }} has been down for more than 1 minute"
+              runbook_url: "https://runbooks.ailert.com/service-down"
+              dashboard_url: "https://grafana.ailert.com/d/service-overview"
+
+          - alert: HighErrorRate
+            expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+            for: 2m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "High error rate detected for {{ $labels.job }}"
+              description: "Error rate is {{ $value | humanizePercentage }} for service {{ $labels.job }}"
+              runbook_url: "https://runbooks.ailert.com/high-error-rate"
+
+          - alert: HighLatency
+            expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+            for: 3m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "High latency detected for {{ $labels.job }}"
+              description: "95th percentile latency is {{ $value }}s for service {{ $labels.job }}"
+              runbook_url: "https://runbooks.ailert.com/high-latency"
+
+          # Resource alerts
+          - alert: HighMemoryUsage
+            expr: (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "High memory usage for {{ $labels.pod }}"
+              description: "Memory usage is {{ $value | humanizePercentage }} for pod {{ $labels.pod }}"
+              runbook_url: "https://runbooks.ailert.com/high-memory"
+
+          - alert: HighCPUUsage
+            expr: rate(container_cpu_usage_seconds_total[5m]) / (container_spec_cpu_quota / container_spec_cpu_period) > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "High CPU usage for {{ $labels.pod }}"
+              description: "CPU usage is {{ $value | humanizePercentage }} for pod {{ $labels.pod }}"
+              runbook_url: "https://runbooks.ailert.com/high-cpu"
+
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+            for: 5m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "Pod {{ $labels.pod }} is crash looping"
+              description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes"
+              runbook_url: "https://runbooks.ailert.com/pod-crash-loop"
+
+          # Database alerts
+          - alert: PostgreSQLDown
+            expr: pg_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL database is not responding"
+              runbook_url: "https://runbooks.ailert.com/postgresql-down"
+
+          - alert: PostgreSQLHighConnections
+            expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "PostgreSQL high connection usage"
+              description: "PostgreSQL is using {{ $value | humanizePercentage }} of available connections"
+              runbook_url: "https://runbooks.ailert.com/postgresql-connections"
+
+          - alert: RedisDown
+            expr: redis_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              team: platform
+              environment: production
+            annotations:
+              summary: "Redis is down"
+              description: "Redis cache is not responding"
+              runbook_url: "https://runbooks.ailert.com/redis-down"
+
+          - alert: RedisHighMemoryUsage
+            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "Redis high memory usage"
+              description: "Redis is using {{ $value | humanizePercentage }} of available memory"
+              runbook_url: "https://runbooks.ailert.com/redis-memory"
+
+          # Business logic alerts
+          - alert: NewsletterGenerationFailed
+            expr: increase(newsletter_generation_failures_total[5m]) > 5
+            for: 2m
+            labels:
+              severity: critical
+              team: product
+              environment: production
+            annotations:
+              summary: "Newsletter generation failures detected"
+              description: "{{ $value }} newsletter generation failures in the last 5 minutes"
+              runbook_url: "https://runbooks.ailert.com/newsletter-generation"
+
+          - alert: EmailDeliveryFailed
+            expr: increase(email_delivery_failures_total[5m]) > 10
+            for: 2m
+            labels:
+              severity: critical
+              team: product
+              environment: production
+            annotations:
+              summary: "Email delivery failures detected"
+              description: "{{ $value }} email delivery failures in the last 5 minutes"
+              runbook_url: "https://runbooks.ailert.com/email-delivery"
+
+          - alert: HighUnsubscribeRate
+            expr: rate(newsletter_unsubscribes_total[1h]) / rate(newsletter_sends_total[1h]) > 0.05
+            for: 10m
+            labels:
+              severity: warning
+              team: product
+              environment: production
+            annotations:
+              summary: "High unsubscribe rate detected"
+              description: "Unsubscribe rate is {{ $value | humanizePercentage }} in the last hour"
+              runbook_url: "https://runbooks.ailert.com/high-unsubscribe"
+
+      - name: ailert.production.capacity
+        rules:
+          - alert: DiskSpaceRunningLow
+            expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+            for: 5m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "Disk space running low on {{ $labels.instance }}"
+              description: "Disk space is {{ $value | humanizePercentage }} full on {{ $labels.instance }}"
+              runbook_url: "https://runbooks.ailert.com/disk-space"
+
+          - alert: LoadAverageHigh
+            expr: node_load15 > 2
+            for: 10m
+            labels:
+              severity: warning
+              team: platform
+              environment: production
+            annotations:
+              summary: "High load average on {{ $labels.instance }}"
+              description: "15-minute load average is {{ $value }} on {{ $labels.instance }}"
+              runbook_url: "https://runbooks.ailert.com/high-load"
+
+  recording_rules.yml: |
+    groups:
+      - name: ailert.production.recording
+        interval: 30s
+        rules:
+          # HTTP request rate and error rate
+          - record: ailert:http_requests:rate5m
+            expr: rate(http_requests_total[5m])
+
+          - record: ailert:http_errors:rate5m
+            expr: rate(http_requests_total{status=~"5.."}[5m])
+
+          - record: ailert:http_error_rate:rate5m
+            expr: ailert:http_errors:rate5m / ailert:http_requests:rate5m
+
+          # Response time percentiles
+          - record: ailert:http_request_duration:p50
+            expr: histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))
+
+          - record: ailert:http_request_duration:p95
+            expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+          - record: ailert:http_request_duration:p99
+            expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+          # Resource utilization
+          - record: ailert:cpu_utilization:rate5m
+            expr: rate(container_cpu_usage_seconds_total[5m])
+
+          - record: ailert:memory_utilization:ratio
+            expr: container_memory_working_set_bytes / container_spec_memory_limit_bytes
+
+          # Business metrics
+          - record: ailert:newsletter_generation:rate1h
+            expr: rate(newsletter_generation_total[1h])
+
+          - record: ailert:email_delivery:rate1h
+            expr: rate(email_delivery_total[1h])
+
+          - record: ailert:user_registrations:rate1h
+            expr: rate(user_registrations_total[1h])
+
+---
+# AlertManager Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: ailert-production
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.ailert.com:587'
+      smtp_from: 'alerts@ailert.com'
+      smtp_auth_username: 'alerts@ailert.com'
+      smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
+
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'default'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+          group_wait: 5s
+          repeat_interval: 5m
+        - match:
+            team: platform
+          receiver: 'platform-team'
+        - match:
+            team: product
+          receiver: 'product-team'
+
+    receivers:
+      - name: 'default'
+        email_configs:
+          - to: 'devops@ailert.com'
+            subject: '[AiLert] {{ .GroupLabels.alertname }}'
+            body: |
+              {{ range .Alerts }}
+              Alert: {{ .Annotations.summary }}
+              Description: {{ .Annotations.description }}
+              Severity: {{ .Labels.severity }}
+              Environment: {{ .Labels.environment }}
+              Runbook: {{ .Annotations.runbook_url }}
+              {{ end }}
+
+      - name: 'critical-alerts'
+        email_configs:
+          - to: 'oncall@ailert.com'
+            subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+            body: |
+              🚨 CRITICAL ALERT 🚨
+
+              {{ range .Alerts }}
+              Alert: {{ .Annotations.summary }}
+              Description: {{ .Annotations.description }}
+              Environment: {{ .Labels.environment }}
+              Runbook: {{ .Annotations.runbook_url }}
+              Dashboard: {{ .Annotations.dashboard_url }}
+              {{ end }}
+        slack_configs:
+          - api_url_file: '/etc/alertmanager/secrets/slack_webhook'
+            channel: '#alerts-critical'
+            title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+            text: |
+              {{ range .Alerts }}
+              *Alert:* {{ .Annotations.summary }}
+              *Description:* {{ .Annotations.description }}
+              *Environment:* {{ .Labels.environment }}
+              *Runbook:* {{ .Annotations.runbook_url }}
+              {{ end }}
+        pagerduty_configs:
+          - routing_key_file: '/etc/alertmanager/secrets/pagerduty_key'
+            description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+
+      - name: 'platform-team'
+        email_configs:
+          - to: 'platform-team@ailert.com'
+            subject: '[Platform] {{ .GroupLabels.alertname }}'
+        slack_configs:
+          - api_url_file: '/etc/alertmanager/secrets/slack_webhook'
+            channel: '#platform-alerts'
+            title: 'Platform Alert: {{ .GroupLabels.alertname }}'
+
+      - name: 'product-team'
+        email_configs:
+          - to: 'product-team@ailert.com'
+            subject: '[Product] {{ .GroupLabels.alertname }}'
+        slack_configs:
+          - api_url_file: '/etc/alertmanager/secrets/slack_webhook'
+            channel: '#product-alerts'
+            title: 'Product Alert: {{ .GroupLabels.alertname }}'
+
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'cluster', 'service']
+
+  alert_templates.tmpl: |
+    {{ define "slack.default.title" }}
+    {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}
+    {{ end }}
+
+    {{ define "slack.default.text" }}
+    {{ range .Alerts }}
+    *Alert:* {{ .Annotations.summary }}
+    *Description:* {{ .Annotations.description }}
+    *Severity:* {{ .Labels.severity }}
+    *Environment:* {{ .Labels.environment }}
+    {{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+    {{ if .Annotations.dashboard_url }}*Dashboard:* {{ .Annotations.dashboard_url }}{{ end }}
+    {{ end }}
+    {{ end }}
+
+---
+# Production Prometheus Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-production
+  namespace: ailert-production
+  labels:
+    app: prometheus
+    environment: production
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: prometheus
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        environment: production
+      annotations:
+        prometheus.io/scrape: "false" # Don't scrape itself
+    spec:
+      serviceAccountName: prometheus-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.47.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--web.console.libraries=/etc/prometheus/console_libraries"
+            - "--web.console.templates=/etc/prometheus/consoles"
+            - "--web.enable-lifecycle"
+            - "--web.enable-admin-api"
+            - "--storage.tsdb.retention.time=30d"
+            - "--storage.tsdb.retention.size=50GB"
+            - "--web.external-url=https://prometheus.ailert.com"
+            - "--log.level=info"
+          ports:
+            - name: web
+              containerPort: 9090
+              protocol: TCP
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+              ephemeral-storage: "2Gi"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+              ephemeral-storage: "4Gi"
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-storage
+              mountPath: /prometheus
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: web
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-production-config
+        - name: prometheus-storage
+          persistentVolumeClaim:
+            claimName: prometheus-production-pvc
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - prometheus
+                topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30
+
+---
+# AlertManager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: ailert-production
+  labels:
+    app: alertmanager
+    environment: production
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: alertmanager
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+        environment: production
+    spec:
+      serviceAccountName: alertmanager-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.26.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config.file=/etc/alertmanager/alertmanager.yml"
+            - "--storage.path=/alertmanager"
+            - "--web.external-url=https://alertmanager.ailert.com"
+            - "--cluster.listen-address=0.0.0.0:9094"
+            - "--cluster.peer=alertmanager-0.alertmanager:9094"
+            - "--cluster.peer=alertmanager-1.alertmanager:9094"
+            - "--log.level=info"
+          ports:
+            - name: web
+              containerPort: 9093
+              protocol: TCP
+            - name: cluster
+              containerPort: 9094
+              protocol: TCP
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: alertmanager-config
+              mountPath: /etc/alertmanager
+            - name: alertmanager-secrets
+              mountPath: /etc/alertmanager/secrets
+              readOnly: true
+            - name: alertmanager-storage
+              mountPath: /alertmanager
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: web
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: alertmanager-config
+          configMap:
+            name: alertmanager-config
+        - name: alertmanager-secrets
+          secret:
+            secretName: alertmanager-secrets
+        - name: alertmanager-storage
+          persistentVolumeClaim:
+            claimName: alertmanager-pvc
+
+---
+# Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: ailert-production
+  labels:
+    app: prometheus
+    environment: production
+spec:
+  selector:
+    app: prometheus
+    environment: production
+  ports:
+    - name: web
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: ailert-production
+  labels:
+    app: alertmanager
+    environment: production
+spec:
+  selector:
+    app: alertmanager
+    environment: production
+  ports:
+    - name: web
+      port: 9093
+      targetPort: 9093
+    - name: cluster
+      port: 9094
+      targetPort: 9094
+  type: ClusterIP
+  clusterIP: None # Headless service for clustering
+
+---
+# PVCs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-production-pvc
+  namespace: ailert-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: gp3
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-pvc
+  namespace: ailert-production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: gp3

@@ -1,0 +1,427 @@
+name: Developer Tools CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/developer-tools-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/developer-tools-ci.yml'
+
+env:
+  NODE_VERSION: '18'
+  COVERAGE_THRESHOLD: 70
+
+jobs:
+  # ESLint and Code Quality Checks
+  code-quality:
+    name: Code Quality & ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Run ESLint
+        run: |
+          cd scripts
+          npm run lint
+
+      - name: Run TypeScript compilation check
+        run: |
+          cd scripts
+          npm run type-check
+
+      - name: Run code quality check
+        run: |
+          cd scripts
+          npm run quality-check
+
+  # Cross-Platform Testing Matrix
+  cross-platform-tests:
+    name: Cross-Platform Tests
+    needs: code-quality
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['18', '20']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Setup test environment (Ubuntu/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          # Install common development tools for testing
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y lsof netstat-nat
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install lsof
+          fi
+
+      - name: Setup test environment (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Windows-specific setup
+          choco install netstat -y
+
+      - name: Run unit tests
+        run: |
+          cd scripts
+          npm test
+
+      - name: Run integration tests
+        run: |
+          cd scripts
+          npm run test:integration
+
+      - name: Run platform-specific tests
+        run: |
+          cd scripts
+          npm run test:platform
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-node${{ matrix.node-version }}
+          path: |
+            scripts/coverage/
+            scripts/test-results/
+            scripts/__tests__/reports/
+
+  # Test Coverage Analysis
+  coverage-analysis:
+    name: Test Coverage Analysis
+    needs: cross-platform-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Run tests with coverage
+        run: |
+          cd scripts
+          npm run test:coverage
+
+      - name: Check coverage threshold
+        run: |
+          cd scripts
+          npm run coverage:check
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./scripts/coverage
+          flags: developer-tools
+          name: developer-tools-coverage
+
+      - name: Generate coverage report
+        run: |
+          cd scripts
+          npm run coverage:report
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: scripts/coverage/
+
+  # Performance Regression Testing
+  performance-tests:
+    name: Performance Regression Tests
+    needs: code-quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Run performance tests
+        run: |
+          cd scripts
+          npm run test:performance
+
+      - name: Analyze performance results
+        run: |
+          cd scripts
+          npm run performance:analyze
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: scripts/__tests__/performance-results/
+
+  # Security and Vulnerability Scanning
+  security-scan:
+    name: Security Scan
+    needs: code-quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Run npm audit
+        run: |
+          cd scripts
+          npm audit --audit-level=moderate
+
+      - name: Run security scan
+        run: |
+          cd scripts
+          npm run security:scan
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report
+          path: scripts/security-report.json
+
+  # Integration with External Services
+  integration-tests:
+    name: Integration Tests
+    needs: cross-platform-tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start test services
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+
+      - name: Wait for services
+        run: |
+          sleep 30
+
+      - name: Run integration tests
+        env:
+          REDIS_URL: redis://localhost:6379
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+        run: |
+          cd scripts
+          npm run test:integration:full
+
+      - name: Cleanup test services
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down
+
+  # Quality Gates and Reporting
+  quality-gates:
+    name: Quality Gates
+    needs: [coverage-analysis, performance-tests, security-scan]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Aggregate test results
+        run: |
+          cd scripts
+          npm run test:aggregate
+
+      - name: Check quality gates
+        run: |
+          cd scripts
+          npm run quality:gates
+
+      - name: Generate final report
+        run: |
+          cd scripts
+          npm run report:generate
+
+      - name: Upload final report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: scripts/quality-report/
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = './scripts/quality-report/summary.md';
+
+            if (fs.existsSync(path)) {
+              const summary = fs.readFileSync(path, 'utf8');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## Developer Tools CI/CD Results\n\n${summary}`
+              });
+            }
+
+  # Deployment to staging (on main branch)
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [quality-gates, integration-tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+
+      - name: Build for staging
+        run: |
+          cd scripts
+          npm run build
+
+      - name: Deploy to staging environment
+        run: |
+          cd scripts
+          npm run deploy:staging
+
+      - name: Run smoke tests
+        run: |
+          cd scripts
+          npm run test:smoke
+
+      - name: Notify deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: 'success',
+              environment_url: 'https://staging.example.com/developer-tools',
+              description: 'Developer tools deployed to staging'
+            });

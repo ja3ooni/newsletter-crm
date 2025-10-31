@@ -1,0 +1,605 @@
+# Capacity Planning and Performance Monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capacity-planning-config
+  namespace: ailert-production
+data:
+  # Capacity thresholds and planning parameters
+  capacity-config.json: |
+    {
+      "thresholds": {
+        "cpu": {
+          "warning": 70,
+          "critical": 85,
+          "scale_up": 80
+        },
+        "memory": {
+          "warning": 75,
+          "critical": 90,
+          "scale_up": 85
+        },
+        "disk": {
+          "warning": 80,
+          "critical": 90,
+          "cleanup": 85
+        },
+        "network": {
+          "warning": 70,
+          "critical": 85
+        }
+      },
+      "scaling_policies": {
+        "user-service": {
+          "min_replicas": 3,
+          "max_replicas": 20,
+          "target_cpu": 70,
+          "target_memory": 80,
+          "scale_up_cooldown": 300,
+          "scale_down_cooldown": 600
+        },
+        "newsletter-service": {
+          "min_replicas": 3,
+          "max_replicas": 25,
+          "target_cpu": 65,
+          "target_memory": 75,
+          "scale_up_cooldown": 180,
+          "scale_down_cooldown": 900
+        },
+        "crm-service": {
+          "min_replicas": 2,
+          "max_replicas": 15,
+          "target_cpu": 70,
+          "target_memory": 80,
+          "scale_up_cooldown": 300,
+          "scale_down_cooldown": 600
+        },
+        "analytics-service": {
+          "min_replicas": 2,
+          "max_replicas": 12,
+          "target_cpu": 75,
+          "target_memory": 85,
+          "scale_up_cooldown": 240,
+          "scale_down_cooldown": 900
+        },
+        "content-service": {
+          "min_replicas": 2,
+          "max_replicas": 10,
+          "target_cpu": 70,
+          "target_memory": 80,
+          "scale_up_cooldown": 300,
+          "scale_down_cooldown": 600
+        }
+      },
+      "forecasting": {
+        "prediction_window": "7d",
+        "growth_rate_threshold": 0.2,
+        "seasonal_patterns": true,
+        "business_hours": {
+          "start": "08:00",
+          "end": "18:00",
+          "timezone": "UTC"
+        }
+      }
+    }
+
+  # Performance benchmarks and SLAs
+  performance-slas.json: |
+    {
+      "slas": {
+        "api_response_time": {
+          "p50": 200,
+          "p95": 500,
+          "p99": 1000,
+          "unit": "ms"
+        },
+        "availability": {
+          "target": 99.9,
+          "measurement_window": "30d"
+        },
+        "error_rate": {
+          "target": 0.1,
+          "unit": "percent"
+        },
+        "throughput": {
+          "min_rps": 100,
+          "target_rps": 1000,
+          "max_rps": 5000
+        }
+      },
+      "business_metrics": {
+        "newsletter_generation": {
+          "target_time": 30,
+          "unit": "seconds"
+        },
+        "email_delivery": {
+          "target_rate": 95,
+          "unit": "percent"
+        },
+        "user_registration": {
+          "target_time": 2,
+          "unit": "seconds"
+        }
+      }
+    }
+
+---
+# Capacity Planning Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capacity-planner
+  namespace: ailert-production
+  labels:
+    app: capacity-planner
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: capacity-planner
+  template:
+    metadata:
+      labels:
+        app: capacity-planner
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: capacity-planner-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: capacity-planner
+          image: ailert/capacity-planner:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+          env:
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-service:9090"
+            - name: CONFIG_PATH
+              value: "/etc/capacity-planning"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ANALYSIS_INTERVAL
+              value: "300" # 5 minutes
+            - name: FORECAST_INTERVAL
+              value: "3600" # 1 hour
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: capacity-planning-config
+              mountPath: /etc/capacity-planning
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: capacity-planning-config
+          configMap:
+            name: capacity-planning-config
+        - name: tmp
+          emptyDir: {}
+
+---
+# Capacity Planning Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: capacity-planner-service
+  namespace: ailert-production
+  labels:
+    app: capacity-planner
+    component: monitoring
+spec:
+  selector:
+    app: capacity-planner
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP
+
+---
+# Resource Usage Analysis CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: resource-analyzer
+  namespace: ailert-production
+  labels:
+    app: resource-analyzer
+    component: monitoring
+spec:
+  schedule: "0 */4 * * *" # Every 4 hours
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: resource-analyzer-service-account
+          containers:
+            - name: resource-analyzer
+              image: ailert/resource-analyzer:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  echo "Starting resource usage analysis at $(date)"
+
+                  # Analyze CPU usage trends
+                  echo "Analyzing CPU usage patterns..."
+
+                  # Query Prometheus for CPU metrics
+                  CPU_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\"}[5m])) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+
+                  echo "Current CPU usage by pod:"
+                  echo "$CPU_USAGE"
+
+                  # Analyze memory usage trends
+                  echo "Analyzing memory usage patterns..."
+
+                  MEMORY_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(container_memory_working_set_bytes{namespace=\"ailert-production\"}) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+
+                  echo "Current memory usage by pod:"
+                  echo "$MEMORY_USAGE"
+
+                  # Check for resource bottlenecks
+                  echo "Checking for resource bottlenecks..."
+
+                  # High CPU usage check
+                  HIGH_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\"}[5m]) > 0.8" | jq -r '.data.result | length')
+
+                  if [ "$HIGH_CPU" -gt 0 ]; then
+                    echo "⚠️ High CPU usage detected on $HIGH_CPU pods"
+
+                    # Send capacity alert
+                    curl -X POST "$WEBHOOK_URL" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"alert\": \"High CPU Usage\", \"affected_pods\": $HIGH_CPU, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                  fi
+
+                  # High memory usage check
+                  HIGH_MEMORY=$(curl -s "http://prometheus-service:9090/api/v1/query?query=container_memory_working_set_bytes{namespace=\"ailert-production\"} / container_spec_memory_limit_bytes > 0.85" | jq -r '.data.result | length')
+
+                  if [ "$HIGH_MEMORY" -gt 0 ]; then
+                    echo "⚠️ High memory usage detected on $HIGH_MEMORY pods"
+
+                    # Send capacity alert
+                    curl -X POST "$WEBHOOK_URL" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"alert\": \"High Memory Usage\", \"affected_pods\": $HIGH_MEMORY, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                  fi
+
+                  # Disk usage analysis
+                  echo "Analyzing disk usage..."
+
+                  # Check PVC usage
+                  kubectl get pvc -n ailert-production -o json | jq -r '.items[] | "\(.metadata.name): \(.status.capacity.storage)"' > /tmp/pvc_usage.txt
+
+                  echo "PVC usage:"
+                  cat /tmp/pvc_usage.txt
+
+                  # Network analysis
+                  echo "Analyzing network patterns..."
+
+                  NETWORK_RX=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_network_receive_bytes_total{namespace=\"ailert-production\"}[5m])" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+
+                  echo "Network receive rates:"
+                  echo "$NETWORK_RX"
+
+                  # Generate capacity recommendations
+                  echo "Generating capacity recommendations..."
+
+                  # Check if any services need scaling
+                  for service in user-service newsletter-service crm-service analytics-service content-service; do
+                    CURRENT_REPLICAS=$(kubectl get deployment $service -n ailert-production -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+                    AVG_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\",pod=~\"$service.*\"}[5m]))" | jq -r '.data.result[0].value[1] // "0"')
+
+                    # Convert to percentage (assuming 1 CPU = 1.0)
+                    CPU_PERCENT=$(echo "$AVG_CPU * 100" | bc -l 2>/dev/null || echo "0")
+
+                    echo "Service $service: $CURRENT_REPLICAS replicas, ${CPU_PERCENT}% CPU"
+
+                    # Recommend scaling if CPU > 70%
+                    if [ "$(echo "$CPU_PERCENT > 70" | bc -l 2>/dev/null || echo "0")" -eq 1 ]; then
+                      RECOMMENDED_REPLICAS=$(echo "$CURRENT_REPLICAS * 1.5" | bc -l | cut -d. -f1)
+                      echo "  📈 Recommendation: Scale $service to $RECOMMENDED_REPLICAS replicas"
+
+                      # Send scaling recommendation
+                      curl -X POST "$WEBHOOK_URL" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"recommendation\": \"Scale Up\", \"service\": \"$service\", \"current_replicas\": $CURRENT_REPLICAS, \"recommended_replicas\": $RECOMMENDED_REPLICAS, \"cpu_usage\": \"${CPU_PERCENT}%\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                    fi
+                  done
+
+                  echo "Resource analysis completed at $(date)"
+              env:
+                - name: WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: CAPACITY_WEBHOOK_URL
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure
+
+---
+# Performance Benchmarking CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: performance-benchmark
+  namespace: ailert-production
+  labels:
+    app: performance-benchmark
+    component: monitoring
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: performance-benchmark-service-account
+          containers:
+            - name: performance-benchmark
+              image: ailert/performance-benchmark:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  echo "Starting performance benchmarking at $(date)"
+
+                  # API Response Time Benchmarks
+                  echo "Running API response time benchmarks..."
+
+                  for service in user-service newsletter-service crm-service analytics-service content-service; do
+                    echo "Benchmarking $service..."
+
+                    SERVICE_PORT=$(kubectl get service $service -n ailert-production -o jsonpath='{.spec.ports[0].port}')
+
+                    # Run load test
+                    echo "Running load test for $service on port $SERVICE_PORT"
+
+                    # Simple load test with curl (in production, use proper load testing tools)
+                    TOTAL_TIME=0
+                    SUCCESSFUL_REQUESTS=0
+                    FAILED_REQUESTS=0
+
+                    for i in $(seq 1 10); do
+                      RESPONSE_TIME=$(curl -w "%{time_total}" -s -o /dev/null --max-time 10 "http://$service:$SERVICE_PORT/health" 2>/dev/null || echo "999")
+
+                      if [ "$(echo "$RESPONSE_TIME < 10" | bc -l)" -eq 1 ]; then
+                        TOTAL_TIME=$(echo "$TOTAL_TIME + $RESPONSE_TIME" | bc -l)
+                        SUCCESSFUL_REQUESTS=$((SUCCESSFUL_REQUESTS + 1))
+                      else
+                        FAILED_REQUESTS=$((FAILED_REQUESTS + 1))
+                      fi
+
+                      sleep 1
+                    done
+
+                    if [ $SUCCESSFUL_REQUESTS -gt 0 ]; then
+                      AVG_RESPONSE_TIME=$(echo "scale=3; $TOTAL_TIME / $SUCCESSFUL_REQUESTS" | bc -l)
+                      echo "  Average response time: ${AVG_RESPONSE_TIME}s"
+                      echo "  Successful requests: $SUCCESSFUL_REQUESTS/10"
+                      echo "  Failed requests: $FAILED_REQUESTS/10"
+
+                      # Check against SLA (500ms = 0.5s)
+                      if [ "$(echo "$AVG_RESPONSE_TIME > 0.5" | bc -l)" -eq 1 ]; then
+                        echo "  ⚠️ SLA violation: Response time exceeds 500ms"
+
+                        # Send SLA violation alert
+                        curl -X POST "$WEBHOOK_URL" \
+                          -H "Content-Type: application/json" \
+                          -d "{\"alert\": \"SLA Violation\", \"service\": \"$service\", \"response_time\": \"${AVG_RESPONSE_TIME}s\", \"sla_threshold\": \"0.5s\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                      fi
+
+                      # Send metrics to monitoring system
+                      curl -X POST "http://prometheus-pushgateway:9091/metrics/job/performance-benchmark/instance/$service" \
+                        --data-binary "response_time_seconds $AVG_RESPONSE_TIME" || true
+                    else
+                      echo "  ❌ All requests failed for $service"
+
+                      # Send service unavailable alert
+                      curl -X POST "$WEBHOOK_URL" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"alert\": \"Service Unavailable\", \"service\": \"$service\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
+                    fi
+                  done
+
+                  # Database Performance Benchmarks
+                  echo "Running database performance benchmarks..."
+
+                  # PostgreSQL connection test
+                  DB_CONNECT_TIME=$(time (kubectl exec -n ailert-production statefulset/postgres -- pg_isready) 2>&1 | grep real | awk '{print $2}' | sed 's/[^0-9.]//g')
+                  echo "Database connection time: ${DB_CONNECT_TIME}s"
+
+                  # Redis performance test
+                  REDIS_PING_TIME=$(kubectl exec -n ailert-production statefulset/redis -- redis-cli ping | wc -l)
+                  echo "Redis ping successful: $REDIS_PING_TIME"
+
+                  # Generate performance report
+                  echo "Generating performance report..."
+
+                  REPORT_FILE="/tmp/performance-report-$(date +%Y%m%d).json"
+
+                  cat > $REPORT_FILE << EOF
+                  {
+                    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+                    "benchmarks": {
+                      "api_services": {
+                        "user_service": {"avg_response_time": "$AVG_RESPONSE_TIME"},
+                        "newsletter_service": {"avg_response_time": "$AVG_RESPONSE_TIME"},
+                        "crm_service": {"avg_response_time": "$AVG_RESPONSE_TIME"},
+                        "analytics_service": {"avg_response_time": "$AVG_RESPONSE_TIME"},
+                        "content_service": {"avg_response_time": "$AVG_RESPONSE_TIME"}
+                      },
+                      "database": {
+                        "postgres_connect_time": "$DB_CONNECT_TIME",
+                        "redis_availability": "$REDIS_PING_TIME"
+                      }
+                    },
+                    "sla_compliance": {
+                      "response_time_sla": "500ms",
+                      "availability_sla": "99.9%"
+                    }
+                  }
+                  EOF
+
+                  echo "Performance report generated: $REPORT_FILE"
+                  cat $REPORT_FILE
+
+                  echo "Performance benchmarking completed at $(date)"
+              env:
+                - name: WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: ailert-secrets
+                      key: PERFORMANCE_WEBHOOK_URL
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure
+
+---
+# Service Accounts
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: capacity-planner-service-account
+  namespace: ailert-production
+  labels:
+    component: monitoring
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: resource-analyzer-service-account
+  namespace: ailert-production
+  labels:
+    component: monitoring
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: performance-benchmark-service-account
+  namespace: ailert-production
+  labels:
+    component: monitoring
+
+---
+# RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: capacity-monitoring-role
+  namespace: ailert-production
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: capacity-planner-role-binding
+  namespace: ailert-production
+subjects:
+  - kind: ServiceAccount
+    name: capacity-planner-service-account
+    namespace: ailert-production
+roleRef:
+  kind: Role
+  name: capacity-monitoring-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: resource-analyzer-role-binding
+  namespace: ailert-production
+subjects:
+  - kind: ServiceAccount
+    name: resource-analyzer-service-account
+    namespace: ailert-production
+roleRef:
+  kind: Role
+  name: capacity-monitoring-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: performance-benchmark-role-binding
+  namespace: ailert-production
+subjects:
+  - kind: ServiceAccount
+    name: performance-benchmark-service-account
+    namespace: ailert-production
+roleRef:
+  kind: Role
+  name: capacity-monitoring-role
+  apiGroup: rbac.authorization.k8s.io

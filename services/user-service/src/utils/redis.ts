@@ -7,15 +7,20 @@ class RedisClient {
   private isConnected = false;
 
   constructor() {
-    this.client = Redis.createClient({
+    const clientConfig: any = {
       url: redisConfig.url,
-      password: redisConfig.password,
       socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+        reconnectStrategy: (retries: number) => Math.min(retries * 50, 500),
       },
-    });
+    };
 
-    this.client.on('error', (err) => {
+    if (redisConfig.password) {
+      clientConfig.password = redisConfig.password;
+    }
+
+    this.client = Redis.createClient(clientConfig);
+
+    this.client.on('error', err => {
       logger.error('Redis Client Error:', err);
       this.isConnected = false;
     });
@@ -100,7 +105,7 @@ class RedisClient {
   async expire(key: string, seconds: number): Promise<boolean> {
     try {
       const result = await this.client.expire(key, seconds);
-      return result === 1;
+      return Boolean(result);
     } catch (error) {
       logger.error('Redis EXPIRE error:', { key, seconds, error });
       throw error;
@@ -130,7 +135,8 @@ class RedisClient {
   // Hash operations
   async hGet(key: string, field: string): Promise<string | null> {
     try {
-      return await this.client.hGet(key, field);
+      const result = await this.client.hGet(key, field);
+      return result ?? null;
     } catch (error) {
       logger.error('Redis HGET error:', { key, field, error });
       throw error;
@@ -208,7 +214,7 @@ class RedisClient {
       multi.incr(key);
       multi.expire(key, ttl);
       const results = await multi.exec();
-      return results?.[0] as number || 0;
+      return (results?.[0] as number) || 0;
     } catch (error) {
       logger.error('Redis increment with expiry error:', { key, ttl, error });
       throw error;
@@ -216,7 +222,11 @@ class RedisClient {
   }
 
   // Session management
-  async createSession(sessionId: string, data: any, ttl: number): Promise<void> {
+  async createSession(
+    sessionId: string,
+    data: any,
+    ttl: number
+  ): Promise<void> {
     const key = `session:${sessionId}`;
     await this.setJson(key, data, ttl);
   }

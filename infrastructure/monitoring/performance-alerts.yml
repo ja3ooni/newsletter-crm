@@ -1,0 +1,270 @@
+# Performance Monitoring Alerts Configuration
+# Defines alerting rules for performance thresholds and SLA violations
+
+groups:
+  - name: performance.rules
+    rules:
+      # API Performance Alerts
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'High API response time detected'
+          description: 'API response time (95th percentile) is {{ $value }}s for service {{ $labels.service }}, which exceeds the 2s threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-api-response-time'
+
+      - alert: CriticalAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 1m
+        labels:
+          severity: critical
+          category: performance
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'Critical API response time detected'
+          description: 'API response time (95th percentile) is {{ $value }}s for service {{ $labels.service }}, which exceeds the critical 5s threshold'
+          runbook_url: 'https://docs.company.com/runbooks/critical-api-response-time'
+
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'High API error rate detected'
+          description: 'API error rate is {{ $value | humanizePercentage }} for service {{ $labels.service }}, which exceeds the 5% threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-api-error-rate'
+
+      - alert: LowAPIThroughput
+        expr: rate(http_requests_total[5m]) < 10
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'Low API throughput detected'
+          description: 'API throughput is {{ $value }} req/s for service {{ $labels.service }}, which is below the expected 10 req/s minimum'
+          runbook_url: 'https://docs.company.com/runbooks/low-api-throughput'
+
+      # Database Performance Alerts
+      - alert: HighDatabaseQueryTime
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+          category: performance
+          component: database
+        annotations:
+          summary: 'High database query time detected'
+          description: 'Database query time (95th percentile) is {{ $value }}s, which exceeds the 1s threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-database-query-time'
+
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: database_connection_pool_active / database_connection_pool_max > 0.9
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+          component: database
+        annotations:
+          summary: 'Database connection pool near exhaustion'
+          description: 'Database connection pool utilization is {{ $value | humanizePercentage }}, which exceeds the 90% threshold'
+          runbook_url: 'https://docs.company.com/runbooks/database-connection-pool-exhaustion'
+
+      - alert: DatabaseConnectionWaitTime
+        expr: histogram_quantile(0.95, rate(database_connection_wait_duration_seconds_bucket[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+          component: database
+        annotations:
+          summary: 'High database connection wait time'
+          description: 'Database connection wait time (95th percentile) is {{ $value }}s, which exceeds the 100ms threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-database-connection-wait-time'
+
+      # Email Performance Alerts
+      - alert: HighEmailSendTime
+        expr: histogram_quantile(0.95, rate(email_send_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: warning
+          category: performance
+          component: email
+        annotations:
+          summary: 'High email send time detected'
+          description: 'Email send time (95th percentile) is {{ $value }}s, which exceeds the 5s threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-email-send-time'
+
+      - alert: LowEmailSuccessRate
+        expr: rate(emails_sent_success_total[5m]) / rate(emails_sent_total[5m]) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          component: email
+        annotations:
+          summary: 'Low email success rate detected'
+          description: 'Email success rate is {{ $value | humanizePercentage }}, which is below the 95% threshold'
+          runbook_url: 'https://docs.company.com/runbooks/low-email-success-rate'
+
+      - alert: LowEmailThroughput
+        expr: rate(emails_sent_total[5m]) < 0.83 # 50 emails per minute = 0.83 per second
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+          component: email
+        annotations:
+          summary: 'Low email throughput detected'
+          description: 'Email throughput is {{ $value }} emails/s, which is below the expected 50 emails/minute threshold'
+          runbook_url: 'https://docs.company.com/runbooks/low-email-throughput'
+
+      # System Resource Alerts
+      - alert: HighMemoryUsage
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          component: system
+          service: '{{ $labels.name }}'
+        annotations:
+          summary: 'High memory usage detected'
+          description: 'Memory usage is {{ $value | humanizePercentage }} for service {{ $labels.name }}, which exceeds the 85% threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-memory-usage'
+
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          component: system
+          service: '{{ $labels.name }}'
+        annotations:
+          summary: 'High CPU usage detected'
+          description: 'CPU usage is {{ $value | humanizePercentage }} for service {{ $labels.name }}, which exceeds the 80% threshold'
+          runbook_url: 'https://docs.company.com/runbooks/high-cpu-usage'
+
+      # Performance Test Alerts
+      - alert: PerformanceTestFailure
+        expr: performance_test_status == 0
+        for: 0m
+        labels:
+          severity: critical
+          category: performance
+          component: testing
+        annotations:
+          summary: 'Performance test failure detected'
+          description: 'Performance test {{ $labels.test_name }} has failed'
+          runbook_url: 'https://docs.company.com/runbooks/performance-test-failure'
+
+      - alert: PerformanceThresholdViolation
+        expr: performance_threshold_violations > 0
+        for: 0m
+        labels:
+          severity: warning
+          category: performance
+          component: testing
+        annotations:
+          summary: 'Performance threshold violations detected'
+          description: '{{ $value }} performance thresholds have been violated in recent tests'
+          runbook_url: 'https://docs.company.com/runbooks/performance-threshold-violation'
+
+      # SLA Violation Alerts
+      - alert: SLAViolationResponseTime
+        expr: |
+          (
+            histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[1h])) > 2
+          ) and (
+            rate(http_requests_total[1h]) > 100
+          )
+        for: 5m
+        labels:
+          severity: critical
+          category: sla
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'SLA violation: Response time'
+          description: 'SLA violation detected for service {{ $labels.service }}: 95th percentile response time is {{ $value }}s over the last hour, exceeding the 2s SLA'
+          runbook_url: 'https://docs.company.com/runbooks/sla-violation-response-time'
+
+      - alert: SLAViolationAvailability
+        expr: |
+          (
+            rate(http_requests_total{status=~"2.."}[1h]) / rate(http_requests_total[1h]) < 0.999
+          ) and (
+            rate(http_requests_total[1h]) > 100
+          )
+        for: 5m
+        labels:
+          severity: critical
+          category: sla
+          service: '{{ $labels.service }}'
+        annotations:
+          summary: 'SLA violation: Availability'
+          description: 'SLA violation detected for service {{ $labels.service }}: Availability is {{ $value | humanizePercentage }} over the last hour, below the 99.9% SLA'
+          runbook_url: 'https://docs.company.com/runbooks/sla-violation-availability'
+
+  - name: performance.recording
+    rules:
+      # Recording rules for performance metrics
+      - record: api:response_time:p95_5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+      - record: api:response_time:p99_5m
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+      - record: api:error_rate:5m
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+
+      - record: api:throughput:5m
+        expr: rate(http_requests_total[5m])
+
+      - record: database:query_time:p95_5m
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m]))
+
+      - record: database:connection_pool_utilization:5m
+        expr: database_connection_pool_active / database_connection_pool_max
+
+      - record: email:send_time:p95_5m
+        expr: histogram_quantile(0.95, rate(email_send_duration_seconds_bucket[5m]))
+
+      - record: email:success_rate:5m
+        expr: rate(emails_sent_success_total[5m]) / rate(emails_sent_total[5m])
+
+      - record: email:throughput:5m
+        expr: rate(emails_sent_total[5m])
+
+      - record: system:memory_usage:5m
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes
+
+      - record: system:cpu_usage:5m
+        expr: rate(container_cpu_usage_seconds_total[5m])
+
+      # Performance score calculation
+      - record: performance:score:overall
+        expr: |
+          (
+            (api:response_time:p95_5m < 2) * 25 +
+            (api:error_rate:5m < 0.05) * 25 +
+            (database:query_time:p95_5m < 1) * 25 +
+            (email:success_rate:5m > 0.95) * 25
+          )
+
+      # System health calculation
+      - record: system:health:overall
+        expr: |
+          (
+            (system:memory_usage:5m < 0.85) * 0.3 +
+            (system:cpu_usage:5m < 0.8) * 0.3 +
+            (api:error_rate:5m < 0.05) * 0.4
+          )

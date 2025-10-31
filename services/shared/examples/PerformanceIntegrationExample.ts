@@ -241,7 +241,10 @@ export class OptimizedNewsletterService {
         `newsletter:${newsletterId}`,
       ]);
     } catch (error) {
-      console.error('Failed to send newsletter:', error);
+      logger.error('Failed to send newsletter', {
+        error: error.message,
+        stack: error.stack,
+      });
       throw error;
     }
   }

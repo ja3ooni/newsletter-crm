@@ -86,7 +86,7 @@ export class InputValidator {
     const sanitizedHtml = DOMPurify.sanitize(html, config);
 
     // Check if content was significantly altered (potential XSS attempt)
-    if (html.length > sanitizedHtml.length * 1.5) {
+    if (html.length > String(sanitizedHtml).length * 1.5) {
       errors.push('Content contains potentially malicious elements');
     }
 
@@ -173,8 +173,7 @@ export class InputValidator {
         require_host: true,
         require_valid_protocol: true,
         allow_underscores: false,
-        host_whitelist: false,
-        host_blacklist: false,
+        // host_whitelist and host_blacklist removed as they expect arrays
         allow_trailing_dot: false,
         allow_protocol_relative_urls: false,
       })

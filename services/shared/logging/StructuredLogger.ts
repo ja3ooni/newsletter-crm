@@ -12,6 +12,7 @@ export interface LogContext {
   service: string;
   environment: string;
   version?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface LogMetadata {

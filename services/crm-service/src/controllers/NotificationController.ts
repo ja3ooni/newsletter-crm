@@ -67,7 +67,10 @@ export class NotificationController {
         message: 'Successfully subscribed to push notifications',
       });
     } catch (error: any) {
-      console.error('Error subscribing to push notifications:', error);
+      logger.error('Error subscribing to push notifications', {
+        error: error.message,
+        stack: error.stack,
+      });
 
       if (error.name === 'ZodError') {
         res.status(400).json({
@@ -100,7 +103,10 @@ export class NotificationController {
         message: 'Successfully unsubscribed from push notifications',
       });
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
+      logger.error('Error unsubscribing from push notifications', {
+        error: error.message,
+        stack: error.stack,
+      });
       res.status(500).json({
         error: 'Failed to unsubscribe from push notifications',
       });
@@ -129,7 +135,10 @@ export class NotificationController {
         })),
       });
     } catch (error) {
-      console.error('Error getting push subscriptions:', error);
+      logger.error('Error getting push subscriptions', {
+        error: error.message,
+        stack: error.stack,
+      });
       res.status(500).json({
         error: 'Failed to get push subscriptions',
       });
@@ -164,7 +173,10 @@ export class NotificationController {
         hasMore: result.total > options.offset + options.limit,
       });
     } catch (error: any) {
-      console.error('Error getting notifications:', error);
+      logger.error('Error getting notifications', {
+        error: error.message,
+        stack: error.stack,
+      });
 
       if (error.name === 'ZodError') {
         res.status(400).json({

@@ -90,7 +90,6 @@ export class KeyRotationService {
   stop(): void {
     this.rotationJobs.forEach((job, name) => {
       job.stop();
-      job.destroy();
       logger.info('Stopped rotation job', { jobName: name });
     });
     this.rotationJobs.clear();

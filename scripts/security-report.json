@@ -1,0 +1,2396 @@
+{
+  "timestamp": "2025-10-30T19:59:36.000Z",
+  "summary": {
+    "filesScanned": 23,
+    "vulnerabilities": 297,
+    "highSeverity": 4,
+    "mediumSeverity": 94,
+    "lowSeverity": 199
+  },
+  "findings": [
+    {
+      "file": "code-generators\\generate-service.ts",
+      "line": 104,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "token",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "code-generators\\generate-service.ts",
+      "line": 104,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "token",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "code-generators\\generate-service.ts",
+      "line": 173,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "debug-tools.ts",
+      "line": 179,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "debug-tools.ts",
+      "line": 179,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "debug-tools.ts",
+      "line": 179,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "debug-tools.ts",
+      "line": 179,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "debug-tools.ts",
+      "line": 179,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 269,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 270,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "PASSWORD",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 269,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 270,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "PASSWORD",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 269,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 279,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 279,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 270,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "PASSWORD",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 270,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "PASSWORD",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-onboarding.ts",
+      "line": 508,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 116,
+      "severity": "LOW",
+      "message": "Dynamic environment variable access should be validated",
+      "pattern": "process.env[varName]",
+      "rule": "/process\\.env\\[\\s*[^'\"`\\]]+\\s*\\]/g"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 116,
+      "severity": "LOW",
+      "message": "Dynamic environment variable access should be validated",
+      "pattern": "process.env[varName]",
+      "rule": "/process\\.env\\[\\s*[^'\"`\\]]+\\s*\\]/g"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 43,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 58,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 49,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "KEY",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 43,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 43,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 43,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 47,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "SECRET",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "dev-utilities.ts",
+      "line": 43,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "run-integration-tests.js",
+      "line": 18,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "run-integration-tests.js",
+      "line": 18,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "run-integration-tests.js",
+      "line": 18,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "run-integration-tests.js",
+      "line": 18,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "run-integration-tests.js",
+      "line": 18,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\aggregate-test-results.js",
+      "line": 13,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\analyze-performance.js",
+      "line": 35,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 14,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 132,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\generate-report.js",
+      "line": 612,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "Key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 36,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\quality-gates.js",
+      "line": 450,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 19,
+      "severity": "HIGH",
+      "message": "Use of eval() can lead to code injection vulnerabilities",
+      "pattern": "eval(",
+      "rule": "/eval\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 19,
+      "severity": "HIGH",
+      "message": "Use of eval() can lead to code injection vulnerabilities",
+      "pattern": "eval(",
+      "rule": "/eval\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 25,
+      "severity": "MEDIUM",
+      "message": "Direct use of exec() should be carefully reviewed for command injection",
+      "pattern": "exec(",
+      "rule": "/exec\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 31,
+      "severity": "LOW",
+      "message": "Use of spawn() should validate inputs to prevent command injection",
+      "pattern": "spawn(",
+      "rule": "/spawn\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 70,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "token",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\security-scan.js",
+      "line": 44,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "scripts\\test-results-processor.js",
+      "line": 243,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 254,
+      "severity": "HIGH",
+      "message": "Use of eval() can lead to code injection vulnerabilities",
+      "pattern": "eval(",
+      "rule": "/eval\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 39,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "token",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "password",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "security-scan.js",
+      "line": 242,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "secret",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "shared\\ErrorHandler.ts",
+      "line": 451,
+      "severity": "LOW",
+      "message": "Dynamic environment variable access should be validated",
+      "pattern": "process.env[varName]",
+      "rule": "/process\\.env\\[\\s*[^'\"`\\]]+\\s*\\]/g"
+    },
+    {
+      "file": "shared\\ErrorHandler.ts",
+      "line": 10,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 111,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 30,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 30,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "shared\\Logger.ts",
+      "line": 30,
+      "severity": "MEDIUM",
+      "message": "Potential hardcoded secrets detected",
+      "pattern": "key",
+      "rule": "/password|secret|key|token/gi"
+    },
+    {
+      "file": "shared\\PlatformService.ts",
+      "line": 290,
+      "severity": "LOW",
+      "message": "Dynamic environment variable access should be validated",
+      "pattern": "process.env[name]",
+      "rule": "/process\\.env\\[\\s*[^'\"`\\]]+\\s*\\]/g"
+    },
+    {
+      "file": "shared\\PlatformService.ts",
+      "line": 290,
+      "severity": "LOW",
+      "message": "Dynamic environment variable access should be validated",
+      "pattern": "process.env[name]",
+      "rule": "/process\\.env\\[\\s*[^'\"`\\]]+\\s*\\]/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-setup.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-setup.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-setup.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-setup.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-teardown.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-teardown.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": "__tests__\\setup\\global-teardown.ts",
+      "line": 11,
+      "severity": "LOW",
+      "message": "Console.log statements should be replaced with proper logging",
+      "pattern": "console.log(",
+      "rule": "/console\\.log\\s*\\(/g"
+    },
+    {
+      "file": ".env",
+      "line": 0,
+      "severity": "HIGH",
+      "message": "Sensitive file detected in repository",
+      "pattern": ".env",
+      "rule": "sensitive-file-check"
+    }
+  ],
+  "recommendations": [
+    "Address all HIGH severity vulnerabilities immediately",
+    "Review and fix MEDIUM severity issues",
+    "Replace eval() usage with safer alternatives",
+    "Run security scans regularly in CI/CD pipeline",
+    "Keep dependencies updated and monitor for vulnerabilities",
+    "Use environment variables for sensitive configuration"
+  ]
+}
