@@ -46,8 +46,8 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Run Semgrep
-        if: ${{ secrets.SEMGREP_APP_TOKEN != '' }}
         uses: returntocorp/semgrep-action@v1
+        continue-on-error: true
         with:
           config: >-
             p/security-audit
@@ -59,10 +59,6 @@ jobs:
             p/kubernetes
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-
-      - name: Skip Semgrep (missing token)
-        if: ${{ secrets.SEMGREP_APP_TOKEN == '' }}
-        run: echo "⚠️ Skipping Semgrep scan - SEMGREP_APP_TOKEN not configured"
 
       - name: Setup Node.js for dependency check
         uses: actions/setup-node@v4
@@ -82,17 +78,12 @@ jobs:
           done
 
       - name: Run Snyk security scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --all-projects
-
-      - name: Skip Snyk scan (missing token)
-        if: ${{ secrets.SNYK_TOKEN == '' }}
-        run: echo "⚠️ Skipping Snyk scan - SNYK_TOKEN not configured"
 
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
@@ -358,39 +349,32 @@ jobs:
           DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
 
-  # Skip deployment notification
-  skip-deployment:
-    name: Skip Deployment (Missing AWS Secrets)
-    runs-on: ubuntu-latest
-    needs: [integration-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID == ''
-    steps:
-      - name: Deployment skipped
-        run: |
-          echo "🚀 Deployment skipped - AWS secrets not configured"
-          echo "To enable deployment, add the following secrets to your repository:"
-          echo "  - AWS_ACCESS_KEY_ID"
-          echo "  - AWS_SECRET_ACCESS_KEY"
-          echo "  - AWS_REGION"
-          echo "  - EKS_CLUSTER_NAME_STAGING"
-          echo "  - EKS_CLUSTER_NAME_PROD"
-          echo ""
-          echo "See GITHUB_SECRETS_SETUP.md for detailed instructions"
-
   # Deploy to Staging
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: [integration-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: staging
       url: https://staging.ailert.com
     steps:
+      - name: Check AWS secrets
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "aws-configured=false" >> $GITHUB_OUTPUT
+            echo "⚠️ AWS secrets not configured - skipping deployment"
+          else
+            echo "aws-configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -398,15 +382,18 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup kubectl
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: azure/setup-kubectl@v3
         with:
           version: 'v1.28.0'
 
       - name: Configure kubectl
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_STAGING }}
 
       - name: Deploy to staging
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           # Update image tags in Kubernetes manifests
           sed -i "s|ailert/user-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/user-service:${{ github.sha }}|g" k8s/user-service.yaml
@@ -431,6 +418,7 @@ jobs:
           kubectl rollout status deployment/frontend -n ailert --timeout=300s
 
       - name: Run smoke tests
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           # Wait for services to be ready
           sleep 30
@@ -448,15 +436,27 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [deploy-staging]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
       url: https://ailert.com
     steps:
+      - name: Check AWS secrets
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "aws-configured=false" >> $GITHUB_OUTPUT
+            echo "⚠️ AWS secrets not configured - skipping deployment"
+          else
+            echo "aws-configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -464,15 +464,18 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup kubectl
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         uses: azure/setup-kubectl@v3
         with:
           version: 'v1.28.0'
 
       - name: Configure kubectl
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME_PROD }}
 
       - name: Blue-Green Deployment
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           # Create green deployment
           sed -i "s|ailert/user-service:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/user-service:${{ github.sha }}|g" k8s/user-service.yaml
@@ -494,6 +497,7 @@ jobs:
           kubectl rollout status deployment/frontend -n ailert --timeout=600s
 
       - name: Production Health Check
+        if: steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           # Wait for services to stabilize
           sleep 60
@@ -510,7 +514,7 @@ jobs:
           curl -f https://api.ailert.com/api/v1/analytics/health || exit 1
 
       - name: Rollback on Failure
-        if: failure()
+        if: failure() && steps.check-secrets.outputs.aws-configured == 'true'
         run: |
           echo "Deployment failed, initiating rollback..."
           kubectl rollout undo deployment/user-service -n ailert
@@ -524,19 +528,15 @@ jobs:
   notify:
     name: Notify Deployment Status
     runs-on: ubuntu-latest
-    needs: [deploy-production, skip-deployment]
-    if: always() && (needs.deploy-production.result != 'skipped' || needs.skip-deployment.result != 'skipped')
+    needs: [deploy-production]
+    if: always()
     steps:
       - name: Notify Slack
-        if: ${{ secrets.SLACK_WEBHOOK != '' }}
         uses: 8398a7/action-slack@v3
+        continue-on-error: true
         with:
           status: ${{ job.status }}
           channel: '#deployments'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Skip Slack notification (missing webhook)
-        if: ${{ secrets.SLACK_WEBHOOK == '' }}
-        run: echo "⚠️ Skipping Slack notification - SLACK_WEBHOOK not configured"
