@@ -18,18 +18,26 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Run npm audit
         run: |
+          # Configure npm for public registry
+          npm config set registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ""
+          
           for service in services/*/; do
             if [ -f "$service/package.json" ]; then
               echo "Scanning $service"
               cd "$service"
+              npm install --no-audit --no-fund --silent --legacy-peer-deps || echo "Install failed for $service"
               npm audit --audit-level=moderate || echo "Audit found issues in $service"
               cd ../..
             fi
           done
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Run Snyk security scan
         uses: snyk/actions/node@master

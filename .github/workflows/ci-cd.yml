@@ -12,7 +12,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
 
@@ -64,20 +64,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Run npm audit
         run: |
+          # Configure npm for public registry
+          npm config set registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ""
+          
           for service in services/*/; do
             if [ -f "$service/package.json" ]; then
               echo "Auditing $service..."
               cd "$service"
               # Use npm install first to generate node_modules, then audit
-              npm install --no-audit --no-fund --silent || echo "Install failed for $service"
+              npm install --no-audit --no-fund --silent --legacy-peer-deps || echo "Install failed for $service"
               npm audit --audit-level=moderate --production || echo "Audit found issues in $service"
               cd ../..
             fi
           done
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Run Snyk security scan
         uses: snyk/actions/node@master
@@ -170,7 +176,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: |
@@ -179,7 +186,12 @@ jobs:
           else
             cd services/${{ matrix.service }}
           fi
-          npm install --no-audit --no-fund
+          # Configure npm to use public registry and skip authentication for public packages
+          npm config set registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ""
+          npm install --no-audit --no-fund --legacy-peer-deps
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Run ESLint
         run: |
@@ -332,10 +344,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          # Configure npm for public registry
+          npm config set registry https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken ""
+          npm install --no-audit --no-fund --legacy-peer-deps
+        env:
+          NODE_AUTH_TOKEN: ""
 
       - name: Run integration tests
         run: npm run test:integration -- --silent
