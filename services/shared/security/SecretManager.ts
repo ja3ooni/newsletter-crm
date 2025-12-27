@@ -97,10 +97,10 @@ export class SecretManager {
             'hex'
           );
         } else {
-          // Generate a random key if none provided (for development only)
           this.localEncryptionKey = crypto.randomBytes(32);
           logger.warn(
-            'Using randomly generated encryption key. This should only be used in development!'
+            'Using randomly generated encryption key. This should only be used in development!',
+            { provider: 'local', keyGenerated: true }
           );
         }
         break;

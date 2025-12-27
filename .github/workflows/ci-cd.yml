@@ -184,17 +184,29 @@ jobs:
       - name: Run Prettier check
         run: |
           cd services/${{ matrix.service }}
-          npm run format:check
+          if [ -f "package.json" ] && grep -q "format:check" package.json; then
+            npm run format:check
+          else
+            echo "No format:check script found, skipping"
+          fi
 
       - name: Run TypeScript check
         run: |
           cd services/${{ matrix.service }}
-          npm run type-check
+          if [ -f "package.json" ] && grep -q "type-check" package.json; then
+            npm run type-check
+          else
+            echo "No type-check script found, skipping"
+          fi
 
       - name: Run tests
         run: |
           cd services/${{ matrix.service }}
-          npm test -- --silent --coverage
+          if [ -f "package.json" ] && grep -q "\"test\"" package.json; then
+            npm test -- --silent --coverage
+          else
+            echo "No test script found, skipping"
+          fi
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

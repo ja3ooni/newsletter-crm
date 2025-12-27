@@ -11,6 +11,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { log } from './shared/Logger';
 import { PlatformService } from './shared/PlatformService';
+import { performanceOptimizer } from './shared/PerformanceOptimizer';
 
 interface DiagnosticsResult {
   timestamp: string;

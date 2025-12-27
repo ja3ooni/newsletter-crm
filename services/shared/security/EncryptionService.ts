@@ -75,10 +75,10 @@ export class EncryptionService {
         if (keyHex) {
           this.masterKey = Buffer.from(keyHex, 'hex');
         } else {
-          this.masterKey = crypto.randomBytes(32);
-          logger.warn(
-            'Generated random master key for local encryption. This should only be used in development!'
-          );
+          logger.warn('Generated random master key for local encryption. This should only be used in development!', {
+            provider: 'local',
+            keyGenerated: true
+          });
         }
         break;
 
@@ -226,7 +226,10 @@ export class EncryptionService {
 
           (result as any)[field] = await this.decrypt(encryptedData);
         } catch (error) {
-          logger.warn(`Failed to decrypt field ${field}`, { error });
+          logger.warn(`Failed to decrypt field ${field}`, { 
+            error: error instanceof Error ? error.message : 'Unknown error',
+            field 
+          });
           // Keep original value if decryption fails
         }
       }

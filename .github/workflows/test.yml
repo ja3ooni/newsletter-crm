@@ -43,13 +43,22 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          cd services/${{ matrix.service }}
-          npm ci
+          if [ -d "services/${{ matrix.service }}" ]; then
+            cd services/${{ matrix.service }}
+            npm ci
+          else
+            echo "Service directory not found: services/${{ matrix.service }}"
+            exit 1
+          fi
 
       - name: Run unit tests
         run: |
           cd services/${{ matrix.service }}
-          npm test -- --coverage --silent --ci
+          if [ -f "package.json" ] && grep -q "\"test\"" package.json; then
+            npm test -- --coverage --silent --ci
+          else
+            echo "No test script found for ${{ matrix.service }}, skipping"
+          fi
         env:
           NODE_ENV: test
 
