@@ -25,7 +25,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies
-RUN npm ci --only=production --no-audit --no-fund && \
+RUN npm install --only=production --no-audit --no-fund && \
     npm cache clean --force
 
 # Development dependencies stage
@@ -36,7 +36,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies including dev dependencies
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # Development stage
 FROM base AS development

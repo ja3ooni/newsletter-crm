@@ -32,11 +32,16 @@ jobs:
           done
 
       - name: Run Snyk security scan
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --all-projects --severity-threshold=high
+
+      - name: Skip Snyk scan (missing token)
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: echo "⚠️ Skipping Snyk scan - SNYK_TOKEN not configured"
 
   container-scan:
     name: Container Security Scan
