@@ -50,7 +50,14 @@ jobs:
 
       - name: Build Docker image
         run: |
-          if [ -d "services/${{ matrix.service }}" ] && [ -f "services/${{ matrix.service }}/Dockerfile" ]; then
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            if [ -f "frontend/Dockerfile" ]; then
+              docker build -t ${{ matrix.service }}:scan ./frontend
+            else
+              echo "Dockerfile not found for frontend, skipping"
+              exit 0
+            fi
+          elif [ -d "services/${{ matrix.service }}" ] && [ -f "services/${{ matrix.service }}/Dockerfile" ]; then
             docker build -t ${{ matrix.service }}:scan ./services/${{ matrix.service }}
           else
             echo "Dockerfile not found for ${{ matrix.service }}, skipping"

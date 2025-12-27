@@ -169,21 +169,33 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+          cache-dependency-path: ${{ matrix.service == 'frontend' && 'frontend/package-lock.json' || format('services/{0}/package-lock.json', matrix.service) }}
 
       - name: Install dependencies
         run: |
-          cd services/${{ matrix.service }}
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            cd frontend
+          else
+            cd services/${{ matrix.service }}
+          fi
           npm ci
 
       - name: Run ESLint
         run: |
-          cd services/${{ matrix.service }}
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            cd frontend
+          else
+            cd services/${{ matrix.service }}
+          fi
           npm run lint
 
       - name: Run Prettier check
         run: |
-          cd services/${{ matrix.service }}
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            cd frontend
+          else
+            cd services/${{ matrix.service }}
+          fi
           if [ -f "package.json" ] && grep -q "format:check" package.json; then
             npm run format:check
           else
@@ -192,7 +204,11 @@ jobs:
 
       - name: Run TypeScript check
         run: |
-          cd services/${{ matrix.service }}
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            cd frontend
+          else
+            cd services/${{ matrix.service }}
+          fi
           if [ -f "package.json" ] && grep -q "type-check" package.json; then
             npm run type-check
           else
@@ -201,7 +217,11 @@ jobs:
 
       - name: Run tests
         run: |
-          cd services/${{ matrix.service }}
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            cd frontend
+          else
+            cd services/${{ matrix.service }}
+          fi
           if [ -f "package.json" ] && grep -q "\"test\"" package.json; then
             npm test -- --silent --coverage
           else
@@ -211,7 +231,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: services/${{ matrix.service }}/coverage/lcov.info
+          file: ${{ matrix.service == 'frontend' && 'frontend/coverage/lcov.info' || format('services/{0}/coverage/lcov.info', matrix.service) }}
           flags: ${{ matrix.service }}
           name: ${{ matrix.service }}-coverage
 
@@ -252,8 +272,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/${{ matrix.service }}
-          file: ./services/${{ matrix.service }}/Dockerfile
+          context: ${{ matrix.service == 'frontend' && './frontend' || format('./services/{0}', matrix.service) }}
+          file: ${{ matrix.service == 'frontend' && './frontend/Dockerfile' || format('./services/{0}/Dockerfile', matrix.service) }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
