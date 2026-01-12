@@ -1,6 +1,6 @@
 # Inter-Service Communication Guide
 
-This guide explains how to use the inter-service communication system implemented for the AiLert platform.
+This guide explains how to use the inter-service communication system implemented for the DatatechtonCRM platform.
 
 ## Overview
 
@@ -26,8 +26,8 @@ const messageBus = createMessageBus({
   url: 'amqp://user:pass@rabbitmq:5672',
   serviceName: 'my-service',
   exchanges: {
-    events: 'ailert.events',
-    deadLetter: 'ailert.dead-letter',
+    events: 'datatechtoncrm.events',
+    deadLetter: 'datatechtoncrm.dead-letter',
   },
   // ... other config
 });
@@ -471,7 +471,7 @@ console.log(stats);
 const config = {
   serviceName: 'my-service',
   messagebus: {
-    url: 'amqp://ailert:ailert_rabbitmq_password@localhost:5672',
+    url: 'amqp://datatechtoncrm:datatechtoncrm_rabbitmq_password@localhost:5672',
   },
   circuitBreaker: {
     enabled: true,

@@ -35,12 +35,12 @@ This document lists all the secrets that need to be configured in your GitHub re
 
 6. **EKS_CLUSTER_NAME_STAGING**
    - **Purpose**: Name of your staging EKS cluster
-   - **Example value**: `ailert-staging`
+   - **Example value**: `datatechtoncrm-staging`
    - **Required for**: Staging deployments
 
 7. **EKS_CLUSTER_NAME_PROD**
    - **Purpose**: Name of your production EKS cluster
-   - **Example value**: `ailert-production`
+   - **Example value**: `datatechtoncrm-production`
    - **Required for**: Production deployments
 
 ### Notification Secrets (Optional)

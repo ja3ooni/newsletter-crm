@@ -1,5 +1,5 @@
 {
-  "name": "@ailert/content-service",
+  "name": "@datatechtoncrm/content-service",
   "version": "1.0.0",
   "description": "Content Service for managing newsletter content and templates",
   "main": "dist/index.js",

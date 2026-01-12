@@ -1190,7 +1190,7 @@ export class ComplianceService {
 
     // In production, this would upload to S3, Google Cloud Storage, or similar
     // For now, we'll store in Redis with expiration
-    const exportUrl = `${process.env.BASE_URL || 'https://api.ailert.com'}/compliance/exports/${exportId}`;
+    const exportUrl = `${process.env.BASE_URL || 'https://api.datatechtoncrm.com'}/compliance/exports/${exportId}`;
 
     // Store export data with 7-day expiration
     await redis.setex(

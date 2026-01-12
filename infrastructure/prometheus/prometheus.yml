@@ -1,9 +1,9 @@
-# Prometheus configuration for AiLert monitoring
+# Prometheus configuration for DatatechtonCRM monitoring
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'ailert-dev'
+    cluster: 'datatechtoncrm-dev'
     environment: 'development'
 
 rule_files:

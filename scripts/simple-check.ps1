@@ -1,5 +1,5 @@
 # Simple Infrastructure Check
-Write-Host "=== AiLert Infrastructure Check ===" -ForegroundColor Cyan
+Write-Host "=== DatatechtonCRM Infrastructure Check ===" -ForegroundColor Cyan
 
 # Check Docker
 if (Get-Command docker -ErrorAction SilentlyContinue) {

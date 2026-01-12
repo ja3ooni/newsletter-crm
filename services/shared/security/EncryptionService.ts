@@ -249,7 +249,7 @@ export class EncryptionService {
     }
 
     const command = new GenerateDataKeyCommand({
-      KeyId: keyId || this.config.keyId || 'alias/ailert-encryption-key',
+      KeyId: keyId || this.config.keyId || 'alias/datatechtoncrm-encryption-key',
       KeySpec: 'AES_256',
     });
 
@@ -269,7 +269,7 @@ export class EncryptionService {
     keyId?: string
   ): Promise<EncryptedData> {
     const command = new EncryptCommand({
-      KeyId: keyId || this.config.keyId || 'alias/ailert-encryption-key',
+      KeyId: keyId || this.config.keyId || 'alias/datatechtoncrm-encryption-key',
       Plaintext: Buffer.from(plaintext, 'utf8'),
     });
 
@@ -349,7 +349,7 @@ export class EncryptionService {
   ): Promise<EncryptedData> {
     const vaultConfig = this.config.vault!;
     const transitPath = vaultConfig.transitPath || 'transit';
-    const keyName = keyId || 'ailert-encryption-key';
+    const keyName = keyId || 'datatechtoncrm-encryption-key';
 
     const response = await fetch(
       `${vaultConfig.endpoint}/v1/${transitPath}/encrypt/${keyName}`,
@@ -386,7 +386,7 @@ export class EncryptionService {
   ): Promise<string> {
     const vaultConfig = this.config.vault!;
     const transitPath = vaultConfig.transitPath || 'transit';
-    const keyName = encryptedData.keyId || 'ailert-encryption-key';
+    const keyName = encryptedData.keyId || 'datatechtoncrm-encryption-key';
 
     const response = await fetch(
       `${vaultConfig.endpoint}/v1/${transitPath}/decrypt/${keyName}`,
@@ -421,7 +421,7 @@ export class EncryptionService {
 
     const vaultConfig = this.config.vault!;
     const transitPath = vaultConfig.transitPath || 'transit';
-    const keyName = keyId || 'ailert-encryption-key';
+    const keyName = keyId || 'datatechtoncrm-encryption-key';
 
     const response = await fetch(
       `${vaultConfig.endpoint}/v1/${transitPath}/keys/${keyName}/rotate`,

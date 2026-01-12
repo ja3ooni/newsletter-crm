@@ -476,7 +476,7 @@ export class ErrorTracker {
               short: true,
             },
           ],
-          footer: 'AiLert Error Tracking',
+          footer: 'DatatechtonCRM Error Tracking',
           ts: Math.floor(errorReport.timestamp.getTime() / 1000),
         },
       ],

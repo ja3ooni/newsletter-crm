@@ -79,7 +79,7 @@ services:
           memory: 512M
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/user_db
+      - DATABASE_URL=postgresql://datatechtoncrm:${POSTGRES_PASSWORD}@postgres:5432/user_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - JWT_SECRET=${JWT_SECRET}
     volumes: []
@@ -99,9 +99,9 @@ services:
           memory: 512M
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/newsletter_db
+      - DATABASE_URL=postgresql://datatechtoncrm:${POSTGRES_PASSWORD}@postgres:5432/newsletter_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://datatechtoncrm:${RABBITMQ_PASSWORD}@rabbitmq:5672
     volumes: []
 
   content-service:
@@ -119,10 +119,10 @@ services:
           memory: 512M
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/content_db
+      - DATABASE_URL=postgresql://datatechtoncrm:${POSTGRES_PASSWORD}@postgres:5432/content_db
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://datatechtoncrm:${RABBITMQ_PASSWORD}@rabbitmq:5672
     volumes: []
 
   crm-service:
@@ -140,9 +140,9 @@ services:
           memory: 512M
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/crm_db
+      - DATABASE_URL=postgresql://datatechtoncrm:${POSTGRES_PASSWORD}@postgres:5432/crm_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://datatechtoncrm:${RABBITMQ_PASSWORD}@rabbitmq:5672
     volumes: []
 
   analytics-service:
@@ -160,9 +160,9 @@ services:
           memory: 512M
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:${POSTGRES_PASSWORD}@postgres:5432/analytics_db
+      - DATABASE_URL=postgresql://datatechtoncrm:${POSTGRES_PASSWORD}@postgres:5432/analytics_db
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      - RABBITMQ_URL=amqp://ailert:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://datatechtoncrm:${RABBITMQ_PASSWORD}@rabbitmq:5672
     volumes: []
 
   frontend:

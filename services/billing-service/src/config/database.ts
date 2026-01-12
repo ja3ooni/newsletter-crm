@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 const dbConfig: PoolConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'ailert_billing',
+  database: process.env.DB_NAME || 'datatechtoncrm_billing',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
   max: parseInt(process.env.DB_POOL_MAX || '20'),

@@ -1,7 +1,7 @@
 # Production Deployment Guide
 
 This guide provides comprehensive instructions for deploying and managing the
-AiLert platform in production using Kubernetes with advanced features including
+DatatechtonCRM platform in production using Kubernetes with advanced features including
 blue-green deployments, auto-scaling, disaster recovery, and comprehensive
 monitoring.
 
@@ -62,8 +62,8 @@ kubectl cluster-info
 kubectl apply -f k8s/production/namespace-production.yaml
 
 # Verify namespace creation
-kubectl get namespace ailert-production
-kubectl describe namespace ailert-production
+kubectl get namespace datatechtoncrm-production
+kubectl describe namespace datatechtoncrm-production
 ```
 
 ### 2. Storage Classes
@@ -90,7 +90,7 @@ EOF
 
 ```bash
 # Create secrets for production
-kubectl create secret generic ailert-secrets \
+kubectl create secret generic datatechtoncrm-secrets \
   --from-literal=POSTGRES_PASSWORD="$(openssl rand -base64 32)" \
   --from-literal=REDIS_PASSWORD="$(openssl rand -base64 32)" \
   --from-literal=RABBITMQ_PASSWORD="$(openssl rand -base64 32)" \
@@ -107,20 +107,20 @@ kubectl create secret generic ailert-secrets \
   --from-literal=LOG_ANALYSIS_WEBHOOK_URL="your-log-analysis-webhook" \
   --from-literal=CAPACITY_WEBHOOK_URL="your-capacity-webhook" \
   --from-literal=PERFORMANCE_WEBHOOK_URL="your-performance-webhook" \
-  -n ailert-production
+  -n datatechtoncrm-production
 
 # Create Elasticsearch secrets
 kubectl create secret generic elasticsearch-secrets \
   --from-literal=username="elastic" \
   --from-literal=password="$(openssl rand -base64 32)" \
-  -n ailert-production
+  -n datatechtoncrm-production
 
 # Create AlertManager secrets
 kubectl create secret generic alertmanager-secrets \
   --from-literal=smtp_password="your-smtp-password" \
   --from-literal=slack_webhook="your-slack-webhook-url" \
   --from-literal=pagerduty_key="your-pagerduty-integration-key" \
-  -n ailert-production
+  -n datatechtoncrm-production
 ```
 
 ### 4. Service Accounts and RBAC
@@ -139,13 +139,13 @@ kubectl apply -f k8s/rbac.yaml
 kubectl apply -f k8s/postgres.yaml
 
 # Wait for PostgreSQL to be ready
-kubectl wait --for=condition=ready pod -l app=postgres -n ailert-production --timeout=300s
+kubectl wait --for=condition=ready pod -l app=postgres -n datatechtoncrm-production --timeout=300s
 
 # Deploy Redis cluster
 kubectl apply -f k8s/redis.yaml
 
 # Wait for Redis to be ready
-kubectl wait --for=condition=ready pod -l app=redis -n ailert-production --timeout=300s
+kubectl wait --for=condition=ready pod -l app=redis -n datatechtoncrm-production --timeout=300s
 ```
 
 ### 2. Message Queue Deployment
@@ -155,7 +155,7 @@ kubectl wait --for=condition=ready pod -l app=redis -n ailert-production --timeo
 kubectl apply -f k8s/rabbitmq.yaml
 
 # Wait for RabbitMQ to be ready
-kubectl wait --for=condition=ready pod -l app=rabbitmq -n ailert-production --timeout=300s
+kubectl wait --for=condition=ready pod -l app=rabbitmq -n datatechtoncrm-production --timeout=300s
 ```
 
 ### 3. Monitoring Infrastructure
@@ -165,13 +165,13 @@ kubectl wait --for=condition=ready pod -l app=rabbitmq -n ailert-production --ti
 kubectl apply -f k8s/production/monitoring-production.yaml
 
 # Wait for Prometheus to be ready
-kubectl wait --for=condition=available deployment/prometheus-production -n ailert-production --timeout=600s
+kubectl wait --for=condition=available deployment/prometheus-production -n datatechtoncrm-production --timeout=600s
 
 # Deploy log aggregation
 kubectl apply -f k8s/production/log-aggregation.yaml
 
 # Wait for Elasticsearch cluster to be ready
-kubectl wait --for=condition=ready pod -l app=elasticsearch -n ailert-production --timeout=900s
+kubectl wait --for=condition=ready pod -l app=elasticsearch -n datatechtoncrm-production --timeout=900s
 ```
 
 ### 4. Application Services Deployment
@@ -233,7 +233,7 @@ chmod +x scripts/blue-green-deployment.sh
 
 ```bash
 # 1. Check current active environment
-ACTIVE_ENV=$(kubectl get configmap blue-green-config -n ailert-production -o jsonpath='{.data.active-environment}')
+ACTIVE_ENV=$(kubectl get configmap blue-green-config -n datatechtoncrm-production -o jsonpath='{.data.active-environment}')
 echo "Current active environment: $ACTIVE_ENV"
 
 # 2. Determine inactive environment
@@ -245,25 +245,25 @@ fi
 
 # 3. Update inactive environment with new image
 kubectl set image deployment/user-service-$INACTIVE_ENV \
-  user-service=ailert/user-service:v1.2.3 \
-  -n ailert-production
+  user-service=datatechtoncrm/user-service:v1.2.3 \
+  -n datatechtoncrm-production
 
 # 4. Scale up inactive environment
-kubectl scale deployment user-service-$INACTIVE_ENV --replicas=3 -n ailert-production
+kubectl scale deployment user-service-$INACTIVE_ENV --replicas=3 -n datatechtoncrm-production
 
 # 5. Wait for deployment to be ready
-kubectl rollout status deployment/user-service-$INACTIVE_ENV -n ailert-production
+kubectl rollout status deployment/user-service-$INACTIVE_ENV -n datatechtoncrm-production
 
 # 6. Switch traffic to inactive environment
-kubectl patch service user-service -n ailert-production \
+kubectl patch service user-service -n datatechtoncrm-production \
   -p '{"spec":{"selector":{"version":"'$INACTIVE_ENV'"}}}'
 
 # 7. Update active environment marker
-kubectl patch configmap blue-green-config -n ailert-production \
+kubectl patch configmap blue-green-config -n datatechtoncrm-production \
   -p '{"data":{"active-environment":"'$INACTIVE_ENV'"}}'
 
 # 8. Scale down old environment
-kubectl scale deployment user-service-$ACTIVE_ENV --replicas=0 -n ailert-production
+kubectl scale deployment user-service-$ACTIVE_ENV --replicas=0 -n datatechtoncrm-production
 ```
 
 ## Monitoring and Alerting
@@ -272,18 +272,18 @@ kubectl scale deployment user-service-$ACTIVE_ENV --replicas=0 -n ailert-product
 
 ```bash
 # Port forward to Grafana
-kubectl port-forward service/grafana-service 3000:3000 -n ailert-production
+kubectl port-forward service/grafana-service 3000:3000 -n datatechtoncrm-production
 
 # Access Grafana at http://localhost:3000
 # Default credentials: admin / (check secret for password)
 
 # Port forward to Prometheus
-kubectl port-forward service/prometheus-service 9090:9090 -n ailert-production
+kubectl port-forward service/prometheus-service 9090:9090 -n datatechtoncrm-production
 
 # Access Prometheus at http://localhost:9090
 
 # Port forward to AlertManager
-kubectl port-forward service/alertmanager 9093:9093 -n ailert-production
+kubectl port-forward service/alertmanager 9093:9093 -n datatechtoncrm-production
 
 # Access AlertManager at http://localhost:9093
 ```
@@ -325,13 +325,13 @@ Automated backups are configured through CronJobs:
 
 ```bash
 # Check backup job status
-kubectl get cronjobs -n ailert-production
+kubectl get cronjobs -n datatechtoncrm-production
 
 # Manual backup trigger
-kubectl create job --from=cronjob/postgres-backup postgres-backup-manual -n ailert-production
+kubectl create job --from=cronjob/postgres-backup postgres-backup-manual -n datatechtoncrm-production
 
 # Verify backup completion
-kubectl logs job/postgres-backup-manual -n ailert-production
+kubectl logs job/postgres-backup-manual -n datatechtoncrm-production
 ```
 
 ### Recovery Procedures
@@ -340,24 +340,24 @@ kubectl logs job/postgres-backup-manual -n ailert-production
 
 ```bash
 # 1. Stop application services
-kubectl scale deployment user-service-blue --replicas=0 -n ailert-production
-kubectl scale deployment newsletter-service-blue --replicas=0 -n ailert-production
+kubectl scale deployment user-service-blue --replicas=0 -n datatechtoncrm-production
+kubectl scale deployment newsletter-service-blue --replicas=0 -n datatechtoncrm-production
 
 # 2. Restore PostgreSQL from backup
-kubectl exec -it statefulset/postgres -n ailert-production -- bash
+kubectl exec -it statefulset/postgres -n datatechtoncrm-production -- bash
 # Inside the pod:
-# pg_restore -h localhost -U ailert -d ailert_production /path/to/backup.dump
+# pg_restore -h localhost -U datatechtoncrm -d datatechtoncrm_production /path/to/backup.dump
 
 # 3. Restart application services
-kubectl scale deployment user-service-blue --replicas=3 -n ailert-production
-kubectl scale deployment newsletter-service-blue --replicas=3 -n ailert-production
+kubectl scale deployment user-service-blue --replicas=3 -n datatechtoncrm-production
+kubectl scale deployment newsletter-service-blue --replicas=3 -n datatechtoncrm-production
 ```
 
 #### Full Cluster Recovery
 
 ```bash
 # 1. Restore Kubernetes state
-aws s3 cp s3://ailert-production-backups/kubernetes/k8s-state-latest.tar.gz .
+aws s3 cp s3://datatechtoncrm-production-backups/kubernetes/k8s-state-latest.tar.gz .
 tar -xzf k8s-state-latest.tar.gz
 
 # 2. Apply configurations
@@ -367,7 +367,7 @@ kubectl apply -f k8s-backup/
 # Follow cloud provider specific procedures for volume restoration
 
 # 4. Verify services
-kubectl get pods -n ailert-production
+kubectl get pods -n datatechtoncrm-production
 ./scripts/blue-green-deployment.sh status
 ```
 
@@ -378,13 +378,13 @@ kubectl get pods -n ailert-production
 ```bash
 # Check current resource usage
 kubectl top nodes
-kubectl top pods -n ailert-production
+kubectl top pods -n datatechtoncrm-production
 
 # Check HPA status
-kubectl get hpa -n ailert-production
+kubectl get hpa -n datatechtoncrm-production
 
 # View capacity planning metrics
-kubectl logs deployment/capacity-planner -n ailert-production
+kubectl logs deployment/capacity-planner -n datatechtoncrm-production
 ```
 
 ### Scaling Recommendations
@@ -399,16 +399,16 @@ The capacity planning system provides automatic recommendations:
 
 ```bash
 # Scale specific service
-kubectl scale deployment user-service-blue --replicas=5 -n ailert-production
+kubectl scale deployment user-service-blue --replicas=5 -n datatechtoncrm-production
 
 # Update HPA limits
-kubectl patch hpa user-service-hpa -n ailert-production \
+kubectl patch hpa user-service-hpa -n datatechtoncrm-production \
   -p '{"spec":{"maxReplicas":15}}'
 
 # Add cluster nodes (cloud provider specific)
 # AWS EKS example:
 aws eks update-nodegroup-config \
-  --cluster-name ailert-production \
+  --cluster-name datatechtoncrm-production \
   --nodegroup-name workers \
   --scaling-config minSize=3,maxSize=10,desiredSize=5
 ```
@@ -421,58 +421,58 @@ aws eks update-nodegroup-config \
 
 ```bash
 # Check pod status
-kubectl get pods -n ailert-production -l app=user-service
+kubectl get pods -n datatechtoncrm-production -l app=user-service
 
 # Check pod logs
-kubectl logs deployment/user-service-blue -n ailert-production --tail=100
+kubectl logs deployment/user-service-blue -n datatechtoncrm-production --tail=100
 
 # Check events
-kubectl get events -n ailert-production --sort-by='.lastTimestamp'
+kubectl get events -n datatechtoncrm-production --sort-by='.lastTimestamp'
 
 # Check resource constraints
-kubectl describe pod <pod-name> -n ailert-production
+kubectl describe pod <pod-name> -n datatechtoncrm-production
 ```
 
 #### High Error Rate
 
 ```bash
 # Check application logs for errors
-kubectl logs deployment/user-service-blue -n ailert-production | grep ERROR
+kubectl logs deployment/user-service-blue -n datatechtoncrm-production | grep ERROR
 
 # Check database connectivity
-kubectl exec deployment/user-service-blue -n ailert-production -- nc -zv postgres-service 5432
+kubectl exec deployment/user-service-blue -n datatechtoncrm-production -- nc -zv postgres-service 5432
 
 # Check recent deployments
-kubectl rollout history deployment/user-service-blue -n ailert-production
+kubectl rollout history deployment/user-service-blue -n datatechtoncrm-production
 
 # Rollback if needed
-kubectl rollout undo deployment/user-service-blue -n ailert-production
+kubectl rollout undo deployment/user-service-blue -n datatechtoncrm-production
 ```
 
 #### Database Issues
 
 ```bash
 # Check PostgreSQL status
-kubectl exec statefulset/postgres -n ailert-production -- pg_isready
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- pg_isready
 
 # Check database connections
-kubectl exec statefulset/postgres -n ailert-production -- \
-  psql -U ailert -c "SELECT count(*) FROM pg_stat_activity;"
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- \
+  psql -U datatechtoncrm -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Check slow queries
-kubectl exec statefulset/postgres -n ailert-production -- \
-  psql -U ailert -c "SELECT query, calls, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;"
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- \
+  psql -U datatechtoncrm -c "SELECT query, calls, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;"
 ```
 
 ### Performance Issues
 
 ```bash
 # Check resource usage
-kubectl top pods -n ailert-production --sort-by=cpu
-kubectl top pods -n ailert-production --sort-by=memory
+kubectl top pods -n datatechtoncrm-production --sort-by=cpu
+kubectl top pods -n datatechtoncrm-production --sort-by=memory
 
 # Check HPA status
-kubectl describe hpa -n ailert-production
+kubectl describe hpa -n datatechtoncrm-production
 
 # Check node resources
 kubectl describe nodes
@@ -486,16 +486,16 @@ kubectl describe nodes
 
 ```bash
 # 1. Check backup integrity
-kubectl logs cronjob/backup-verification -n ailert-production
+kubectl logs cronjob/backup-verification -n datatechtoncrm-production
 
 # 2. Review capacity metrics
-kubectl logs deployment/capacity-planner -n ailert-production
+kubectl logs deployment/capacity-planner -n datatechtoncrm-production
 
 # 3. Check certificate expiration
-kubectl get certificates -n ailert-production
+kubectl get certificates -n datatechtoncrm-production
 
 # 4. Review security alerts
-kubectl logs deployment/incident-responder -n ailert-production
+kubectl logs deployment/incident-responder -n datatechtoncrm-production
 ```
 
 #### Monthly Tasks
@@ -505,16 +505,16 @@ kubectl logs deployment/incident-responder -n ailert-production
 # Use blue-green deployment for zero-downtime updates
 
 # 2. Review and rotate secrets
-kubectl create secret generic ailert-secrets-new \
+kubectl create secret generic datatechtoncrm-secrets-new \
   --from-literal=JWT_SECRET="$(openssl rand -base64 64)" \
-  -n ailert-production
+  -n datatechtoncrm-production
 
 # 3. Database maintenance
-kubectl exec statefulset/postgres -n ailert-production -- \
-  psql -U ailert -c "VACUUM ANALYZE;"
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- \
+  psql -U datatechtoncrm -c "VACUUM ANALYZE;"
 
 # 4. Clean up old resources
-kubectl delete pods --field-selector=status.phase=Succeeded -n ailert-production
+kubectl delete pods --field-selector=status.phase=Succeeded -n datatechtoncrm-production
 ```
 
 #### Quarterly Tasks
@@ -527,7 +527,7 @@ kubectl delete pods --field-selector=status.phase=Succeeded -n ailert-production
 # Review RBAC permissions, network policies, and secrets
 
 # 3. Performance benchmarking
-kubectl logs cronjob/performance-benchmark -n ailert-production
+kubectl logs cronjob/performance-benchmark -n datatechtoncrm-production
 
 # 4. Capacity planning review
 # Analyze growth trends and plan infrastructure scaling
@@ -546,8 +546,8 @@ kubectl get pods --all-namespaces
 kubectl get pods -n ingress-nginx
 
 # 3. Restart critical services
-kubectl rollout restart deployment/user-service-blue -n ailert-production
-kubectl rollout restart deployment/newsletter-service-blue -n ailert-production
+kubectl rollout restart deployment/user-service-blue -n datatechtoncrm-production
+kubectl rollout restart deployment/newsletter-service-blue -n datatechtoncrm-production
 
 # 4. Check external dependencies
 # Verify database, Redis, and external API connectivity
@@ -557,11 +557,11 @@ kubectl rollout restart deployment/newsletter-service-blue -n ailert-production
 
 ```bash
 # 1. Immediately stop write operations
-kubectl scale deployment --all --replicas=0 -n ailert-production
+kubectl scale deployment --all --replicas=0 -n datatechtoncrm-production
 
 # 2. Assess damage
-kubectl exec statefulset/postgres -n ailert-production -- \
-  psql -U ailert -c "SELECT pg_database_size('ailert_production');"
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- \
+  psql -U datatechtoncrm -c "SELECT pg_database_size('datatechtoncrm_production');"
 
 # 3. Restore from backup
 # Follow disaster recovery procedures
@@ -603,8 +603,8 @@ kubectl exec statefulset/postgres -n ailert-production -- \
 
 ```bash
 # Monitor slow queries
-kubectl exec statefulset/postgres -n ailert-production -- \
-  psql -U ailert -c "SELECT * FROM pg_stat_statements WHERE mean_time > 1000 ORDER BY mean_time DESC LIMIT 10;"
+kubectl exec statefulset/postgres -n datatechtoncrm-production -- \
+  psql -U datatechtoncrm -c "SELECT * FROM pg_stat_statements WHERE mean_time > 1000 ORDER BY mean_time DESC LIMIT 10;"
 
 # Connection pooling optimization
 # Configure PgBouncer for connection pooling
@@ -626,6 +626,6 @@ kubectl exec statefulset/postgres -n ailert-production -- \
 - Custom metrics for business logic scaling
 
 This production deployment guide provides comprehensive instructions for
-deploying, monitoring, and maintaining the AiLert platform in a production
+deploying, monitoring, and maintaining the DatatechtonCRM platform in a production
 Kubernetes environment with enterprise-grade reliability, security, and
 performance.

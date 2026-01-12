@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: ailert-network-policy
-  namespace: ailert
+  name: datatechtoncrm-network-policy
+  namespace: datatechtoncrm
 spec:
   podSelector: {}
   policyTypes:
@@ -12,7 +12,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          name: ailert
+          name: datatechtoncrm
     - namespaceSelector:
         matchLabels:
           name: ingress-nginx
@@ -42,7 +42,7 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
-          name: ailert
+          name: datatechtoncrm
   - to: []
     ports:
     - protocol: TCP
@@ -55,7 +55,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: database-network-policy
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   podSelector:
     matchLabels:
@@ -76,7 +76,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: redis-network-policy
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   podSelector:
     matchLabels:
@@ -97,7 +97,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: elasticsearch-network-policy
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   podSelector:
     matchLabels:
@@ -118,7 +118,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: rabbitmq-network-policy
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   podSelector:
     matchLabels:

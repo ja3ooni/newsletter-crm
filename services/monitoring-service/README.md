@@ -1,6 +1,6 @@
-# AiLert Monitoring Service
+# DatatechtonCRM Monitoring Service
 
-Comprehensive monitoring and observability service for the AiLert platform,
+Comprehensive monitoring and observability service for the DatatechtonCRM platform,
 providing metrics collection, alerting, distributed tracing, and log analysis.
 
 ## Features
@@ -136,8 +136,8 @@ GET /health/live
 ### Service Integration
 
 ```typescript
-import { createLoggingMiddleware } from '@ailert/shared/logging';
-import { createMonitoringMiddleware } from '@ailert/shared/monitoring';
+import { createLoggingMiddleware } from '@datatechtoncrm/shared/logging';
+import { createMonitoringMiddleware } from '@datatechtoncrm/shared/monitoring';
 
 const app = express();
 
@@ -218,7 +218,7 @@ Alert rules are defined in YAML format and can be managed via API:
 
 ```yaml
 groups:
-  - name: ailert_alerts
+  - name: datatechtoncrm_alerts
     rules:
       - alert: HighErrorRate
         expr:

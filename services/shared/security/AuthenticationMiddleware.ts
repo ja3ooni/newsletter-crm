@@ -405,8 +405,8 @@ export class AuthenticationMiddleware {
   }): string {
     return jwt.sign(payload, this.config.jwtSecret, {
       expiresIn: this.config.jwtExpiresIn || '24h',
-      issuer: 'ailert-platform',
-      audience: 'ailert-users',
+      issuer: 'datatechtoncrm-platform',
+      audience: 'datatechtoncrm-users',
     } as jwt.SignOptions);
   }
 

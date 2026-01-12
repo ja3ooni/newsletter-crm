@@ -604,10 +604,10 @@ CREATE TABLE IF NOT EXISTS system_config (
 -- Insert default system configuration
 INSERT INTO system_config (key, value, description) VALUES
 ('email_settings', '{
-    "from_name": "AiLert Newsletter",
-    "from_email": "newsletter@ailert.com",
-    "reply_to": "support@ailert.com",
-    "bounce_email": "bounce@ailert.com",
+    "from_name": "DatatechtonCRM Newsletter",
+    "from_email": "newsletter@datatechtoncrm.com",
+    "reply_to": "support@datatechtoncrm.com",
+    "bounce_email": "bounce@datatechtoncrm.com",
     "default_timezone": "UTC"
 }'::jsonb, 'Default email sending configuration'),
 

@@ -1,7 +1,7 @@
 # Development Scripts
 
 This directory contains comprehensive development tools and utilities to enhance
-the developer experience for the AiLert platform.
+the developer experience for the DatatechtonCRM platform.
 
 ## Overview
 

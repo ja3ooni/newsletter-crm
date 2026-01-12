@@ -1,4 +1,4 @@
--- Initial PostgreSQL Schema for AiLert Professional Platform
+-- Initial PostgreSQL Schema for DatatechtonCRM Professional Platform
 -- Migration: 001_initial_schema.sql
 -- Description: Creates core tables for users, subscriptions, CRM, marketing automation, and newsletters
 

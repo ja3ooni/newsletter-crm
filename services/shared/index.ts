@@ -1,5 +1,5 @@
 /**
- * Shared utilities and services for AiLert platform
+ * Shared utilities and services for DatatechtonCRM platform
  */
 
 // Error handling

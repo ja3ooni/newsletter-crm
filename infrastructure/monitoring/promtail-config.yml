@@ -50,13 +50,13 @@ scrape_configs:
           __path__: /var/log/syslog
 
   # Application logs
-  - job_name: ailert-logs
+  - job_name: datatechtoncrm-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: ailert
-          __path__: /var/log/ailert/*.log
+          job: datatechtoncrm
+          __path__: /var/log/datatechtoncrm/*.log
 
     pipeline_stages:
       - json:

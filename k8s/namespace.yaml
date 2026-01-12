@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ailert
+  name: datatechtoncrm
   labels:
-    name: ailert
+    name: datatechtoncrm
     environment: production

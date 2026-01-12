@@ -94,11 +94,11 @@ export class StructuredLogger {
           clientOpts: {
             node: config.elasticsearchUrl,
           },
-          index: `ailert-logs-${this.defaultContext.environment}`,
+          index: `datatechtoncrm-logs-${this.defaultContext.environment}`,
           indexTemplate: {
-            name: 'ailert-logs-template',
+            name: 'datatechtoncrm-logs-template',
             body: {
-              index_patterns: ['ailert-logs-*'],
+              index_patterns: ['datatechtoncrm-logs-*'],
               settings: {
                 number_of_shards: 1,
                 number_of_replicas: 0,
@@ -461,6 +461,6 @@ export const createStructuredLogger = (config: {
 
 // Default logger instance
 export const logger = createStructuredLogger({
-  service: 'ailert-shared',
+  service: 'datatechtoncrm-shared',
   elasticsearchUrl: process.env.ELASTICSEARCH_URL,
 });

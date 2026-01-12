@@ -1,6 +1,6 @@
 global:
   smtp_smarthost: 'localhost:587'
-  smtp_from: 'alerts@ailert.com'
+  smtp_from: 'alerts@datatechtoncrm.com'
   smtp_auth_username: ''
   smtp_auth_password: ''
 
@@ -26,7 +26,7 @@ receivers:
 
   - name: 'critical-alerts'
     email_configs:
-      - to: 'critical-alerts@ailert.com'
+      - to: 'critical-alerts@datatechtoncrm.com'
         subject: 'CRITICAL: {{ .GroupLabels.alertname }}'
         body: |
           {{ range .Alerts }}
@@ -42,7 +42,7 @@ receivers:
 
   - name: 'warning-alerts'
     email_configs:
-      - to: 'alerts@ailert.com'
+      - to: 'alerts@datatechtoncrm.com'
         subject: 'WARNING: {{ .GroupLabels.alertname }}'
         body: |
           {{ range .Alerts }}

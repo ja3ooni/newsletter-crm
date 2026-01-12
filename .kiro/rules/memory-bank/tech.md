@@ -281,8 +281,8 @@ component and a Next.js frontend.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/ailert-platform.git
-cd ailert-platform
+git clone https://github.com/your-username/datatechtoncrm-platform.git
+cd datatechtoncrm-platform
 
 # Install all dependencies
 npm run install:all

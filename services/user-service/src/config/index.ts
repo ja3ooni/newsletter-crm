@@ -73,8 +73,8 @@ export const jwtConfig = {
   expiresIn: config.JWT_EXPIRES_IN,
   refreshExpiresIn: config.JWT_REFRESH_EXPIRES_IN,
   algorithm: 'HS256' as const,
-  issuer: 'ailert-user-service',
-  audience: 'ailert-platform',
+  issuer: 'datatechtoncrm-user-service',
+  audience: 'datatechtoncrm-platform',
 };
 
 // Database Configuration

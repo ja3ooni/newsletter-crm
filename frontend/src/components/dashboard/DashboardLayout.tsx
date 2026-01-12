@@ -236,7 +236,7 @@ function SidebarContent({ navigation, pathname }: SidebarContentProps): JSX.Elem
           <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">A</span>
           </div>
-          <span className="ml-2 text-xl font-semibold text-gray-900">AiLert</span>
+          <span className="ml-2 text-xl font-semibold text-gray-900">DatatechtonCRM</span>
         </div>
         <nav className="mt-5 flex-1 px-2 space-y-1">
           {navigation.map((item) => {

@@ -23,7 +23,7 @@
     "services/analytics-service",
     "frontend"
   ],
-  "docker.defaultRegistryPath": "ghcr.io/your-username/ailert",
+  "docker.defaultRegistryPath": "ghcr.io/your-username/datatechtoncrm",
   "docker.commands.build": "${containerCommand} build --pull --rm -f \"${dockerfile}\" -t ${tag} \"${context}\"",
   "docker.commands.run": "${containerCommand} run --rm -d ${exposedPorts} ${tag}",
   "search.exclude": {

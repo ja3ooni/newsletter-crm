@@ -1,7 +1,7 @@
 {
-  "name": "@ailert/developer-tools",
+  "name": "@datatechtoncrm/developer-tools",
   "version": "1.0.0",
-  "description": "Developer tools and utilities for AiLert platform",
+  "description": "Developer tools and utilities for DatatechtonCRM platform",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -53,11 +53,11 @@
     "typescript": "^5.9.0"
   },
   "keywords": [
-    "ailert",
+    "datatechtoncrm",
     "developer-tools",
     "debugging",
     "typescript"
   ],
-  "author": "AiLert Team",
+  "author": "DatatechtonCRM Team",
   "license": "MIT"
 }

@@ -4,7 +4,7 @@ services:
   # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:v2.47.2
-    container_name: ailert-prometheus
+    container_name: datatechtoncrm-prometheus
     ports:
       - '9090:9090'
     volumes:
@@ -24,13 +24,13 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.prometheus.rule=Host(`prometheus.ailert.local`)'
+      - 'traefik.http.routers.prometheus.rule=Host(`prometheus.datatechtoncrm.local`)'
       - 'traefik.http.services.prometheus.loadbalancer.server.port=9090'
 
   # Grafana for visualization
   grafana:
     image: grafana/grafana:10.2.0
-    container_name: ailert-grafana
+    container_name: datatechtoncrm-grafana
     ports:
       - '3000:3000'
     volumes:
@@ -48,13 +48,13 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.grafana.rule=Host(`grafana.ailert.local`)'
+      - 'traefik.http.routers.grafana.rule=Host(`grafana.datatechtoncrm.local`)'
       - 'traefik.http.services.grafana.loadbalancer.server.port=3000'
 
   # Jaeger for distributed tracing
   jaeger:
     image: jaegertracing/all-in-one:1.50
-    container_name: ailert-jaeger
+    container_name: datatechtoncrm-jaeger
     ports:
       - '16686:16686' # Jaeger UI
       - '14268:14268' # Jaeger collector HTTP
@@ -70,13 +70,13 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.jaeger.rule=Host(`jaeger.ailert.local`)'
+      - 'traefik.http.routers.jaeger.rule=Host(`jaeger.datatechtoncrm.local`)'
       - 'traefik.http.services.jaeger.loadbalancer.server.port=16686'
 
   # Loki for log aggregation
   loki:
     image: grafana/loki:2.9.2
-    container_name: ailert-loki
+    container_name: datatechtoncrm-loki
     ports:
       - '3100:3100'
     volumes:
@@ -90,7 +90,7 @@ services:
   # Promtail for log collection
   promtail:
     image: grafana/promtail:2.9.2
-    container_name: ailert-promtail
+    container_name: datatechtoncrm-promtail
     volumes:
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
@@ -103,7 +103,7 @@ services:
   # AlertManager for alert handling
   alertmanager:
     image: prom/alertmanager:v0.26.0
-    container_name: ailert-alertmanager
+    container_name: datatechtoncrm-alertmanager
     ports:
       - '9093:9093'
     volumes:
@@ -118,13 +118,13 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.alertmanager.rule=Host(`alertmanager.ailert.local`)'
+      - 'traefik.http.routers.alertmanager.rule=Host(`alertmanager.datatechtoncrm.local`)'
       - 'traefik.http.services.alertmanager.loadbalancer.server.port=9093'
 
   # Node Exporter for system metrics
   node-exporter:
     image: prom/node-exporter:v1.6.1
-    container_name: ailert-node-exporter
+    container_name: datatechtoncrm-node-exporter
     ports:
       - '9100:9100'
     volumes:
@@ -143,7 +143,7 @@ services:
   # cAdvisor for container metrics
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
-    container_name: ailert-cadvisor
+    container_name: datatechtoncrm-cadvisor
     ports:
       - '8080:8080'
     volumes:
@@ -164,7 +164,7 @@ services:
     build:
       context: ../../services/monitoring-service
       dockerfile: Dockerfile
-    container_name: ailert-monitoring-service
+    container_name: datatechtoncrm-monitoring-service
     ports:
       - '3006:3006'
     environment:
@@ -178,7 +178,7 @@ services:
       - monitoring_logs:/app/logs
     networks:
       - monitoring
-      - ailert-network
+      - datatechtoncrm-network
     depends_on:
       - prometheus
       - jaeger
@@ -186,7 +186,7 @@ services:
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.monitoring.rule=Host(`monitoring.ailert.local`)'
+      - 'traefik.http.routers.monitoring.rule=Host(`monitoring.datatechtoncrm.local`)'
       - 'traefik.http.services.monitoring.loadbalancer.server.port=3006'
 
 volumes:
@@ -206,5 +206,5 @@ volumes:
 networks:
   monitoring:
     driver: bridge
-  ailert-network:
+  datatechtoncrm-network:
     external: true

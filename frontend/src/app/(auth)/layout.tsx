@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Authentication - AiLert',
-  description: 'Sign in or create an account to access AiLert',
+  title: 'Authentication - DatatechtonCRM',
+  description: 'Sign in or create an account to access DatatechtonCRM',
 }
 
 interface AuthLayoutProps {

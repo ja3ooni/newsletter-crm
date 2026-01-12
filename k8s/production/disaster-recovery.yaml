@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: disaster-recovery-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   # Backup configuration
   backup-schedule: "0 2 * * *" # Daily at 2 AM
@@ -34,7 +34,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: postgres-backup
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: postgres-backup
     component: disaster-recovery
@@ -76,7 +76,7 @@ spec:
                   echo "Starting PostgreSQL backup at $(date)"
 
                   # Create backup
-                  pg_dump -h postgres-service -U ailert -d ailert_production \
+                  pg_dump -h postgres-service -U datatechtoncrm -d datatechtoncrm_production \
                     --no-password --verbose --format=custom --compress=9 \
                     --file=/tmp/backup.dump
 
@@ -104,10 +104,10 @@ spec:
                 - name: PGPASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: POSTGRES_PASSWORD
                 - name: BACKUP_BUCKET
-                  value: "ailert-production-backups"
+                  value: "datatechtoncrm-production-backups"
                 - name: AWS_DEFAULT_REGION
                   value: "us-east-1"
               resources:
@@ -138,7 +138,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: redis-backup
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: redis-backup
     component: disaster-recovery
@@ -202,10 +202,10 @@ spec:
                 - name: REDIS_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: REDIS_PASSWORD
                 - name: BACKUP_BUCKET
-                  value: "ailert-production-backups"
+                  value: "datatechtoncrm-production-backups"
                 - name: AWS_DEFAULT_REGION
                   value: "us-east-1"
               resources:
@@ -236,7 +236,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: application-state-backup
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: application-state-backup
     component: disaster-recovery
@@ -273,26 +273,26 @@ spec:
                   echo "Starting Kubernetes state backup at $(date)"
 
                   # Backup ConfigMaps
-                  kubectl get configmaps -n ailert-production -o yaml > ${BACKUP_DIR}/configmaps.yaml
+                  kubectl get configmaps -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/configmaps.yaml
 
                   # Backup Secrets (metadata only, not actual secret data)
-                  kubectl get secrets -n ailert-production -o yaml | \
+                  kubectl get secrets -n datatechtoncrm-production -o yaml | \
                     sed 's/data:/# data:/g' > ${BACKUP_DIR}/secrets-metadata.yaml
 
                   # Backup Services
-                  kubectl get services -n ailert-production -o yaml > ${BACKUP_DIR}/services.yaml
+                  kubectl get services -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/services.yaml
 
                   # Backup Ingress
-                  kubectl get ingress -n ailert-production -o yaml > ${BACKUP_DIR}/ingress.yaml
+                  kubectl get ingress -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/ingress.yaml
 
                   # Backup PVCs
-                  kubectl get pvc -n ailert-production -o yaml > ${BACKUP_DIR}/pvcs.yaml
+                  kubectl get pvc -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/pvcs.yaml
 
                   # Backup HPAs
-                  kubectl get hpa -n ailert-production -o yaml > ${BACKUP_DIR}/hpas.yaml
+                  kubectl get hpa -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/hpas.yaml
 
                   # Backup Network Policies
-                  kubectl get networkpolicies -n ailert-production -o yaml > ${BACKUP_DIR}/networkpolicies.yaml
+                  kubectl get networkpolicies -n datatechtoncrm-production -o yaml > ${BACKUP_DIR}/networkpolicies.yaml
 
                   # Create archive
                   tar -czf /tmp/k8s-state-${TIMESTAMP}.tar.gz -C /tmp k8s-backup-${TIMESTAMP}
@@ -310,7 +310,7 @@ spec:
                     xargs -I {} aws s3 rm s3://${BACKUP_BUCKET}/{}
               env:
                 - name: BACKUP_BUCKET
-                  value: "ailert-production-backups"
+                  value: "datatechtoncrm-production-backups"
                 - name: AWS_DEFAULT_REGION
                   value: "us-east-1"
               resources:
@@ -328,11 +328,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: backup-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: disaster-recovery
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/AilertBackupRole
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/DatatechtoncrmBackupRole
 
 ---
 # Disaster Recovery RBAC
@@ -340,7 +340,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: backup-role
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 rules:
   - apiGroups: [""]
     resources: ["configmaps", "secrets", "services", "persistentvolumeclaims"]
@@ -360,11 +360,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: backup-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: backup-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: backup-role
@@ -376,7 +376,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backup-monitoring
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: backup-monitoring
     component: disaster-recovery
@@ -394,7 +394,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: backup-verification
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: backup-verification
     component: disaster-recovery
@@ -449,13 +449,13 @@ spec:
                     -d "{\"message\": \"Backup verification successful for ${TODAY}\", \"status\": \"success\"}" || true
               env:
                 - name: BACKUP_BUCKET
-                  value: "ailert-production-backups"
+                  value: "datatechtoncrm-production-backups"
                 - name: AWS_DEFAULT_REGION
                   value: "us-east-1"
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: BACKUP_WEBHOOK_URL
               resources:
                 requests:

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   serviceName: postgres-service
   replicas: 1
@@ -23,17 +23,17 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: POSTGRES_DB
         - name: POSTGRES_USER
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: POSTGRES_PASSWORD
         volumeMounts:
         - name: postgres-storage
@@ -52,9 +52,9 @@ spec:
             command:
             - pg_isready
             - -U
-            - ailert
+            - datatechtoncrm
             - -d
-            - ailert
+            - datatechtoncrm
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
@@ -62,9 +62,9 @@ spec:
             command:
             - pg_isready
             - -U
-            - ailert
+            - datatechtoncrm
             - -d
-            - ailert
+            - datatechtoncrm
           initialDelaySeconds: 5
           periodSeconds: 5
       volumes:
@@ -85,7 +85,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres-service
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   selector:
     app: postgres
@@ -99,7 +99,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init-scripts
-  namespace: ailert
+  namespace: datatechtoncrm
 data:
   01-create-databases.sql: |
     -- Create multiple databases for microservices
@@ -124,8 +124,8 @@ data:
     GRANT ALL PRIVILEGES ON DATABASE crm_db TO crm_service;
     
     -- Also grant to main user for development
-    GRANT ALL PRIVILEGES ON DATABASE user_db TO ailert;
-    GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO ailert;
-    GRANT ALL PRIVILEGES ON DATABASE content_db TO ailert;
-    GRANT ALL PRIVILEGES ON DATABASE analytics_db TO ailert;
-    GRANT ALL PRIVILEGES ON DATABASE crm_db TO ailert;
+    GRANT ALL PRIVILEGES ON DATABASE user_db TO datatechtoncrm;
+    GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO datatechtoncrm;
+    GRANT ALL PRIVILEGES ON DATABASE content_db TO datatechtoncrm;
+    GRANT ALL PRIVILEGES ON DATABASE analytics_db TO datatechtoncrm;
+    GRANT ALL PRIVILEGES ON DATABASE crm_db TO datatechtoncrm;

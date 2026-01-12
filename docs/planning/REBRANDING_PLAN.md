@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the systematic approach to rebrand from "AiLert" to
+This document outlines the systematic approach to rebrand from "DatatechtonCRM" to
 "DatatechtonCRM" across the entire codebase.
 
 ## Phase 1: Core Configuration Files
@@ -10,7 +10,7 @@ This document outlines the systematic approach to rebrand from "AiLert" to
 ### Package.json Files
 
 - [ ] `package.json` - Update name, description, author, repository
-- [ ] `frontend/package.json` - Update name from "ailert-frontend" to
+- [ ] `frontend/package.json` - Update name from "datatechtoncrm-frontend" to
       "datatechtoncrm-frontend"
 - [ ] `services/*/package.json` - Update all service package names
 - [ ] `services/shared/package.json` - Update shared library name
@@ -21,13 +21,13 @@ This document outlines the systematic approach to rebrand from "AiLert" to
 - [ ] `docker-compose.prod.yml` - Update production configuration
 - [ ] `Dockerfile` files - Update labels and metadata
 - [ ] `k8s/*.yaml` - Update Kubernetes deployment names and labels
-- [ ] `infrastructure/grafana/dashboards/ailert-overview.json` - Rename and
+- [ ] `infrastructure/grafana/dashboards/datatechtoncrm-overview.json` - Rename and
       update content
 
 ### Environment & Configuration
 
 - [ ] `.env.example` files - Update database names and service references
-- [ ] Database migration scripts - Update database names from "ailert" to
+- [ ] Database migration scripts - Update database names from "datatechtoncrm" to
       "datatechtoncrm"
 - [ ] `infrastructure/postgres/init.sql` - Update database creation scripts
 
@@ -56,7 +56,7 @@ This document outlines the systematic approach to rebrand from "AiLert" to
 ### Database Schema Updates
 
 - [ ] Update database names in connection strings
-- [ ] Update table prefixes if using "ailert\_" prefix
+- [ ] Update table prefixes if using "datatechtoncrm\_" prefix
 - [ ] Update migration scripts with new naming
 - [ ] Update seed data with new branding
 
@@ -104,17 +104,17 @@ This document outlines the systematic approach to rebrand from "AiLert" to
 ```bash
 # 1. Global find and replace for common patterns
 find . -type f -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.json" | \
-  xargs sed -i 's/AiLert/DatatechtonCRM/g'
+  xargs sed -i 's/DatatechtonCRM/DatatechtonCRM/g'
 
 find . -type f -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.json" | \
-  xargs sed -i 's/ailert/datatechtoncrm/g'
+  xargs sed -i 's/datatechtoncrm/datatechtoncrm/g'
 
 # 2. Update package names
-find . -name "package.json" -exec sed -i 's/"ailert-/"datatechtoncrm-/g' {} \;
+find . -name "package.json" -exec sed -i 's/"datatechtoncrm-/"datatechtoncrm-/g' {} \;
 
 # 3. Update database references
 find . -type f -name "*.ts" -o -name "*.js" -o -name "*.sql" | \
-  xargs sed -i 's/ailert_db/datatechtoncrm_db/g'
+  xargs sed -i 's/datatechtoncrm_db/datatechtoncrm_db/g'
 ```
 
 ### Manual Review Required

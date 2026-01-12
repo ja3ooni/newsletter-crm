@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AiLert Development Debugging Utilities
+# DatatechtonCRM Development Debugging Utilities
 set -e
 
 # Colors for output
@@ -369,7 +369,7 @@ case "$1" in
         debug_session "$2"
         ;;
     *)
-        echo "AiLert Development Debugging Utilities"
+        echo "DatatechtonCRM Development Debugging Utilities"
         echo ""
         echo "Usage: $0 <command> [options]"
         echo ""

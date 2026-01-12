@@ -3,14 +3,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-production-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   prometheus.yml: |
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
       external_labels:
-        cluster: 'ailert-production'
+        cluster: 'datatechtoncrm-production'
         environment: 'production'
 
     rule_files:
@@ -38,7 +38,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
@@ -54,7 +54,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
@@ -70,7 +70,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
@@ -86,7 +86,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
@@ -102,7 +102,7 @@ data:
           - role: endpoints
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
@@ -148,7 +148,7 @@ data:
           - role: pod
             namespaces:
               names:
-                - ailert-production
+                - datatechtoncrm-production
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
@@ -196,7 +196,7 @@ data:
 
   alert_rules.yml: |
     groups:
-      - name: ailert.production.critical
+      - name: datatechtoncrm.production.critical
         rules:
           # Service availability alerts
           - alert: ServiceDown
@@ -209,8 +209,8 @@ data:
             annotations:
               summary: "Service {{ $labels.job }} is down"
               description: "Service {{ $labels.job }} has been down for more than 1 minute"
-              runbook_url: "https://runbooks.ailert.com/service-down"
-              dashboard_url: "https://grafana.ailert.com/d/service-overview"
+              runbook_url: "https://runbooks.datatechtoncrm.com/service-down"
+              dashboard_url: "https://grafana.datatechtoncrm.com/d/service-overview"
 
           - alert: HighErrorRate
             expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
@@ -222,7 +222,7 @@ data:
             annotations:
               summary: "High error rate detected for {{ $labels.job }}"
               description: "Error rate is {{ $value | humanizePercentage }} for service {{ $labels.job }}"
-              runbook_url: "https://runbooks.ailert.com/high-error-rate"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-error-rate"
 
           - alert: HighLatency
             expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
@@ -234,7 +234,7 @@ data:
             annotations:
               summary: "High latency detected for {{ $labels.job }}"
               description: "95th percentile latency is {{ $value }}s for service {{ $labels.job }}"
-              runbook_url: "https://runbooks.ailert.com/high-latency"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-latency"
 
           # Resource alerts
           - alert: HighMemoryUsage
@@ -247,7 +247,7 @@ data:
             annotations:
               summary: "High memory usage for {{ $labels.pod }}"
               description: "Memory usage is {{ $value | humanizePercentage }} for pod {{ $labels.pod }}"
-              runbook_url: "https://runbooks.ailert.com/high-memory"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-memory"
 
           - alert: HighCPUUsage
             expr: rate(container_cpu_usage_seconds_total[5m]) / (container_spec_cpu_quota / container_spec_cpu_period) > 0.8
@@ -259,7 +259,7 @@ data:
             annotations:
               summary: "High CPU usage for {{ $labels.pod }}"
               description: "CPU usage is {{ $value | humanizePercentage }} for pod {{ $labels.pod }}"
-              runbook_url: "https://runbooks.ailert.com/high-cpu"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-cpu"
 
           - alert: PodCrashLooping
             expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
@@ -271,7 +271,7 @@ data:
             annotations:
               summary: "Pod {{ $labels.pod }} is crash looping"
               description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes"
-              runbook_url: "https://runbooks.ailert.com/pod-crash-loop"
+              runbook_url: "https://runbooks.datatechtoncrm.com/pod-crash-loop"
 
           # Database alerts
           - alert: PostgreSQLDown
@@ -284,7 +284,7 @@ data:
             annotations:
               summary: "PostgreSQL is down"
               description: "PostgreSQL database is not responding"
-              runbook_url: "https://runbooks.ailert.com/postgresql-down"
+              runbook_url: "https://runbooks.datatechtoncrm.com/postgresql-down"
 
           - alert: PostgreSQLHighConnections
             expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
@@ -296,7 +296,7 @@ data:
             annotations:
               summary: "PostgreSQL high connection usage"
               description: "PostgreSQL is using {{ $value | humanizePercentage }} of available connections"
-              runbook_url: "https://runbooks.ailert.com/postgresql-connections"
+              runbook_url: "https://runbooks.datatechtoncrm.com/postgresql-connections"
 
           - alert: RedisDown
             expr: redis_up == 0
@@ -308,7 +308,7 @@ data:
             annotations:
               summary: "Redis is down"
               description: "Redis cache is not responding"
-              runbook_url: "https://runbooks.ailert.com/redis-down"
+              runbook_url: "https://runbooks.datatechtoncrm.com/redis-down"
 
           - alert: RedisHighMemoryUsage
             expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
@@ -320,7 +320,7 @@ data:
             annotations:
               summary: "Redis high memory usage"
               description: "Redis is using {{ $value | humanizePercentage }} of available memory"
-              runbook_url: "https://runbooks.ailert.com/redis-memory"
+              runbook_url: "https://runbooks.datatechtoncrm.com/redis-memory"
 
           # Business logic alerts
           - alert: NewsletterGenerationFailed
@@ -333,7 +333,7 @@ data:
             annotations:
               summary: "Newsletter generation failures detected"
               description: "{{ $value }} newsletter generation failures in the last 5 minutes"
-              runbook_url: "https://runbooks.ailert.com/newsletter-generation"
+              runbook_url: "https://runbooks.datatechtoncrm.com/newsletter-generation"
 
           - alert: EmailDeliveryFailed
             expr: increase(email_delivery_failures_total[5m]) > 10
@@ -345,7 +345,7 @@ data:
             annotations:
               summary: "Email delivery failures detected"
               description: "{{ $value }} email delivery failures in the last 5 minutes"
-              runbook_url: "https://runbooks.ailert.com/email-delivery"
+              runbook_url: "https://runbooks.datatechtoncrm.com/email-delivery"
 
           - alert: HighUnsubscribeRate
             expr: rate(newsletter_unsubscribes_total[1h]) / rate(newsletter_sends_total[1h]) > 0.05
@@ -357,9 +357,9 @@ data:
             annotations:
               summary: "High unsubscribe rate detected"
               description: "Unsubscribe rate is {{ $value | humanizePercentage }} in the last hour"
-              runbook_url: "https://runbooks.ailert.com/high-unsubscribe"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-unsubscribe"
 
-      - name: ailert.production.capacity
+      - name: datatechtoncrm.production.capacity
         rules:
           - alert: DiskSpaceRunningLow
             expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
@@ -371,7 +371,7 @@ data:
             annotations:
               summary: "Disk space running low on {{ $labels.instance }}"
               description: "Disk space is {{ $value | humanizePercentage }} full on {{ $labels.instance }}"
-              runbook_url: "https://runbooks.ailert.com/disk-space"
+              runbook_url: "https://runbooks.datatechtoncrm.com/disk-space"
 
           - alert: LoadAverageHigh
             expr: node_load15 > 2
@@ -383,48 +383,48 @@ data:
             annotations:
               summary: "High load average on {{ $labels.instance }}"
               description: "15-minute load average is {{ $value }} on {{ $labels.instance }}"
-              runbook_url: "https://runbooks.ailert.com/high-load"
+              runbook_url: "https://runbooks.datatechtoncrm.com/high-load"
 
   recording_rules.yml: |
     groups:
-      - name: ailert.production.recording
+      - name: datatechtoncrm.production.recording
         interval: 30s
         rules:
           # HTTP request rate and error rate
-          - record: ailert:http_requests:rate5m
+          - record: datatechtoncrm:http_requests:rate5m
             expr: rate(http_requests_total[5m])
 
-          - record: ailert:http_errors:rate5m
+          - record: datatechtoncrm:http_errors:rate5m
             expr: rate(http_requests_total{status=~"5.."}[5m])
 
-          - record: ailert:http_error_rate:rate5m
-            expr: ailert:http_errors:rate5m / ailert:http_requests:rate5m
+          - record: datatechtoncrm:http_error_rate:rate5m
+            expr: datatechtoncrm:http_errors:rate5m / datatechtoncrm:http_requests:rate5m
 
           # Response time percentiles
-          - record: ailert:http_request_duration:p50
+          - record: datatechtoncrm:http_request_duration:p50
             expr: histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))
 
-          - record: ailert:http_request_duration:p95
+          - record: datatechtoncrm:http_request_duration:p95
             expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 
-          - record: ailert:http_request_duration:p99
+          - record: datatechtoncrm:http_request_duration:p99
             expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
 
           # Resource utilization
-          - record: ailert:cpu_utilization:rate5m
+          - record: datatechtoncrm:cpu_utilization:rate5m
             expr: rate(container_cpu_usage_seconds_total[5m])
 
-          - record: ailert:memory_utilization:ratio
+          - record: datatechtoncrm:memory_utilization:ratio
             expr: container_memory_working_set_bytes / container_spec_memory_limit_bytes
 
           # Business metrics
-          - record: ailert:newsletter_generation:rate1h
+          - record: datatechtoncrm:newsletter_generation:rate1h
             expr: rate(newsletter_generation_total[1h])
 
-          - record: ailert:email_delivery:rate1h
+          - record: datatechtoncrm:email_delivery:rate1h
             expr: rate(email_delivery_total[1h])
 
-          - record: ailert:user_registrations:rate1h
+          - record: datatechtoncrm:user_registrations:rate1h
             expr: rate(user_registrations_total[1h])
 
 ---
@@ -433,13 +433,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alertmanager-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   alertmanager.yml: |
     global:
-      smtp_smarthost: 'smtp.ailert.com:587'
-      smtp_from: 'alerts@ailert.com'
-      smtp_auth_username: 'alerts@ailert.com'
+      smtp_smarthost: 'smtp.datatechtoncrm.com:587'
+      smtp_from: 'alerts@datatechtoncrm.com'
+      smtp_auth_username: 'alerts@datatechtoncrm.com'
       smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
 
     templates:
@@ -467,8 +467,8 @@ data:
     receivers:
       - name: 'default'
         email_configs:
-          - to: 'devops@ailert.com'
-            subject: '[AiLert] {{ .GroupLabels.alertname }}'
+          - to: 'devops@datatechtoncrm.com'
+            subject: '[DatatechtonCRM] {{ .GroupLabels.alertname }}'
             body: |
               {{ range .Alerts }}
               Alert: {{ .Annotations.summary }}
@@ -480,7 +480,7 @@ data:
 
       - name: 'critical-alerts'
         email_configs:
-          - to: 'oncall@ailert.com'
+          - to: 'oncall@datatechtoncrm.com'
             subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
             body: |
               🚨 CRITICAL ALERT 🚨
@@ -509,7 +509,7 @@ data:
 
       - name: 'platform-team'
         email_configs:
-          - to: 'platform-team@ailert.com'
+          - to: 'platform-team@datatechtoncrm.com'
             subject: '[Platform] {{ .GroupLabels.alertname }}'
         slack_configs:
           - api_url_file: '/etc/alertmanager/secrets/slack_webhook'
@@ -518,7 +518,7 @@ data:
 
       - name: 'product-team'
         email_configs:
-          - to: 'product-team@ailert.com'
+          - to: 'product-team@datatechtoncrm.com'
             subject: '[Product] {{ .GroupLabels.alertname }}'
         slack_configs:
           - api_url_file: '/etc/alertmanager/secrets/slack_webhook'
@@ -554,7 +554,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus-production
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: prometheus
     environment: production
@@ -596,7 +596,7 @@ spec:
             - "--web.enable-admin-api"
             - "--storage.tsdb.retention.time=30d"
             - "--storage.tsdb.retention.size=50GB"
-            - "--web.external-url=https://prometheus.ailert.com"
+            - "--web.external-url=https://prometheus.datatechtoncrm.com"
             - "--log.level=info"
           ports:
             - name: web
@@ -665,7 +665,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: alertmanager
     environment: production
@@ -696,7 +696,7 @@ spec:
           args:
             - "--config.file=/etc/alertmanager/alertmanager.yml"
             - "--storage.path=/alertmanager"
-            - "--web.external-url=https://alertmanager.ailert.com"
+            - "--web.external-url=https://alertmanager.datatechtoncrm.com"
             - "--cluster.listen-address=0.0.0.0:9094"
             - "--cluster.peer=alertmanager-0.alertmanager:9094"
             - "--cluster.peer=alertmanager-1.alertmanager:9094"
@@ -758,7 +758,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: prometheus
     environment: production
@@ -777,7 +777,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: alertmanager
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: alertmanager
     environment: production
@@ -801,7 +801,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: prometheus-production-pvc
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 spec:
   accessModes:
     - ReadWriteOnce
@@ -815,7 +815,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: alertmanager-pvc
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 spec:
   accessModes:
     - ReadWriteOnce

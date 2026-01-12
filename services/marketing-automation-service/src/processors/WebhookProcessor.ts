@@ -27,7 +27,7 @@ export class WebhookProcessor {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'AiLert-Marketing-Automation/1.0',
+          'User-Agent': 'DatatechtonCRM-Marketing-Automation/1.0',
           ...headers,
         },
         timeout: config.webhook.timeout,

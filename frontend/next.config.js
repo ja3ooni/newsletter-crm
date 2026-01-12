@@ -4,7 +4,7 @@ const nextConfig = {
     appDir: true,
   },
   images: {
-    domains: ['localhost', 'api.ailert.com'],
+    domains: ['localhost', 'api.datatechtoncrm.com'],
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,

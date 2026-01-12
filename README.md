@@ -382,11 +382,48 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📚 Documentation
 
+### Core Documentation
 - [API Documentation](docs/api.md) - Complete API reference
-- [Development Guide](DEVELOPMENT.md) - Detailed development setup
-- [Infrastructure Guide](INFRASTRUCTURE.md) - Infrastructure and deployment
-- [Architecture Decision Records](docs/adr/) - Technical decisions and rationale
 - [User Guide](docs/user-guide.md) - End-user documentation
+- [Production Deployment Guide](docs/production-deployment-guide.md) - Production deployment
+
+### Development
+- [Development Guide](docs/development/DEVELOPMENT.md) - Detailed development setup
+- [Contributing Guide](docs/development/CONTRIBUTING.md) - How to contribute to the project
+- [Developer Tools Review](docs/development/DEVELOPER_TOOLS_REVIEW.md) - Available developer tools
+- [Developer Tools Action Plan](docs/development/DEVELOPER_TOOLS_ACTION_PLAN.md) - Tooling improvements
+- [Quick Reference](docs/development/quick-reference.md) - Quick reference guide
+- [Setup Guide](docs/development/setup-guide.md) - Initial setup instructions
+- [Developer Experience](docs/development/developer-experience.md) - DX improvements
+
+### Deployment & Infrastructure
+- [Infrastructure Guide](docs/deployment/INFRASTRUCTURE.md) - Infrastructure and deployment architecture
+
+### CI/CD
+- [CI/CD Issues Summary](docs/cicd/CI_CD_ISSUES_SUMMARY.md) - Known CI/CD issues and resolutions
+- [GitHub Actions Fixes](docs/cicd/GITHUB_ACTIONS_FIXES.md) - GitHub Actions troubleshooting
+- [GitHub Secrets Setup](docs/cicd/GITHUB_SECRETS_SETUP.md) - Setting up GitHub secrets
+- [Docker NPM Fixes](docs/cicd/DOCKER_NPM_FIXES.md) - Docker and NPM configuration fixes
+
+### Accessibility
+- [Accessibility Audit - Billing](docs/accessibility/ACCESSIBILITY_AUDIT_BillingPage.md) - Billing page accessibility
+- [Accessibility Audit - Promo Codes](docs/accessibility/ACCESSIBILITY_AUDIT_PromoCodeManager.md) - Promo code manager
+- [Accessibility Audit - Subscriptions](docs/accessibility/ACCESSIBILITY_AUDIT_SubscriptionOverview.md) - Subscription overview
+- [Accessibility Audit - Usage](docs/accessibility/ACCESSIBILITY_AUDIT_UsageTracking.md) - Usage tracking
+- [Accessibility Implementation](docs/accessibility/ACCESSIBILITY_IMPLEMENTATION_SUMMARY.md) - Implementation summary
+
+### Security
+- [Security Recommendations](docs/security/SECURITY_RECOMMENDATIONS.md) - Security best practices and recommendations
+
+### Planning & Roadmap
+- [Immediate Action Plan](docs/planning/IMMEDIATE_ACTION_PLAN.md) - Short-term priorities
+- [Optimization and Features](docs/planning/OPTIMIZATION_AND_FEATURES.md) - Performance optimization plans
+- [Rebranding Plan](docs/planning/REBRANDING_PLAN.md) - Brand refresh roadmap
+
+### Issue Tracking
+- [Critical Debug Tools Fix](docs/issues/01-critical-debug-tools-fix.md) - Debug tools issues
+- [Cross-Platform Compatibility](docs/issues/02-cross-platform-compatibility.md) - Platform compatibility
+- [Error Handling Improvements](docs/issues/03-error-handling-improvements.md) - Error handling enhancements
 
 ## 🆘 Support & Troubleshooting
 

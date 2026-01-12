@@ -26,7 +26,7 @@ export function CTA(): JSX.Element {
             viewport={{ once: true }}
             className="mx-auto mt-6 max-w-xl text-lg leading-8 text-primary-100"
           >
-            Join thousands of businesses already using AiLert to grow their audience
+            Join thousands of businesses already using DatatechtonCRM to grow their audience
             and increase engagement. Start your free trial today.
           </motion.p>
           <motion.div

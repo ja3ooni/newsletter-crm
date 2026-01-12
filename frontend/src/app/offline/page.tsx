@@ -118,7 +118,7 @@ export default function OfflinePage() {
               Call Support
             </a>
             <a
-              href="mailto:support@ailert.com"
+              href="mailto:support@datatechtoncrm.com"
               className="flex items-center text-sm text-blue-600 hover:text-blue-800"
             >
               <Mail className="h-4 w-4 mr-1" />

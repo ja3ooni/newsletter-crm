@@ -429,7 +429,7 @@ export class LogAnalyzer {
       };
 
       const response = await axios.post(
-        `${this.elasticsearchUrl}/ailert-logs-*/_search`,
+        `${this.elasticsearchUrl}/datatechtoncrm-logs-*/_search`,
         query,
         { timeout: 10000 }
       );

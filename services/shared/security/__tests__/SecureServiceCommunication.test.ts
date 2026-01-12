@@ -74,7 +74,7 @@ describe('SecureServiceCommunication', () => {
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'ailert-service/test-service',
+          'User-Agent': 'datatechtoncrm-service/test-service',
         },
       });
     });
@@ -164,7 +164,7 @@ describe('SecureServiceCommunication', () => {
       expect(mockedJwt.sign).toHaveBeenCalledWith(
         expect.objectContaining({
           serviceId: 'test-service',
-          iss: 'ailert-platform',
+          iss: 'datatechtoncrm-platform',
         }),
         'test-private-key',
         {

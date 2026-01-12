@@ -1,7 +1,7 @@
 {
-  "name": "@ailert/monitoring-service",
+  "name": "@datatechtoncrm/monitoring-service",
   "version": "1.0.0",
-  "description": "Comprehensive monitoring and observability service for AiLert platform",
+  "description": "Comprehensive monitoring and observability service for DatatechtonCRM platform",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -49,6 +49,6 @@
     "metrics",
     "tracing"
   ],
-  "author": "AiLert Team",
+  "author": "DatatechtonCRM Team",
   "license": "MIT"
 }

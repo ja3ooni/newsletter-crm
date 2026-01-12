@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: elasticsearch
 spec:
@@ -65,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: elasticsearch
 spec:

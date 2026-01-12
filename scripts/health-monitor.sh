@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AiLert Health Monitoring Script
+# DatatechtonCRM Health Monitoring Script
 set -e
 
 # Colors for output
@@ -159,7 +159,7 @@ send_alert() {
     # Example Slack webhook (uncomment and configure)
     # if [ -n "$SLACK_WEBHOOK_URL" ]; then
     #     curl -X POST -H 'Content-type: application/json' \
-    #         --data "{\"text\":\"AiLert Alert [$severity]: $message\"}" \
+    #         --data "{\"text\":\"DatatechtonCRM Alert [$severity]: $message\"}" \
     #         "$SLACK_WEBHOOK_URL"
     # fi
 }
@@ -191,17 +191,17 @@ run_health_check() {
     # Check Docker containers
     log_info "Checking Docker containers..."
     local containers=(
-        "ailert-user-service"
-        "ailert-newsletter-service"
-        "ailert-content-service"
-        "ailert-crm-service"
-        "ailert-analytics-service"
-        "ailert-frontend"
-        "ailert-postgres"
-        "ailert-redis"
-        "ailert-elasticsearch"
-        "ailert-rabbitmq"
-        "ailert-api-gateway"
+        "datatechtoncrm-user-service"
+        "datatechtoncrm-newsletter-service"
+        "datatechtoncrm-content-service"
+        "datatechtoncrm-crm-service"
+        "datatechtoncrm-analytics-service"
+        "datatechtoncrm-frontend"
+        "datatechtoncrm-postgres"
+        "datatechtoncrm-redis"
+        "datatechtoncrm-elasticsearch"
+        "datatechtoncrm-rabbitmq"
+        "datatechtoncrm-api-gateway"
     )
 
     for container in "${containers[@]}"; do
@@ -292,7 +292,7 @@ generate_health_report() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AiLert Health Report</title>
+    <title>DatatechtonCRM Health Report</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
@@ -305,7 +305,7 @@ generate_health_report() {
 </head>
 <body>
     <div class="header">
-        <h1>AiLert Health Report</h1>
+        <h1>DatatechtonCRM Health Report</h1>
         <p class="timestamp">Generated: $(date)</p>
     </div>
 
@@ -368,7 +368,7 @@ case "$1" in
         generate_health_report
         ;;
     *)
-        echo "AiLert Health Monitoring"
+        echo "DatatechtonCRM Health Monitoring"
         echo ""
         echo "Usage: $0 <command> [options]"
         echo ""

@@ -279,8 +279,8 @@ class SecurityTestRunner {
       'build',
       'coverage',
       '.venv',
-      'ailert/.venv',
-      'ailert/node_modules',
+      'datatechtoncrm/.venv',
+      'datatechtoncrm/node_modules',
       'MCP-Smartload',
       'migration-env',
     ];

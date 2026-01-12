@@ -1,5 +1,5 @@
 {
-  "name": "@ailert/analytics-service",
+  "name": "@datatechtoncrm/analytics-service",
   "version": "1.0.0",
   "description": "Analytics Service with comprehensive metrics and reporting",
   "main": "dist/index.js",

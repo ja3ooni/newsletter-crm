@@ -1,5 +1,5 @@
 {
-  "name": "@ailert/marketing-automation-service",
+  "name": "@datatechtoncrm/marketing-automation-service",
   "version": "1.0.0",
   "description": "Marketing Automation Service with workflow builder, execution engine, and drip campaigns",
   "main": "dist/index.js",

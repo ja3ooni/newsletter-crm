@@ -337,9 +337,9 @@ export class NewsletterRepository {
       segments: row.segments || [],
       personalization: row.personalization || { enabled: false, rules: [], fallbackContent: '' },
       deliverabilitySettings: row.deliverability_settings || {
-        fromName: 'AiLert Newsletter',
-        fromEmail: 'noreply@ailert.com',
-        replyTo: 'support@ailert.com',
+        fromName: 'DatatechtonCRM Newsletter',
+        fromEmail: 'noreply@datatechtoncrm.com',
+        replyTo: 'support@datatechtoncrm.com',
         trackOpens: true,
         trackClicks: true,
         unsubscribeLink: true,

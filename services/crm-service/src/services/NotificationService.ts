@@ -77,7 +77,7 @@ export class NotificationService extends EventEmitter {
 
     if (vapidKeys.publicKey && vapidKeys.privateKey) {
       webpush.setVapidDetails(
-        'mailto:support@ailert.com',
+        'mailto:support@datatechtoncrm.com',
         vapidKeys.publicKey,
         vapidKeys.privateKey
       );

@@ -1,6 +1,6 @@
-# Prometheus alerting rules for AiLert platform
+# Prometheus alerting rules for DatatechtonCRM platform
 groups:
-  - name: ailert_alerts
+  - name: datatechtoncrm_alerts
     rules:
       # Service availability alerts
       - alert: ServiceDown

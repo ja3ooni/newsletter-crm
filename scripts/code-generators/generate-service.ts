@@ -163,15 +163,15 @@ class ServiceGenerator {
     }
 
     const packageJson = {
-      name: `@ailert/${this.serviceName}`,
+      name: `@datatechtoncrm/${this.serviceName}`,
       version: '1.0.0',
-      description: `AiLert ${this.servicePascal} Service`,
+      description: `DatatechtonCRM ${this.servicePascal} Service`,
       main: 'dist/index.js',
       scripts,
       dependencies,
       devDependencies,
-      keywords: ['ailert', 'microservice', 'typescript', 'express', 'api'],
-      author: 'AiLert Team',
+      keywords: ['datatechtoncrm', 'microservice', 'typescript', 'express', 'api'],
+      author: 'DatatechtonCRM Team',
       license: 'MIT',
     };
 
@@ -295,12 +295,12 @@ WORKDIR /app
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \\
-    adduser -S ailert -u 1001
+    adduser -S datatechtoncrm -u 1001
 
 # Copy built application
-COPY --from=builder --chown=ailert:nodejs /app/dist ./dist
-COPY --from=builder --chown=ailert:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=ailert:nodejs /app/package*.json ./
+COPY --from=builder --chown=datatechtoncrm:nodejs /app/dist ./dist
+COPY --from=builder --chown=datatechtoncrm:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=datatechtoncrm:nodejs /app/package*.json ./
 
 # Set environment
 ENV NODE_ENV=production
@@ -314,7 +314,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \\
   CMD curl -f http://localhost:3000/health || exit 1
 
 # Switch to non-root user
-USER ailert
+USER datatechtoncrm
 
 # Start the application
 CMD ["node", "dist/index.js"]

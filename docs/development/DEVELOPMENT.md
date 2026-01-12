@@ -1,8 +1,8 @@
-# AiLert Development Guide
+# DatatechtonCRM Development Guide
 
 ## Overview
 
-This document provides comprehensive guidance for developing the AiLert Professional Newsletter Platform. The platform uses a modern microservices architecture with Docker containerization, Kubernetes deployment, and comprehensive CI/CD pipelines.
+This document provides comprehensive guidance for developing the DatatechtonCRM Professional Newsletter Platform. The platform uses a modern microservices architecture with Docker containerization, Kubernetes deployment, and comprehensive CI/CD pipelines.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ This document provides comprehensive guidance for developing the AiLert Professi
 ### 1. Clone and Setup
 ```bash
 git clone <repository-url>
-cd ailert-platform
+cd datatechtoncrm-platform
 chmod +x scripts/*.sh
 ./scripts/setup-dev.sh
 ```
@@ -192,7 +192,7 @@ make psql
 make redis-cli
 
 # Access pgAdmin (development)
-# http://localhost:5050 (admin@ailert.dev / admin)
+# http://localhost:5050 (admin@datatechtoncrm.dev / admin)
 ```
 
 ### Testing
@@ -359,13 +359,13 @@ Deployment is handled by GitHub Actions CI/CD pipeline:
 kubectl apply -f k8s/
 
 # Check deployment status
-kubectl get pods -n ailert
+kubectl get pods -n datatechtoncrm
 
 # View service logs
-kubectl logs -f deployment/user-service -n ailert
+kubectl logs -f deployment/user-service -n datatechtoncrm
 
 # Port forward for local access
-kubectl port-forward service/user-service 3001:3001 -n ailert
+kubectl port-forward service/user-service 3001:3001 -n datatechtoncrm
 ```
 
 ## Security
@@ -379,7 +379,7 @@ make security-scan
 npm audit fix
 
 # Docker image scanning
-trivy image ailert/user-service:latest
+trivy image datatechtoncrm/user-service:latest
 ```
 
 ### Security Best Practices
@@ -410,7 +410,7 @@ docker-compose restart service-name
 #### Database Connection Issues
 ```bash
 # Check database status
-docker-compose exec postgres pg_isready -U ailert
+docker-compose exec postgres pg_isready -U datatechtoncrm
 
 # Reset database
 make db-reset

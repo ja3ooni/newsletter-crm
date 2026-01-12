@@ -53,7 +53,7 @@ export class DatabaseManager {
       connectionTimeoutMillis: config.connectionTimeoutMillis || 10000,
       statement_timeout: config.statementTimeout || 30000,
       query_timeout: config.queryTimeout || 30000,
-      application_name: `ailert-${name}`,
+      application_name: `datatechtoncrm-${name}`,
     };
 
     const pool = new Pool(poolConfig);
@@ -278,8 +278,8 @@ export class DatabaseConfigFactory {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432', 10),
       database: process.env.DB_NAME || `${serviceName}_db`,
-      username: process.env.DB_USER || 'ailert',
-      password: process.env.DB_PASSWORD || 'ailert_dev_password',
+      username: process.env.DB_USER || 'datatechtoncrm',
+      password: process.env.DB_PASSWORD || 'datatechtoncrm_dev_password',
       ssl: process.env.DB_SSL === 'true',
       maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
       idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),

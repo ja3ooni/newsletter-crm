@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: incident-response-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   # Incident response procedures
   incident-procedures.json: |
@@ -16,31 +16,31 @@ data:
             {
               "step": 1,
               "action": "Check service health endpoints",
-              "command": "kubectl get pods -n ailert-production -l app=<service-name>",
+              "command": "kubectl get pods -n datatechtoncrm-production -l app=<service-name>",
               "timeout": "2m"
             },
             {
               "step": 2,
               "action": "Check service logs",
-              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=100",
+              "command": "kubectl logs -n datatechtoncrm-production deployment/<service-name> --tail=100",
               "timeout": "2m"
             },
             {
               "step": 3,
               "action": "Check resource usage",
-              "command": "kubectl top pods -n ailert-production -l app=<service-name>",
+              "command": "kubectl top pods -n datatechtoncrm-production -l app=<service-name>",
               "timeout": "1m"
             },
             {
               "step": 4,
               "action": "Restart service if needed",
-              "command": "kubectl rollout restart deployment/<service-name> -n ailert-production",
+              "command": "kubectl rollout restart deployment/<service-name> -n datatechtoncrm-production",
               "timeout": "5m"
             },
             {
               "step": 5,
               "action": "Verify service recovery",
-              "command": "kubectl rollout status deployment/<service-name> -n ailert-production",
+              "command": "kubectl rollout status deployment/<service-name> -n datatechtoncrm-production",
               "timeout": "10m"
             }
           ],
@@ -57,25 +57,25 @@ data:
             {
               "step": 1,
               "action": "Check error logs",
-              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=200 | grep -i error",
+              "command": "kubectl logs -n datatechtoncrm-production deployment/<service-name> --tail=200 | grep -i error",
               "timeout": "3m"
             },
             {
               "step": 2,
               "action": "Check recent deployments",
-              "command": "kubectl rollout history deployment/<service-name> -n ailert-production",
+              "command": "kubectl rollout history deployment/<service-name> -n datatechtoncrm-production",
               "timeout": "1m"
             },
             {
               "step": 3,
               "action": "Check database connectivity",
-              "command": "kubectl exec -n ailert-production deployment/<service-name> -- nc -zv postgres-service 5432",
+              "command": "kubectl exec -n datatechtoncrm-production deployment/<service-name> -- nc -zv postgres-service 5432",
               "timeout": "1m"
             },
             {
               "step": 4,
               "action": "Consider rollback if recent deployment",
-              "command": "kubectl rollout undo deployment/<service-name> -n ailert-production",
+              "command": "kubectl rollout undo deployment/<service-name> -n datatechtoncrm-production",
               "timeout": "5m"
             }
           ]
@@ -87,25 +87,25 @@ data:
             {
               "step": 1,
               "action": "Check PostgreSQL status",
-              "command": "kubectl exec -n ailert-production statefulset/postgres -- pg_isready",
+              "command": "kubectl exec -n datatechtoncrm-production statefulset/postgres -- pg_isready",
               "timeout": "1m"
             },
             {
               "step": 2,
               "action": "Check database connections",
-              "command": "kubectl exec -n ailert-production statefulset/postgres -- psql -U ailert -c 'SELECT count(*) FROM pg_stat_activity;'",
+              "command": "kubectl exec -n datatechtoncrm-production statefulset/postgres -- psql -U datatechtoncrm -c 'SELECT count(*) FROM pg_stat_activity;'",
               "timeout": "2m"
             },
             {
               "step": 3,
               "action": "Check disk space",
-              "command": "kubectl exec -n ailert-production statefulset/postgres -- df -h /var/lib/postgresql/data",
+              "command": "kubectl exec -n datatechtoncrm-production statefulset/postgres -- df -h /var/lib/postgresql/data",
               "timeout": "1m"
             },
             {
               "step": 4,
               "action": "Check slow queries",
-              "command": "kubectl exec -n ailert-production statefulset/postgres -- psql -U ailert -c 'SELECT query, calls, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;'",
+              "command": "kubectl exec -n datatechtoncrm-production statefulset/postgres -- psql -U datatechtoncrm -c 'SELECT query, calls, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;'",
               "timeout": "2m"
             }
           ]
@@ -117,19 +117,19 @@ data:
             {
               "step": 1,
               "action": "Identify memory-intensive pods",
-              "command": "kubectl top pods -n ailert-production --sort-by=memory",
+              "command": "kubectl top pods -n datatechtoncrm-production --sort-by=memory",
               "timeout": "1m"
             },
             {
               "step": 2,
               "action": "Check for memory leaks",
-              "command": "kubectl logs -n ailert-production deployment/<service-name> --tail=100 | grep -i 'memory\\|heap\\|gc'",
+              "command": "kubectl logs -n datatechtoncrm-production deployment/<service-name> --tail=100 | grep -i 'memory\\|heap\\|gc'",
               "timeout": "2m"
             },
             {
               "step": 3,
               "action": "Scale up if needed",
-              "command": "kubectl scale deployment/<service-name> --replicas=<new-count> -n ailert-production",
+              "command": "kubectl scale deployment/<service-name> --replicas=<new-count> -n datatechtoncrm-production",
               "timeout": "3m"
             }
           ]
@@ -144,16 +144,16 @@ data:
 
       ## Immediate Actions (0-5 minutes)
       1. **Acknowledge the alert** in PagerDuty/Slack
-      2. **Check service status**: `kubectl get pods -n ailert-production -l app=<service>`
-      3. **Check recent deployments**: `kubectl rollout history deployment/<service> -n ailert-production`
+      2. **Check service status**: `kubectl get pods -n datatechtoncrm-production -l app=<service>`
+      3. **Check recent deployments**: `kubectl rollout history deployment/<service> -n datatechtoncrm-production`
 
       ## Investigation (5-15 minutes)
-      1. **Check logs**: `kubectl logs -n ailert-production deployment/<service> --tail=100`
-      2. **Check resource usage**: `kubectl top pods -n ailert-production -l app=<service>`
+      1. **Check logs**: `kubectl logs -n datatechtoncrm-production deployment/<service> --tail=100`
+      2. **Check resource usage**: `kubectl top pods -n datatechtoncrm-production -l app=<service>`
       3. **Check dependencies**: Verify database, Redis, and external services
 
       ## Resolution Actions
-      1. **If recent deployment caused issue**: `kubectl rollout undo deployment/<service> -n ailert-production`
+      1. **If recent deployment caused issue**: `kubectl rollout undo deployment/<service> -n datatechtoncrm-production`
       2. **If resource exhaustion**: Scale up the deployment
       3. **If configuration issue**: Update ConfigMap and restart
 
@@ -171,7 +171,7 @@ data:
       # High Error Rate Runbook
 
       ## Immediate Actions (0-5 minutes)
-      1. **Check error logs**: `kubectl logs -n ailert-production deployment/<service> | grep ERROR`
+      1. **Check error logs**: `kubectl logs -n datatechtoncrm-production deployment/<service> | grep ERROR`
       2. **Identify error patterns**: Look for common error messages
       3. **Check recent changes**: Deployments, configuration updates
 
@@ -219,7 +219,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: incident-responder
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: incident-responder
     component: automation
@@ -241,25 +241,25 @@ spec:
         runAsGroup: 1001
       containers:
         - name: incident-responder
-          image: ailert/incident-responder:latest
+          image: datatechtoncrm/incident-responder:latest
           imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
           env:
             - name: NAMESPACE
-              value: "ailert-production"
+              value: "datatechtoncrm-production"
             - name: CONFIG_PATH
               value: "/etc/incident-response"
             - name: SLACK_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: ailert-secrets
+                  name: datatechtoncrm-secrets
                   key: SLACK_BOT_TOKEN
             - name: PAGERDUTY_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: ailert-secrets
+                  name: datatechtoncrm-secrets
                   key: PAGERDUTY_TOKEN
           resources:
             requests:
@@ -304,7 +304,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: incident-responder-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: incident-responder
     component: automation
@@ -323,7 +323,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: incident-responder-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: automation
 
@@ -333,7 +333,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: incident-responder-role
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 rules:
   - apiGroups: [""]
     resources: ["pods", "services", "configmaps", "secrets"]
@@ -356,11 +356,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: incident-responder-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: incident-responder-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: incident-responder-role
@@ -372,7 +372,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: webhook-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   webhook-handlers.json: |
     {
@@ -438,7 +438,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: performance-monitor
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: performance-monitor
     component: monitoring
@@ -453,7 +453,7 @@ spec:
           serviceAccountName: performance-monitor-service-account
           containers:
             - name: performance-checker
-              image: ailert/performance-checker:latest
+              image: datatechtoncrm/performance-checker:latest
               command:
                 - /bin/sh
                 - -c
@@ -467,7 +467,7 @@ spec:
                     echo "Checking $service performance..."
 
                     # Measure response time
-                    response_time=$(curl -w "%{time_total}" -s -o /dev/null "http://$service:$(kubectl get service $service -n ailert-production -o jsonpath='{.spec.ports[0].port}')/health" || echo "999")
+                    response_time=$(curl -w "%{time_total}" -s -o /dev/null "http://$service:$(kubectl get service $service -n datatechtoncrm-production -o jsonpath='{.spec.ports[0].port}')/health" || echo "999")
 
                     echo "Response time for $service: ${response_time}s"
 
@@ -489,7 +489,7 @@ spec:
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: PERFORMANCE_WEBHOOK_URL
               resources:
                 requests:
@@ -506,6 +506,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: performance-monitor-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring

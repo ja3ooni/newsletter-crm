@@ -1,6 +1,6 @@
-# AiLert Platform Infrastructure
+# DatatechtonCRM Platform Infrastructure
 
-This document provides a comprehensive overview of the AiLert platform's modern development infrastructure, including containerization, orchestration, CI/CD, and development environment setup.
+This document provides a comprehensive overview of the DatatechtonCRM platform's modern development infrastructure, including containerization, orchestration, CI/CD, and development environment setup.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This document provides a comprehensive overview of the AiLert platform's modern 
 
 ## Overview
 
-The AiLert platform uses a modern microservices architecture with the following key infrastructure components:
+The DatatechtonCRM platform uses a modern microservices architecture with the following key infrastructure components:
 
 - **Containerization**: Docker with multi-stage builds for all services
 - **Orchestration**: Kubernetes for production deployment
@@ -225,7 +225,7 @@ strategy:
 ```bash
 # Clone and setup
 git clone <repository>
-cd ailert-platform
+cd datatechtoncrm-platform
 
 # Start development environment
 ./scripts/setup-dev.sh
@@ -348,7 +348,7 @@ The project includes comprehensive VS Code configuration:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd ailert-platform
+   cd datatechtoncrm-platform
    ```
 
 2. **Run setup script**
@@ -392,8 +392,8 @@ The project includes comprehensive VS Code configuration:
 
 3. **Verify deployment**
    ```bash
-   kubectl get pods -n ailert
-   kubectl get services -n ailert
+   kubectl get pods -n datatechtoncrm
+   kubectl get services -n datatechtoncrm
    ```
 
 ## Troubleshooting
@@ -538,11 +538,11 @@ npm run deploy:prod
 - API Gateway: http://localhost:8000
 - Grafana: http://localhost:3001 (admin/admin)
 - Prometheus: http://localhost:9090
-- RabbitMQ: http://localhost:15672 (ailert/ailert_rabbitmq_password)
+- RabbitMQ: http://localhost:15672 (datatechtoncrm/datatechtoncrm_rabbitmq_password)
 - MailHog: http://localhost:8025
-- pgAdmin: http://localhost:5050 (admin@ailert.dev/admin)
+- pgAdmin: http://localhost:5050 (admin@datatechtoncrm.dev/admin)
 - Redis Commander: http://localhost:8081
 - Kibana: http://localhost:5601
 - Jaeger: http://localhost:16686
 
-This infrastructure provides a robust, scalable, and secure foundation for the AiLert platform with modern development practices and comprehensive tooling.
+This infrastructure provides a robust, scalable, and secure foundation for the DatatechtonCRM platform with modern development practices and comprehensive tooling.

@@ -84,7 +84,7 @@ export class ZapierIntegration extends BaseMarketingIntegration {
         timestamp: new Date().toISOString(),
         data: {
           test: true,
-          source: 'ailert_platform',
+          source: 'datatechtoncrm_platform',
         },
       };
 
@@ -220,7 +220,7 @@ export class ZapierIntegration extends BaseMarketingIntegration {
         timestamp: new Date().toISOString(),
         user_id: properties.userId,
         session_id: properties.sessionId,
-        source: 'ailert_platform',
+        source: 'datatechtoncrm_platform',
         data: this.sanitizeProperties(properties),
       };
 

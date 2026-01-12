@@ -23,8 +23,8 @@ GRANT ALL PRIVILEGES ON DATABASE analytics_db TO analytics_service;
 GRANT ALL PRIVILEGES ON DATABASE crm_db TO crm_service;
 
 -- Also grant to main user for development
-GRANT ALL PRIVILEGES ON DATABASE user_db TO ailert;
-GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO ailert;
-GRANT ALL PRIVILEGES ON DATABASE content_db TO ailert;
-GRANT ALL PRIVILEGES ON DATABASE analytics_db TO ailert;
-GRANT ALL PRIVILEGES ON DATABASE crm_db TO ailert;
+GRANT ALL PRIVILEGES ON DATABASE user_db TO datatechtoncrm;
+GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO datatechtoncrm;
+GRANT ALL PRIVILEGES ON DATABASE content_db TO datatechtoncrm;
+GRANT ALL PRIVILEGES ON DATABASE analytics_db TO datatechtoncrm;
+GRANT ALL PRIVILEGES ON DATABASE crm_db TO datatechtoncrm;

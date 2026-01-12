@@ -246,7 +246,7 @@ export function BuilderPreview(): JSX.Element {
                     )}
 
                     <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-                      <p>Newsletter powered by AiLert</p>
+                      <p>Newsletter powered by DatatechtonCRM</p>
                     </div>
                   </div>
                 </div>

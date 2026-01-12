@@ -1,7 +1,7 @@
 {
-  "name": "@ailert/shared",
+  "name": "@datatechtoncrm/shared",
   "version": "1.0.0",
-  "description": "Shared utilities and services for AiLert platform",
+  "description": "Shared utilities and services for DatatechtonCRM platform",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -58,6 +58,6 @@
     "performance",
     "shared-utilities"
   ],
-  "author": "AiLert Team",
+  "author": "DatatechtonCRM Team",
   "license": "MIT"
 }

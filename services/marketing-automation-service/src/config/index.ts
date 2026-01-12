@@ -10,7 +10,7 @@ export const config = {
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
-    name: process.env.DB_NAME || 'ailert_automation',
+    name: process.env.DB_NAME || 'datatechtoncrm_automation',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     ssl: process.env.DB_SSL === 'true',
@@ -65,8 +65,8 @@ export const config = {
   email: {
     provider: process.env.EMAIL_PROVIDER || 'sendgrid',
     apiKey: process.env.EMAIL_API_KEY,
-    fromEmail: process.env.EMAIL_FROM || 'noreply@ailert.com',
-    fromName: process.env.EMAIL_FROM_NAME || 'AiLert',
+    fromEmail: process.env.EMAIL_FROM || 'noreply@datatechtoncrm.com',
+    fromName: process.env.EMAIL_FROM_NAME || 'DatatechtonCRM',
   },
 
   // Webhook configuration

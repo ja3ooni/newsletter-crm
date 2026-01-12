@@ -7,15 +7,15 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AiLert - Professional Newsletter Platform',
+  title: 'DatatechtonCRM - Professional Newsletter Platform',
   description: 'Enterprise-grade newsletter platform with advanced CRM and marketing automation',
   keywords: ['newsletter', 'email marketing', 'CRM', 'automation', 'mobile CRM', 'PWA'],
-  authors: [{ name: 'AiLert Team' }],
+  authors: [{ name: 'DatatechtonCRM Team' }],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'AiLert CRM',
+    title: 'DatatechtonCRM CRM',
     startupImage: [
       {
         url: '/icons/crm-icon-512.png',
@@ -28,21 +28,21 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: 'AiLert CRM',
-    title: 'AiLert - Professional CRM Platform',
+    siteName: 'DatatechtonCRM CRM',
+    title: 'DatatechtonCRM - Professional CRM Platform',
     description: 'Manage contacts, deals, and tasks on the go with our mobile-first CRM platform',
     images: [
       {
         url: '/screenshots/crm-dashboard-mobile.png',
         width: 390,
         height: 844,
-        alt: 'AiLert CRM Mobile Dashboard',
+        alt: 'DatatechtonCRM CRM Mobile Dashboard',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AiLert - Professional CRM Platform',
+    title: 'DatatechtonCRM - Professional CRM Platform',
     description: 'Manage contacts, deals, and tasks on the go with our mobile-first CRM platform',
     images: ['/screenshots/crm-dashboard-mobile.png'],
   },
@@ -68,10 +68,10 @@ export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
     <html lang="en" className="h-full">
       <head>
         {/* PWA Meta Tags */}
-        <meta name="application-name" content="AiLert CRM" />
+        <meta name="application-name" content="DatatechtonCRM CRM" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="AiLert CRM" />
+        <meta name="apple-mobile-web-app-title" content="DatatechtonCRM CRM" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />

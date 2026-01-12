@@ -1,5 +1,5 @@
 {
-  "name": "@ailert/crm-service",
+  "name": "@datatechtoncrm/crm-service",
   "version": "1.0.0",
   "description": "Comprehensive CRM Service with contact management, segmentation, and lead scoring",
   "main": "dist/index.js",

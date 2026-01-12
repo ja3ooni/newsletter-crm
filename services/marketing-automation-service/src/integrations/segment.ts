@@ -132,7 +132,7 @@ export class SegmentIntegration extends BaseMarketingIntegration {
         },
         context: {
           library: {
-            name: 'ailert-platform',
+            name: 'datatechtoncrm-platform',
             version: '1.0.0',
           },
         },
@@ -409,7 +409,7 @@ export class SegmentIntegration extends BaseMarketingIntegration {
         },
         context: {
           library: {
-            name: 'ailert-platform',
+            name: 'datatechtoncrm-platform',
             version: '1.0.0',
           },
         },
@@ -470,7 +470,7 @@ export class SegmentIntegration extends BaseMarketingIntegration {
   private buildContext(properties?: Record<string, any>): SegmentContext {
     const context: SegmentContext = {
       library: {
-        name: 'ailert-platform',
+        name: 'datatechtoncrm-platform',
         version: '1.0.0',
       },
     };
@@ -627,7 +627,7 @@ export class SegmentIntegration extends BaseMarketingIntegration {
         traits: this.sanitizeTraits(traits),
         context: {
           library: {
-            name: 'ailert-platform',
+            name: 'datatechtoncrm-platform',
             version: '1.0.0',
           },
         },
@@ -780,7 +780,7 @@ export class SegmentIntegration extends BaseMarketingIntegration {
         ...(traits && { traits: this.sanitizeTraits(traits) }),
         context: {
           library: {
-            name: 'ailert-platform',
+            name: 'datatechtoncrm-platform',
             version: '1.0.0',
           },
         },

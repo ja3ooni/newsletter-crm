@@ -487,11 +487,11 @@ export function createMessageBus(config: MessageBusConfig): MessageBus {
  */
 export const defaultMessageBusConfig: Omit<MessageBusConfig, 'url' | 'serviceName'> = {
   exchanges: {
-    events: 'ailert.events',
-    deadLetter: 'ailert.dead-letter',
+    events: 'datatechtoncrm.events',
+    deadLetter: 'datatechtoncrm.dead-letter',
   },
   queues: {
-    prefix: 'ailert.queue',
+    prefix: 'datatechtoncrm.queue',
     options: {
       durable: true,
       exclusive: false,

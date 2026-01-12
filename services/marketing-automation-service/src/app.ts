@@ -51,8 +51,8 @@ app.use(
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
-        'https://ailert.com',
-        'https://app.ailert.com',
+        'https://datatechtoncrm.com',
+        'https://app.datatechtoncrm.com',
       ];
 
       if (config.nodeEnv === 'development' || allowedOrigins.includes(origin)) {

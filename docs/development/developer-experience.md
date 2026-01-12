@@ -3,7 +3,7 @@
 ## Overview
 
 This guide covers the comprehensive developer experience tools and workflows
-available in the AiLert platform. Our goal is to provide an exceptional
+available in the DatatechtonCRM platform. Our goal is to provide an exceptional
 development experience that enables developers to be productive from day one.
 
 ## Quick Start
@@ -596,7 +596,7 @@ npm run test:watch
 
 ## Conclusion
 
-The AiLert platform provides a comprehensive developer experience with powerful
+The DatatechtonCRM platform provides a comprehensive developer experience with powerful
 tools, automated workflows, and extensive documentation. By following these
 guidelines and utilizing the available tools, developers can be productive and
 deliver high-quality code efficiently.

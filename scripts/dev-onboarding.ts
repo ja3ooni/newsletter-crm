@@ -71,7 +71,7 @@ class DeveloperOnboarding {
 ╔══════════════════════════════════════════════════════════════╗
 ║                    DEVELOPER ONBOARDING                     ║
 ║                                                              ║
-║  Welcome to the AiLert Platform Development Environment!     ║
+║  Welcome to the DatatechtonCRM Platform Development Environment!     ║
 ║  This interactive guide will help you set up everything      ║
 ║  you need to start contributing to the project.             ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -266,14 +266,14 @@ NODE_ENV=development
 DEBUG=true
 
 # Database
-DATABASE_URL=postgresql://ailert:password@localhost:5432/ailert
-POSTGRES_PASSWORD=ailert_dev_password
-POSTGRES_DB=ailert
-POSTGRES_USER=ailert
+DATABASE_URL=postgresql://datatechtoncrm:password@localhost:5432/datatechtoncrm
+POSTGRES_PASSWORD=datatechtoncrm_dev_password
+POSTGRES_DB=datatechtoncrm
+POSTGRES_USER=datatechtoncrm
 
 # Redis
 REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=ailert_redis_password
+REDIS_PASSWORD=datatechtoncrm_redis_password
 
 # JWT
 JWT_SECRET=dev_jwt_secret_change_in_production

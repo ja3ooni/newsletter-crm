@@ -2,7 +2,7 @@ import { createStructuredLogger } from '../logging/StructuredLogger';
 
 // Create structured logger instance
 export const logger = createStructuredLogger({
-  service: process.env.SERVICE_NAME || 'ailert-shared',
+  service: process.env.SERVICE_NAME || 'datatechtoncrm-shared',
   environment: process.env.NODE_ENV || 'development',
   version: process.env.npm_package_version || '1.0.0',
   elasticsearchUrl: process.env.ELASTICSEARCH_URL,

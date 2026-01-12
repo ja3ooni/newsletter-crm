@@ -1,4 +1,4 @@
-# AiLert Health Monitoring Script - PowerShell Version
+# DatatechtonCRM Health Monitoring Script - PowerShell Version
 param(
     [Parameter(Position=0)]
     [string]$Command,
@@ -198,7 +198,7 @@ function Send-Alert {
     # Example Teams webhook (uncomment and configure)
     # if ($env:TEAMS_WEBHOOK_URL) {
     #     $body = @{
-    #         text = "AiLert Alert [$Severity]: $Message"
+    #         text = "DatatechtonCRM Alert [$Severity]: $Message"
     #     } | ConvertTo-Json
     #
     #     Invoke-RestMethod -Uri $env:TEAMS_WEBHOOK_URL -Method Post -Body $body -ContentType "application/json"
@@ -232,17 +232,17 @@ function Invoke-HealthCheck {
     # Check Docker containers
     Write-Info "Checking Docker containers..."
     $containers = @(
-        "ailert-user-service",
-        "ailert-newsletter-service",
-        "ailert-content-service",
-        "ailert-crm-service",
-        "ailert-analytics-service",
-        "ailert-frontend",
-        "ailert-postgres",
-        "ailert-redis",
-        "ailert-elasticsearch",
-        "ailert-rabbitmq",
-        "ailert-api-gateway"
+        "datatechtoncrm-user-service",
+        "datatechtoncrm-newsletter-service",
+        "datatechtoncrm-content-service",
+        "datatechtoncrm-crm-service",
+        "datatechtoncrm-analytics-service",
+        "datatechtoncrm-frontend",
+        "datatechtoncrm-postgres",
+        "datatechtoncrm-redis",
+        "datatechtoncrm-elasticsearch",
+        "datatechtoncrm-rabbitmq",
+        "datatechtoncrm-api-gateway"
     )
 
     foreach ($container in $containers) {
@@ -337,7 +337,7 @@ function New-HealthReport {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AiLert Health Report</title>
+    <title>DatatechtonCRM Health Report</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
@@ -350,7 +350,7 @@ function New-HealthReport {
 </head>
 <body>
     <div class="header">
-        <h1>AiLert Health Report</h1>
+        <h1>DatatechtonCRM Health Report</h1>
         <p class="timestamp">Generated: $(Get-Date)</p>
     </div>
 
@@ -420,7 +420,7 @@ switch ($Command.ToLower()) {
         New-HealthReport
     }
     default {
-        Write-Host "AiLert Health Monitoring - PowerShell Version"
+        Write-Host "DatatechtonCRM Health Monitoring - PowerShell Version"
         Write-Host ""
         Write-Host "Usage: .\health-monitor.ps1 <command> [options]"
         Write-Host ""

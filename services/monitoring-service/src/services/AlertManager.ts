@@ -162,7 +162,7 @@ export class AlertManager {
         name: 'Email Alerts',
         type: 'email',
         config: {
-          to: process.env.ALERT_EMAIL || 'alerts@ailert.com',
+          to: process.env.ALERT_EMAIL || 'alerts@datatechtoncrm.com',
           smtp: {
             host: process.env.SMTP_HOST || 'localhost',
             port: parseInt(process.env.SMTP_PORT || '587'),
@@ -339,7 +339,7 @@ export class AlertManager {
 
     const payload = {
       channel: channel.config.channel,
-      username: 'AiLert Monitoring',
+      username: 'DatatechtonCRM Monitoring',
       icon_emoji: ':warning:',
       attachments: [
         {
@@ -363,7 +363,7 @@ export class AlertManager {
               short: true,
             },
           ],
-          footer: 'AiLert Monitoring',
+          footer: 'DatatechtonCRM Monitoring',
           ts: Math.floor(alert.startsAt.getTime() / 1000),
         },
       ],

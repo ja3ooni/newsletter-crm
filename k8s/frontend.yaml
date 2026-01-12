@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: frontend
 spec:
@@ -17,22 +17,22 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ailert/frontend:latest
+        image: datatechtoncrm/frontend:latest
         ports:
         - containerPort: 3000
         env:
         - name: NODE_ENV
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: NODE_ENV
         - name: PORT
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: FRONTEND_PORT
         - name: NEXT_PUBLIC_API_URL
-          value: "https://api.ailert.com/api/v1"
+          value: "https://api.datatechtoncrm.com/api/v1"
         resources:
           requests:
             memory: "512Mi"
@@ -65,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: frontend
 spec:
@@ -82,7 +82,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: frontend-hpa
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

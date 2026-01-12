@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: deliverability-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: deliverability-service
     version: v1
@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: deliverability-service
-        image: ailert/deliverability-service:latest
+        image: datatechtoncrm/deliverability-service:latest
         ports:
         - containerPort: 3007
           name: http
@@ -139,7 +139,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: deliverability-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: deliverability-service
 spec:
@@ -157,7 +157,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: deliverability-service-netpol
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   podSelector:
     matchLabels:
@@ -207,7 +207,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: deliverability-service-hpa
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

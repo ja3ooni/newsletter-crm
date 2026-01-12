@@ -11,7 +11,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - DEBUG=ailert:*
+      - DEBUG=datatechtoncrm:*
       - LOG_LEVEL=debug
     ports:
       - "9229:9229"  # Debug port
@@ -25,7 +25,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - DEBUG=ailert:*
+      - DEBUG=datatechtoncrm:*
       - LOG_LEVEL=debug
     ports:
       - "9230:9229"  # Debug port
@@ -39,7 +39,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - DEBUG=ailert:*
+      - DEBUG=datatechtoncrm:*
       - LOG_LEVEL=debug
     ports:
       - "9231:9229"  # Debug port
@@ -53,7 +53,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - DEBUG=ailert:*
+      - DEBUG=datatechtoncrm:*
       - LOG_LEVEL=debug
     ports:
       - "9232:9229"  # Debug port
@@ -67,7 +67,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - DEBUG=ailert:*
+      - DEBUG=datatechtoncrm:*
       - LOG_LEVEL=debug
     ports:
       - "9233:9229"  # Debug port
@@ -89,17 +89,17 @@ services:
   # Development tools
   mailhog:
     image: mailhog/mailhog:v1.0.1
-    container_name: ailert-mailhog
+    container_name: datatechtoncrm-mailhog
     ports:
       - "1025:1025"  # SMTP
       - "8025:8025"  # Web UI
     networks:
-      - ailert-network
+      - datatechtoncrm-network
 
   # Jaeger for distributed tracing
   jaeger:
     image: jaegertracing/all-in-one:1.50
-    container_name: ailert-jaeger
+    container_name: datatechtoncrm-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: true
     ports:
@@ -108,34 +108,34 @@ services:
       - "4317:4317"    # OTLP gRPC receiver
       - "4318:4318"    # OTLP HTTP receiver
     networks:
-      - ailert-network
+      - datatechtoncrm-network
 
   # Zipkin for distributed tracing (alternative)
   zipkin:
     image: openzipkin/zipkin:2.24
-    container_name: ailert-zipkin
+    container_name: datatechtoncrm-zipkin
     ports:
       - "9411:9411"
     networks:
-      - ailert-network
+      - datatechtoncrm-network
 
   # Development file watcher and hot reload
   nodemon:
     image: node:18-alpine
-    container_name: ailert-nodemon
+    container_name: datatechtoncrm-nodemon
     working_dir: /app
     volumes:
       - .:/app
     command: npx nodemon --watch services --ext ts,js,json --exec "echo 'Files changed, services will auto-reload'"
     networks:
-      - ailert-network
+      - datatechtoncrm-network
 
   # Database admin tools
   pgadmin:
     image: dpage/pgadmin4:7.8
-    container_name: ailert-pgadmin
+    container_name: datatechtoncrm-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@ailert.dev
+      PGADMIN_DEFAULT_EMAIL: admin@datatechtoncrm.dev
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
@@ -143,34 +143,34 @@ services:
     ports:
       - "5050:80"
     networks:
-      - ailert-network
+      - datatechtoncrm-network
     depends_on:
       - postgres
 
   # Redis admin
   redis-commander:
     image: rediscommander/redis-commander:latest
-    container_name: ailert-redis-commander
+    container_name: datatechtoncrm-redis-commander
     environment:
-      REDIS_HOSTS: local:redis:6379:0:ailert_redis_password
+      REDIS_HOSTS: local:redis:6379:0:datatechtoncrm_redis_password
     ports:
       - "8081:8081"
     networks:
-      - ailert-network
+      - datatechtoncrm-network
     depends_on:
       - redis
 
   # Elasticsearch admin
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: ailert-kibana
+    container_name: datatechtoncrm-kibana
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
       XPACK_SECURITY_ENABLED: false
     ports:
       - "5601:5601"
     networks:
-      - ailert-network
+      - datatechtoncrm-network
     depends_on:
       - elasticsearch
 

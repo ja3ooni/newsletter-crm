@@ -291,7 +291,7 @@ export class KongMonitor {
         redis: {
           host: 'redis',
           port: 6379,
-          password: process.env.REDIS_PASSWORD || 'ailert_redis_password',
+          password: process.env.REDIS_PASSWORD || 'datatechtoncrm_redis_password',
           database: 0,
         },
       };

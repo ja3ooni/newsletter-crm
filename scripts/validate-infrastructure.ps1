@@ -1,4 +1,4 @@
-# AiLert Infrastructure Validation Script for Windows PowerShell
+# DatatechtonCRM Infrastructure Validation Script for Windows PowerShell
 param(
     [switch]$Detailed = $false
 )
@@ -123,7 +123,7 @@ function Test-DirectoryExists {
 }
 
 # Main validation
-Write-Host "=== AiLert Infrastructure Validation ===" -ForegroundColor $Cyan
+Write-Host "=== DatatechtonCRM Infrastructure Validation ===" -ForegroundColor $Cyan
 Write-Host "$(Get-Date)"
 Write-Host ""
 

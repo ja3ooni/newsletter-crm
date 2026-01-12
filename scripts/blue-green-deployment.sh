@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Blue-Green Deployment Script for AiLert Production
+# Blue-Green Deployment Script for DatatechtonCRM Production
 # This script automates the blue-green deployment process with health checks and rollback capabilities
 
 set -euo pipefail
 
 # Configuration
-NAMESPACE="ailert-production"
+NAMESPACE="datatechtoncrm-production"
 SERVICES=("user-service" "newsletter-service" "crm-service" "analytics-service" "content-service")
 HEALTH_CHECK_TIMEOUT=300
 ROLLBACK_TIMEOUT=600
@@ -238,7 +238,7 @@ deploy_new_version() {
     for service in "${SERVICES[@]}"; do
         log_info "Updating $service-$inactive_env with new image"
         kubectl set image deployment/"$service-$inactive_env" \
-            "$service=ailert/$service:$new_image_tag" \
+            "$service=datatechtoncrm/$service:$new_image_tag" \
             -n "$NAMESPACE" --timeout="${KUBECTL_TIMEOUT}s"
 
         if [ $? -ne 0 ]; then
@@ -380,7 +380,7 @@ show_status() {
 # Function to show help
 show_help() {
     cat << EOF
-Blue-Green Deployment Script for AiLert Production
+Blue-Green Deployment Script for DatatechtonCRM Production
 
 Usage: $0 [COMMAND] [OPTIONS]
 
@@ -398,7 +398,7 @@ Examples:
     $0 health-check green
 
 Environment Variables:
-    NAMESPACE            Kubernetes namespace (default: ailert-production)
+    NAMESPACE            Kubernetes namespace (default: datatechtoncrm-production)
     HEALTH_CHECK_TIMEOUT Health check timeout in seconds (default: 300)
     ROLLBACK_TIMEOUT     Rollback timeout in seconds (default: 600)
 

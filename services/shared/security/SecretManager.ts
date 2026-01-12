@@ -445,7 +445,7 @@ export class SecretManager {
     keyId?: string
   ): Promise<EncryptionResult> {
     const command = new EncryptCommand({
-      KeyId: keyId || 'alias/ailert-encryption-key',
+      KeyId: keyId || 'alias/datatechtoncrm-encryption-key',
       Plaintext: Buffer.from(data, 'utf8'),
     });
 
@@ -533,7 +533,7 @@ export class SecretManager {
       iv
     );
 
-    cipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));
+    cipher.setAAD(Buffer.from('datatechtoncrm-encryption', 'utf8'));
 
     let encrypted = cipher.update(data, 'utf8', 'hex');
 
@@ -571,7 +571,7 @@ export class SecretManager {
       ivBuffer
     );
 
-    decipher.setAAD(Buffer.from('ailert-encryption', 'utf8'));
+    decipher.setAAD(Buffer.from('datatechtoncrm-encryption', 'utf8'));
     decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -704,7 +704,7 @@ export class SecretManager {
   ): Promise<EncryptionResult> {
     const vaultConfig = this.config.hashicorp!;
     const transitPath = 'transit';
-    const keyName = keyId || 'ailert-encryption-key';
+    const keyName = keyId || 'datatechtoncrm-encryption-key';
 
     const response = await fetch(
       `${vaultConfig.endpoint}/v1/${transitPath}/encrypt/${keyName}`,
@@ -742,7 +742,7 @@ export class SecretManager {
   ): Promise<DecryptionResult> {
     const vaultConfig = this.config.hashicorp!;
     const transitPath = 'transit';
-    const keyName = keyId || 'ailert-encryption-key';
+    const keyName = keyId || 'datatechtoncrm-encryption-key';
 
     const response = await fetch(
       `${vaultConfig.endpoint}/v1/${transitPath}/decrypt/${keyName}`,

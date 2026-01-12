@@ -10,7 +10,7 @@ export const config = {
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
-    name: process.env.DB_NAME || 'ailert_newsletter',
+    name: process.env.DB_NAME || 'datatechtoncrm_newsletter',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     ssl: process.env.DB_SSL === 'true',
@@ -43,10 +43,10 @@ export const config = {
       password: process.env.SMTP_PASSWORD,
     },
     from: {
-      name: process.env.EMAIL_FROM_NAME || 'AiLert Newsletter',
-      address: process.env.EMAIL_FROM_ADDRESS || 'noreply@ailert.com',
+      name: process.env.EMAIL_FROM_NAME || 'DatatechtonCRM Newsletter',
+      address: process.env.EMAIL_FROM_ADDRESS || 'noreply@datatechtoncrm.com',
     },
-    replyTo: process.env.EMAIL_REPLY_TO || 'support@ailert.com',
+    replyTo: process.env.EMAIL_REPLY_TO || 'support@datatechtoncrm.com',
   },
 
   // Queue

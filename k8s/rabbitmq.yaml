@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: rabbitmq
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: rabbitmq
 spec:
@@ -24,11 +24,11 @@ spec:
         - containerPort: 15672
         env:
         - name: RABBITMQ_DEFAULT_USER
-          value: "ailert"
+          value: "datatechtoncrm"
         - name: RABBITMQ_DEFAULT_PASS
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: RABBITMQ_PASSWORD
         resources:
           requests:
@@ -68,7 +68,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: rabbitmq
 spec:

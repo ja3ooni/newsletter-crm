@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: crm-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: crm-service
     version: v1
@@ -30,7 +30,7 @@ spec:
         prometheus.io/port: "3004"
         prometheus.io/path: "/metrics"
     spec:
-      serviceAccountName: ailert-service-account
+      serviceAccountName: datatechtoncrm-service-account
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
@@ -40,7 +40,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: crm-service
-        image: ailert/crm-service:latest
+        image: datatechtoncrm/crm-service:latest
         imagePullPolicy: Always
         ports:
         - name: http
@@ -53,33 +53,33 @@ spec:
         - name: NODE_ENV
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: NODE_ENV
         - name: PORT
           valueFrom:
             configMapKeyRef:
-              name: ailert-config
+              name: datatechtoncrm-config
               key: CRM_SERVICE_PORT
         - name: DATABASE_URL
-          value: "postgresql://ailert:$(POSTGRES_PASSWORD)@postgres-service:5432/crm_db"
+          value: "postgresql://datatechtoncrm:$(POSTGRES_PASSWORD)@postgres-service:5432/crm_db"
         - name: REDIS_URL
           value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
         - name: RABBITMQ_URL
-          value: "amqp://ailert:$(RABBITMQ_PASSWORD)@rabbitmq-service:5672"
+          value: "amqp://datatechtoncrm:$(RABBITMQ_PASSWORD)@rabbitmq-service:5672"
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: POSTGRES_PASSWORD
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: REDIS_PASSWORD
         - name: RABBITMQ_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: RABBITMQ_PASSWORD
         - name: LOG_LEVEL
           value: "info"
@@ -168,7 +168,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: crm-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: crm-service
 spec:
@@ -185,7 +185,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: crm-service-hpa
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

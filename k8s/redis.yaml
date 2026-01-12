@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   replicas: 1
   selector:
@@ -28,7 +28,7 @@ spec:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: REDIS_PASSWORD
         volumeMounts:
         - name: redis-storage
@@ -68,7 +68,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-service
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   selector:
     app: redis
@@ -82,7 +82,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: redis-pvc
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   accessModes:
   - ReadWriteOnce

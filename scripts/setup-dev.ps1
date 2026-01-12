@@ -1,4 +1,4 @@
-# AiLert Development Environment Setup Script for Windows
+# DatatechtonCRM Development Environment Setup Script for Windows
 param(
     [switch]$Force,
     [switch]$SkipPrerequisites
@@ -28,7 +28,7 @@ function Write-Error {
     Write-Host "❌ [ERROR] $Message" -ForegroundColor Red
 }
 
-Write-Info "Setting up AiLert development environment for Windows..."
+Write-Info "Setting up DatatechtonCRM development environment for Windows..."
 
 # Check prerequisites
 if (-not $SkipPrerequisites) {
@@ -94,15 +94,15 @@ NODE_ENV=development
 DEBUG=true
 
 # Database
-POSTGRES_PASSWORD=ailert_dev_password
-POSTGRES_DB=ailert
-POSTGRES_USER=ailert
+POSTGRES_PASSWORD=datatechtoncrm_dev_password
+POSTGRES_DB=datatechtoncrm
+POSTGRES_USER=datatechtoncrm
 
 # Redis
-REDIS_PASSWORD=ailert_redis_password
+REDIS_PASSWORD=datatechtoncrm_redis_password
 
 # RabbitMQ
-RABBITMQ_PASSWORD=ailert_rabbitmq_password
+RABBITMQ_PASSWORD=datatechtoncrm_rabbitmq_password
 
 # JWT
 JWT_SECRET=dev_jwt_secret_change_in_production
@@ -208,7 +208,7 @@ docker-compose ps
 # Create databases
 Write-Info "Setting up databases..."
 try {
-    docker-compose exec -T postgres psql -U ailert -d ailert -c "SELECT version();"
+    docker-compose exec -T postgres psql -U datatechtoncrm -d datatechtoncrm -c "SELECT version();"
 }
 catch {
     Write-Warning "Database setup will be handled by init scripts"

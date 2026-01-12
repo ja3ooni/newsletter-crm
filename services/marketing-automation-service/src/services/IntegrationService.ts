@@ -251,7 +251,7 @@ export class IntegrationService {
         sessionId: eventData.sessionId || undefined,
         properties: eventData.properties,
         timestamp: eventData.timestamp || new Date(),
-        source: eventData.source || 'ailert_platform',
+        source: eventData.source || 'datatechtoncrm_platform',
       };
 
       const results = await this.integrationManager.trackEvent(trackingEvent);

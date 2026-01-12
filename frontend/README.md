@@ -1,6 +1,6 @@
-# AiLert Frontend
+# DatatechtonCRM Frontend
 
-Modern Next.js 14 frontend application for the AiLert professional newsletter platform.
+Modern Next.js 14 frontend application for the DatatechtonCRM professional newsletter platform.
 
 ## Features
 
@@ -144,8 +144,8 @@ npm run start
 ### Docker
 
 ```bash
-docker build -t ailert-frontend .
-docker run -p 3000:3000 ailert-frontend
+docker build -t datatechtoncrm-frontend .
+docker run -p 3000:3000 datatechtoncrm-frontend
 ```
 
 ## Contributing

@@ -376,11 +376,11 @@ exports.createMessageBus = createMessageBus;
  */
 exports.defaultMessageBusConfig = {
     exchanges: {
-        events: 'ailert.events',
-        deadLetter: 'ailert.dead-letter',
+        events: 'datatechtoncrm.events',
+        deadLetter: 'datatechtoncrm.dead-letter',
     },
     queues: {
-        prefix: 'ailert.queue',
+        prefix: 'datatechtoncrm.queue',
         options: {
             durable: true,
             exclusive: false,

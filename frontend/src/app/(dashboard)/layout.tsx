@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Dashboard - AiLert',
+  title: 'Dashboard - DatatechtonCRM',
   description: 'Manage your newsletters, contacts, and automation workflows',
 }
 

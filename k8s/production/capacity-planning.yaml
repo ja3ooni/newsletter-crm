@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: capacity-planning-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   # Capacity thresholds and planning parameters
   capacity-config.json: |
@@ -129,7 +129,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: capacity-planner
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: capacity-planner
     component: monitoring
@@ -155,7 +155,7 @@ spec:
         runAsGroup: 1001
       containers:
         - name: capacity-planner
-          image: ailert/capacity-planner:latest
+          image: datatechtoncrm/capacity-planner:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -216,7 +216,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: capacity-planner-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: capacity-planner
     component: monitoring
@@ -238,7 +238,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: resource-analyzer
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: resource-analyzer
     component: monitoring
@@ -253,7 +253,7 @@ spec:
           serviceAccountName: resource-analyzer-service-account
           containers:
             - name: resource-analyzer
-              image: ailert/resource-analyzer:latest
+              image: datatechtoncrm/resource-analyzer:latest
               command:
                 - /bin/sh
                 - -c
@@ -266,7 +266,7 @@ spec:
                   echo "Analyzing CPU usage patterns..."
 
                   # Query Prometheus for CPU metrics
-                  CPU_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\"}[5m])) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+                  CPU_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"datatechtoncrm-production\"}[5m])) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
 
                   echo "Current CPU usage by pod:"
                   echo "$CPU_USAGE"
@@ -274,7 +274,7 @@ spec:
                   # Analyze memory usage trends
                   echo "Analyzing memory usage patterns..."
 
-                  MEMORY_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(container_memory_working_set_bytes{namespace=\"ailert-production\"}) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+                  MEMORY_USAGE=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(container_memory_working_set_bytes{namespace=\"datatechtoncrm-production\"}) by (pod)" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
 
                   echo "Current memory usage by pod:"
                   echo "$MEMORY_USAGE"
@@ -283,7 +283,7 @@ spec:
                   echo "Checking for resource bottlenecks..."
 
                   # High CPU usage check
-                  HIGH_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\"}[5m]) > 0.8" | jq -r '.data.result | length')
+                  HIGH_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_cpu_usage_seconds_total{namespace=\"datatechtoncrm-production\"}[5m]) > 0.8" | jq -r '.data.result | length')
 
                   if [ "$HIGH_CPU" -gt 0 ]; then
                     echo "⚠️ High CPU usage detected on $HIGH_CPU pods"
@@ -295,7 +295,7 @@ spec:
                   fi
 
                   # High memory usage check
-                  HIGH_MEMORY=$(curl -s "http://prometheus-service:9090/api/v1/query?query=container_memory_working_set_bytes{namespace=\"ailert-production\"} / container_spec_memory_limit_bytes > 0.85" | jq -r '.data.result | length')
+                  HIGH_MEMORY=$(curl -s "http://prometheus-service:9090/api/v1/query?query=container_memory_working_set_bytes{namespace=\"datatechtoncrm-production\"} / container_spec_memory_limit_bytes > 0.85" | jq -r '.data.result | length')
 
                   if [ "$HIGH_MEMORY" -gt 0 ]; then
                     echo "⚠️ High memory usage detected on $HIGH_MEMORY pods"
@@ -310,7 +310,7 @@ spec:
                   echo "Analyzing disk usage..."
 
                   # Check PVC usage
-                  kubectl get pvc -n ailert-production -o json | jq -r '.items[] | "\(.metadata.name): \(.status.capacity.storage)"' > /tmp/pvc_usage.txt
+                  kubectl get pvc -n datatechtoncrm-production -o json | jq -r '.items[] | "\(.metadata.name): \(.status.capacity.storage)"' > /tmp/pvc_usage.txt
 
                   echo "PVC usage:"
                   cat /tmp/pvc_usage.txt
@@ -318,7 +318,7 @@ spec:
                   # Network analysis
                   echo "Analyzing network patterns..."
 
-                  NETWORK_RX=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_network_receive_bytes_total{namespace=\"ailert-production\"}[5m])" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
+                  NETWORK_RX=$(curl -s "http://prometheus-service:9090/api/v1/query?query=rate(container_network_receive_bytes_total{namespace=\"datatechtoncrm-production\"}[5m])" | jq -r '.data.result[] | "\(.metric.pod): \(.value[1])"')
 
                   echo "Network receive rates:"
                   echo "$NETWORK_RX"
@@ -328,8 +328,8 @@ spec:
 
                   # Check if any services need scaling
                   for service in user-service newsletter-service crm-service analytics-service content-service; do
-                    CURRENT_REPLICAS=$(kubectl get deployment $service -n ailert-production -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
-                    AVG_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"ailert-production\",pod=~\"$service.*\"}[5m]))" | jq -r '.data.result[0].value[1] // "0"')
+                    CURRENT_REPLICAS=$(kubectl get deployment $service -n datatechtoncrm-production -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+                    AVG_CPU=$(curl -s "http://prometheus-service:9090/api/v1/query?query=avg(rate(container_cpu_usage_seconds_total{namespace=\"datatechtoncrm-production\",pod=~\"$service.*\"}[5m]))" | jq -r '.data.result[0].value[1] // "0"')
 
                     # Convert to percentage (assuming 1 CPU = 1.0)
                     CPU_PERCENT=$(echo "$AVG_CPU * 100" | bc -l 2>/dev/null || echo "0")
@@ -353,7 +353,7 @@ spec:
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: CAPACITY_WEBHOOK_URL
               resources:
                 requests:
@@ -370,7 +370,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: performance-benchmark
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: performance-benchmark
     component: monitoring
@@ -385,7 +385,7 @@ spec:
           serviceAccountName: performance-benchmark-service-account
           containers:
             - name: performance-benchmark
-              image: ailert/performance-benchmark:latest
+              image: datatechtoncrm/performance-benchmark:latest
               command:
                 - /bin/sh
                 - -c
@@ -400,7 +400,7 @@ spec:
                   for service in user-service newsletter-service crm-service analytics-service content-service; do
                     echo "Benchmarking $service..."
 
-                    SERVICE_PORT=$(kubectl get service $service -n ailert-production -o jsonpath='{.spec.ports[0].port}')
+                    SERVICE_PORT=$(kubectl get service $service -n datatechtoncrm-production -o jsonpath='{.spec.ports[0].port}')
 
                     # Run load test
                     echo "Running load test for $service on port $SERVICE_PORT"
@@ -456,11 +456,11 @@ spec:
                   echo "Running database performance benchmarks..."
 
                   # PostgreSQL connection test
-                  DB_CONNECT_TIME=$(time (kubectl exec -n ailert-production statefulset/postgres -- pg_isready) 2>&1 | grep real | awk '{print $2}' | sed 's/[^0-9.]//g')
+                  DB_CONNECT_TIME=$(time (kubectl exec -n datatechtoncrm-production statefulset/postgres -- pg_isready) 2>&1 | grep real | awk '{print $2}' | sed 's/[^0-9.]//g')
                   echo "Database connection time: ${DB_CONNECT_TIME}s"
 
                   # Redis performance test
-                  REDIS_PING_TIME=$(kubectl exec -n ailert-production statefulset/redis -- redis-cli ping | wc -l)
+                  REDIS_PING_TIME=$(kubectl exec -n datatechtoncrm-production statefulset/redis -- redis-cli ping | wc -l)
                   echo "Redis ping successful: $REDIS_PING_TIME"
 
                   # Generate performance report
@@ -499,7 +499,7 @@ spec:
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: PERFORMANCE_WEBHOOK_URL
               resources:
                 requests:
@@ -516,7 +516,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: capacity-planner-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring
 
@@ -525,7 +525,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: resource-analyzer-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring
 
@@ -534,7 +534,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: performance-benchmark-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring
 
@@ -544,7 +544,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: capacity-monitoring-role
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 rules:
   - apiGroups: [""]
     resources: ["pods", "services", "persistentvolumeclaims"]
@@ -564,11 +564,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: capacity-planner-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: capacity-planner-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: capacity-monitoring-role
@@ -579,11 +579,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: resource-analyzer-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: resource-analyzer-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: capacity-monitoring-role
@@ -594,11 +594,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: performance-benchmark-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: performance-benchmark-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: capacity-monitoring-role

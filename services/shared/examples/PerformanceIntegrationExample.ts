@@ -16,7 +16,7 @@ import {
 const performanceConfig: PerformanceConfig = {
   cache: {
     defaultTTL: 3600, // 1 hour
-    keyPrefix: 'ailert',
+    keyPrefix: 'datatechtoncrm',
     enableCompression: true,
     maxMemoryUsage: 512, // 512MB
   },
@@ -28,11 +28,11 @@ const performanceConfig: PerformanceConfig = {
   },
   cdn: {
     distributionId: 'E1234567890ABC',
-    bucketName: 'ailert-assets',
+    bucketName: 'datatechtoncrm-assets',
     region: 'us-east-1',
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    cloudFrontDomain: 'cdn.ailert.com',
+    cloudFrontDomain: 'cdn.datatechtoncrm.com',
     defaultCacheTTL: 86400, // 24 hours
     maxCacheTTL: 31536000, // 1 year
   },
@@ -476,9 +476,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ailert
-      POSTGRES_USER: ailert
-      POSTGRES_PASSWORD: ailert_password
+      POSTGRES_DB: datatechtoncrm
+      POSTGRES_USER: datatechtoncrm
+      POSTGRES_PASSWORD: datatechtoncrm_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres.conf:/etc/postgresql/postgresql.conf
@@ -486,7 +486,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-EXEC", "pg_isready -U ailert -d ailert"]
+      test: ["CMD-EXEC", "pg_isready -U datatechtoncrm -d datatechtoncrm"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -496,11 +496,11 @@ services:
     build: .
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://ailert:ailert_password@postgres:5432/ailert
+      - DATABASE_URL=postgresql://datatechtoncrm:datatechtoncrm_password@postgres:5432/datatechtoncrm
       - REDIS_URL=redis://redis:6379
       - SMTP_HOST=smtp.example.com
       - SMTP_PORT=587
-      - SMTP_USER=noreply@ailert.com
+      - SMTP_USER=noreply@datatechtoncrm.com
       - SMTP_PASS=smtp_password
       - AWS_ACCESS_KEY_ID=your_access_key
       - AWS_SECRET_ACCESS_KEY=your_secret_key

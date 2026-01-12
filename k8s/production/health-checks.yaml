@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: health-check-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   # Health check endpoints configuration
   endpoints.json: |
@@ -179,7 +179,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: health-checker
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: health-checker
     component: monitoring
@@ -206,7 +206,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: health-checker
-          image: ailert/health-checker:latest
+          image: datatechtoncrm/health-checker:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -229,7 +229,7 @@ spec:
             - name: ADMIN_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: ailert-secrets
+                  name: datatechtoncrm-secrets
                   key: ADMIN_TOKEN
           resources:
             requests:
@@ -286,7 +286,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: health-checker-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: health-checker
     component: monitoring
@@ -308,7 +308,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: uptime-monitor
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: uptime-monitor
     component: monitoring
@@ -349,7 +349,7 @@ spec:
                   echo "Starting uptime checks at $TIMESTAMP"
 
                   # Check main website
-                  if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 https://ailert.com | grep -q "200"; then
+                  if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 https://datatechtoncrm.com | grep -q "200"; then
                     echo "✅ Main website is up"
                   else
                     echo "❌ Main website is down"
@@ -359,7 +359,7 @@ spec:
                   fi
 
                   # Check API endpoint
-                  if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.ailert.com/health | grep -q "200"; then
+                  if curl -f -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.datatechtoncrm.com/health | grep -q "200"; then
                     echo "✅ API is up"
                   else
                     echo "❌ API is down"
@@ -373,7 +373,7 @@ spec:
                     echo "Checking from region: $region"
                     # This would typically use a service like Pingdom, StatusCake, or AWS Route 53 health checks
                     # For now, we'll simulate with a simple curl
-                    if curl -f -s -o /dev/null --max-time 15 "https://ailert.com/?region=$region"; then
+                    if curl -f -s -o /dev/null --max-time 15 "https://datatechtoncrm.com/?region=$region"; then
                       echo "✅ Region $region check passed"
                     else
                       echo "⚠️ Region $region check failed"
@@ -385,7 +385,7 @@ spec:
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: UPTIME_WEBHOOK_URL
               resources:
                 requests:
@@ -408,7 +408,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: health-checker-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring
 
@@ -418,7 +418,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: uptime-monitor-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: monitoring
 
@@ -428,7 +428,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: health-checker-role
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 rules:
   - apiGroups: [""]
     resources: ["services", "endpoints"]
@@ -442,11 +442,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: health-checker-role-binding
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 subjects:
   - kind: ServiceAccount
     name: health-checker-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 roleRef:
   kind: Role
   name: health-checker-role
@@ -458,7 +458,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: health-checker-metrics
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: health-checker
     component: monitoring

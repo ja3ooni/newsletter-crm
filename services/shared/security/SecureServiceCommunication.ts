@@ -77,7 +77,7 @@ export class SecureServiceCommunication {
       timeout: this.config.timeout,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': `ailert-service/${this.authConfig.serviceId}`,
+        'User-Agent': `datatechtoncrm-service/${this.authConfig.serviceId}`,
       },
     });
 
@@ -215,7 +215,7 @@ export class SecureServiceCommunication {
     const payload = {
       serviceId: this.authConfig.serviceId,
       iat: Math.floor(Date.now() / 1000),
-      iss: 'ailert-platform',
+      iss: 'datatechtoncrm-platform',
     };
 
     return jwt.sign(payload, this.authConfig.privateKey, {

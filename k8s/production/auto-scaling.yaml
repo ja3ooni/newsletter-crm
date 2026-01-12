@@ -3,7 +3,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: user-service-hpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: user-service
     environment: production
@@ -41,7 +41,7 @@ spec:
         describedObject:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
-          name: ailert-ingress
+          name: datatechtoncrm-ingress
         target:
           type: Value
           value: "1000"
@@ -73,7 +73,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: newsletter-service-hpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: newsletter-service
     environment: production
@@ -129,7 +129,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: crm-service-hpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: crm-service
     environment: production
@@ -182,7 +182,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: analytics-service-hpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: analytics-service
     environment: production
@@ -235,7 +235,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: content-service-hpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: content-service
     environment: production
@@ -288,7 +288,7 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: postgres-vpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 spec:
   targetRef:
     apiVersion: apps/v1
@@ -313,7 +313,7 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: redis-vpa
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 spec:
   targetRef:
     apiVersion: apps/v1
@@ -338,7 +338,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cluster-autoscaler-status
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     k8s-app: cluster-autoscaler
 data:

@@ -261,7 +261,7 @@ program
       }
 
       console.log('\n✓ Kong setup completed successfully!');
-      console.log('Apply the declarative configuration with: docker exec ailert-api-gateway kong reload');
+      console.log('Apply the declarative configuration with: docker exec datatechtoncrm-api-gateway kong reload');
 
     } catch (error) {
       console.error('Setup failed:', error.message);

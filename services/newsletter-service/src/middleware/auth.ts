@@ -131,7 +131,7 @@ export const apiKeyAuth = (req: Request, res: Response, next: NextFunction): voi
   // Set a default user for API key authentication
   ;(req as AuthenticatedRequest).user = {
     id: 'api-user',
-    email: 'api@ailert.com',
+    email: 'api@datatechtoncrm.com',
     role: 'api',
   }
 

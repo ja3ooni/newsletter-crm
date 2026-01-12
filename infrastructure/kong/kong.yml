@@ -5,7 +5,7 @@ _transform: true
 # JWT Secrets for authentication
 jwt_secrets:
   - consumer: default
-    key: ailert-jwt-key
+    key: datatechtoncrm-jwt-key
     secret: ${JWT_SECRET}
     algorithm: HS256
 
@@ -70,7 +70,7 @@ services:
             database: 0
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
@@ -122,7 +122,7 @@ services:
           allowed_payload_size: 10 # 10MB for newsletter content
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
@@ -182,7 +182,7 @@ services:
           strategy: memory
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
@@ -243,7 +243,7 @@ services:
             }
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]
@@ -299,7 +299,7 @@ services:
               - "X-Analytics-Version: v1"
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining", "X-Analytics-Version"]
@@ -343,7 +343,7 @@ services:
             database: 0
       - name: cors
         config:
-          origins: ["http://localhost:3000", "https://*.ailert.com"]
+          origins: ["http://localhost:3000", "https://*.datatechtoncrm.com"]
           methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
           headers: ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "Authorization", "X-API-Key"]
           exposed_headers: ["X-Auth-Token", "X-Request-ID", "X-RateLimit-Remaining"]

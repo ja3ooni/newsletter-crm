@@ -1,4 +1,4 @@
-# AiLert Development Debugging Utilities for Windows
+# DatatechtonCRM Development Debugging Utilities for Windows
 param(
     [Parameter(Mandatory=$false)]
     [ValidateSet("enable-debug", "attach", "logs", "monitor", "test-endpoints", "profile-memory", "heap-dump", "stress-test", "debug-session")]
@@ -406,7 +406,7 @@ function Start-DebugSession {
 
 # Main script logic
 if (-not $Action) {
-    Write-Host "AiLert Development Debugging Utilities for Windows" -ForegroundColor Cyan
+    Write-Host "DatatechtonCRM Development Debugging Utilities for Windows" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage: .\dev-debug.ps1 -Action <command> [options]" -ForegroundColor White
     Write-Host ""

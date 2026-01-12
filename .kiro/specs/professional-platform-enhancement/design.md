@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design document outlines the transformation of AiLert from a basic newsletter application into a professional, enterprise-grade SaaS platform. The design emphasizes modern architecture patterns, scalability, security, and exceptional user experience while maintaining the core newsletter functionality.
+This design document outlines the transformation of DatatechtonCRM from a basic newsletter application into a professional, enterprise-grade SaaS platform. The design emphasizes modern architecture patterns, scalability, security, and exceptional user experience while maintaining the core newsletter functionality.
 
 The solution implements a microservices architecture with Next.js frontend, Node.js/Python backend services, event-driven communication, and comprehensive observability. The platform will support advanced personalization, multi-channel distribution, and robust monetization capabilities.
 
@@ -1417,4 +1417,4 @@ export default function () {
 - **Stripe**: Payment processing, subscription management, revenue tracking
 - **PayPal**: Alternative payment processing and subscription handling
 
-This comprehensive design provides a solid foundation for transforming AiLert into a professional, enterprise-grade newsletter platform with modern architecture, excellent user experience, and robust business capabilities. The enhanced CRM and newsletter features will position the platform as a complete marketing automation solution.
+This comprehensive design provides a solid foundation for transforming DatatechtonCRM into a professional, enterprise-grade newsletter platform with modern architecture, excellent user experience, and robust business capabilities. The enhanced CRM and newsletter features will position the platform as a complete marketing automation solution.

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AiLert Infrastructure Validation Script
+# DatatechtonCRM Infrastructure Validation Script
 set -e
 
 # Colors for output
@@ -112,7 +112,7 @@ check_directory_exists() {
     fi
 }
 
-echo -e "${CYAN}=== AiLert Infrastructure Validation ===${NC}"
+echo -e "${CYAN}=== DatatechtonCRM Infrastructure Validation ===${NC}"
 echo "$(date)"
 echo
 

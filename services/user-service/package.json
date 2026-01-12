@@ -1,5 +1,5 @@
 {
-  "name": "@ailert/user-service",
+  "name": "@datatechtoncrm/user-service",
   "version": "1.0.0",
   "description": "User Service with authentication and authorization",
   "main": "dist/index.js",

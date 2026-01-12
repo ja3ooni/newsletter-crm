@@ -157,7 +157,7 @@ export function BuilderCanvas(): JSX.Element {
 
         {/* Footer */}
         <div className="mt-8 p-4 text-center text-sm text-gray-500 border-t border-gray-200">
-          <p>Newsletter powered by AiLert</p>
+          <p>Newsletter powered by DatatechtonCRM</p>
         </div>
       </div>
     </div>

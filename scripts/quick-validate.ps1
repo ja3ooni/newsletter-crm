@@ -1,5 +1,5 @@
 # Quick Infrastructure Validation Script
-Write-Host "=== AiLert Quick Infrastructure Check ===" -ForegroundColor Cyan
+Write-Host "=== DatatechtonCRM Quick Infrastructure Check ===" -ForegroundColor Cyan
 Write-Host ""
 
 # Check Docker

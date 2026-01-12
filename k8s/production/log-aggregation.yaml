@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fluentd-config
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
 data:
   fluent.conf: |
     # Input sources
@@ -34,7 +34,7 @@ data:
     </filter>
 
     # Parse application logs
-    <filter kubernetes.var.log.containers.**ailert**.log>
+    <filter kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type parser
       key_name log
       reserve_data true
@@ -59,11 +59,11 @@ data:
     </filter>
 
     # Add environment and service labels
-    <filter kubernetes.var.log.containers.**ailert**.log>
+    <filter kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type record_transformer
       <record>
         environment production
-        cluster ailert-production
+        cluster datatechtoncrm-production
         service ${record["kubernetes"]["labels"]["app"]}
         version ${record["kubernetes"]["labels"]["version"]}
         namespace ${record["kubernetes"]["namespace_name"]}
@@ -73,7 +73,7 @@ data:
     </filter>
 
     # Error detection and alerting
-    <filter kubernetes.var.log.containers.**ailert**.log>
+    <filter kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type grep
       <regexp>
         key level
@@ -86,7 +86,7 @@ data:
     </filter>
 
     # Security log detection
-    <filter kubernetes.var.log.containers.**ailert**.log>
+    <filter kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type grep
       <regexp>
         key message
@@ -99,7 +99,7 @@ data:
     </filter>
 
     # Performance log detection
-    <filter kubernetes.var.log.containers.**ailert**.log>
+    <filter kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type grep
       <regexp>
         key message
@@ -112,7 +112,7 @@ data:
     </filter>
 
     # Output to Elasticsearch
-    <match kubernetes.var.log.containers.**ailert**.log>
+    <match kubernetes.var.log.containers.**datatechtoncrm**.log>
       @type elasticsearch
       @id out_es
       @log_level info
@@ -129,10 +129,10 @@ data:
       reconnect_on_error true
       reload_on_failure true
       log_es_400_reason false
-      logstash_prefix ailert-logs
+      logstash_prefix datatechtoncrm-logs
       logstash_dateformat %Y.%m.%d
       logstash_format true
-      index_name ailert-logs
+      index_name datatechtoncrm-logs
       type_name _doc
       <buffer>
         flush_thread_count 8
@@ -194,7 +194,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluentd
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: fluentd
     component: logging
@@ -242,7 +242,7 @@ spec:
             - name: ALERT_WEBHOOK_URL
               valueFrom:
                 secretKeyRef:
-                  name: ailert-secrets
+                  name: datatechtoncrm-secrets
                   key: LOG_ALERT_WEBHOOK_URL
             - name: FLUENTD_SYSTEMD_CONF
               value: disable
@@ -301,7 +301,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: elasticsearch
     component: logging
@@ -345,7 +345,7 @@ spec:
               protocol: TCP
           env:
             - name: cluster.name
-              value: "ailert-logs"
+              value: "datatechtoncrm-logs"
             - name: node.name
               valueFrom:
                 fieldRef:
@@ -419,7 +419,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: kibana
     component: logging
@@ -453,7 +453,7 @@ spec:
                   name: elasticsearch-secrets
                   key: password
             - name: SERVER_NAME
-              value: "kibana.ailert.com"
+              value: "kibana.datatechtoncrm.com"
             - name: SERVER_BASEPATH
               value: ""
             - name: XPACK_MONITORING_ENABLED
@@ -488,7 +488,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: elasticsearch
     component: logging
@@ -509,7 +509,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana-service
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: kibana
     component: logging
@@ -528,7 +528,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: fluentd-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: logging
 
@@ -554,7 +554,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: fluentd-service-account
-    namespace: ailert-production
+    namespace: datatechtoncrm-production
 
 ---
 # Log Analysis CronJob
@@ -562,7 +562,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: log-analyzer
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     app: log-analyzer
     component: logging
@@ -577,7 +577,7 @@ spec:
           serviceAccountName: log-analyzer-service-account
           containers:
             - name: log-analyzer
-              image: ailert/log-analyzer:latest
+              image: datatechtoncrm/log-analyzer:latest
               command:
                 - /bin/sh
                 - -c
@@ -587,7 +587,7 @@ spec:
                   echo "Starting log analysis at $(date)"
 
                   # Analyze error patterns
-                  curl -X GET "http://elasticsearch-service:9200/ailert-logs-*/_search" \
+                  curl -X GET "http://elasticsearch-service:9200/datatechtoncrm-logs-*/_search" \
                     -H "Content-Type: application/json" \
                     -u "elastic:$ELASTICSEARCH_PASSWORD" \
                     -d '{
@@ -646,7 +646,7 @@ spec:
                 - name: WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
-                      name: ailert-secrets
+                      name: datatechtoncrm-secrets
                       key: LOG_ANALYSIS_WEBHOOK_URL
               resources:
                 requests:
@@ -663,6 +663,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: log-analyzer-service-account
-  namespace: ailert-production
+  namespace: datatechtoncrm-production
   labels:
     component: logging

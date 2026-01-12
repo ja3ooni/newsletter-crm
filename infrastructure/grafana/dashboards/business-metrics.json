@@ -1,9 +1,9 @@
 {
   "dashboard": {
     "id": null,
-    "title": "AiLert Business Metrics",
+    "title": "DatatechtonCRM Business Metrics",
     "tags": [
-      "ailert",
+      "datatechtoncrm",
       "business",
       "kpi"
     ],

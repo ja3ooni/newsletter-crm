@@ -8,7 +8,7 @@ set -e
 # Configuration variables
 KONG_ADMIN_URL=${KONG_ADMIN_URL:-"http://localhost:8001"}
 JWT_SECRET=${JWT_SECRET:-$(openssl rand -base64 32)}
-REDIS_PASSWORD=${REDIS_PASSWORD:-"ailert_redis_password"}
+REDIS_PASSWORD=${REDIS_PASSWORD:-"datatechtoncrm_redis_password"}
 
 # Service endpoints for health checks
 declare -A SERVICES=(
@@ -99,7 +99,7 @@ create_jwt_credentials() {
 
     # Create JWT credential for default consumer
     curl -s -X POST "$KONG_ADMIN_URL/consumers/default/jwt" \
-        -d "key=ailert-jwt-key" \
+        -d "key=datatechtoncrm-jwt-key" \
         -d "secret=$JWT_SECRET" \
         -d "algorithm=HS256" || true
 }
@@ -345,10 +345,10 @@ API Keys Generated:
 - Enterprise Tier: $ENTERPRISE_API_KEY
 
 Next Steps:
-1. Apply declarative configuration: docker exec ailert-api-gateway kong reload
+1. Apply declarative configuration: docker exec datatechtoncrm-api-gateway kong reload
 2. Verify configuration: curl http://localhost:8001/status
 3. Test API endpoints: curl -H "X-API-Key: \$API_KEY" http://localhost:8000/api/v1/health
-4. Monitor logs: docker logs ailert-api-gateway -f
+4. Monitor logs: docker logs datatechtoncrm-api-gateway -f
 
 Configuration Files:
 - Kong Config: infrastructure/kong/kong.yml
@@ -383,7 +383,7 @@ main() {
     log_info "Summary saved to kong-setup-summary.txt"
     log_info ""
     log_info "Next steps:"
-    log_info "1. Apply declarative config: docker exec ailert-api-gateway kong reload"
+    log_info "1. Apply declarative config: docker exec datatechtoncrm-api-gateway kong reload"
     log_info "2. Validate setup: ./infrastructure/kong/kong-cli.ts validate"
     log_info "3. Test API: curl -H 'X-API-Key: \$FREE_TIER_API_KEY' http://localhost:8000/api/v1/health"
 }

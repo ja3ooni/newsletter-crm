@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: ailert
+  namespace: datatechtoncrm
 data:
   prometheus.yml: |
     global:
@@ -84,7 +84,7 @@ data:
 
   alert_rules.yml: |
     groups:
-      - name: ailert.rules
+      - name: datatechtoncrm.rules
         rules:
           - alert: HighErrorRate
             expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
@@ -127,7 +127,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: prometheus
 spec:
@@ -140,7 +140,7 @@ spec:
       labels:
         app: prometheus
     spec:
-      serviceAccountName: ailert-service-account
+      serviceAccountName: datatechtoncrm-service-account
       containers:
       - name: prometheus
         image: prom/prometheus:v2.47.0
@@ -190,7 +190,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: prometheus
 spec:
@@ -206,7 +206,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: prometheus-pvc
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   accessModes:
     - ReadWriteOnce
@@ -220,7 +220,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: grafana
 spec:
@@ -242,7 +242,7 @@ spec:
         - name: GF_SECURITY_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: ailert-secrets
+              name: datatechtoncrm-secrets
               key: GRAFANA_PASSWORD
         - name: GF_INSTALL_PLUGINS
           value: "grafana-piechart-panel,grafana-worldmap-panel"
@@ -283,7 +283,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana-service
-  namespace: ailert
+  namespace: datatechtoncrm
   labels:
     app: grafana
 spec:
@@ -299,7 +299,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: grafana-pvc
-  namespace: ailert
+  namespace: datatechtoncrm
 spec:
   accessModes:
     - ReadWriteOnce
@@ -313,7 +313,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-config
-  namespace: ailert
+  namespace: datatechtoncrm
 data:
   datasources.yml: |
     apiVersion: 1
