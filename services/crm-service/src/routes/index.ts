@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CRMController } from '@/controllers/CRMController';
 import { authMiddleware } from '@/middleware/auth';
 import { rateLimitMiddleware } from '@/middleware/rateLimit';

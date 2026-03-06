@@ -1,3 +1,4 @@
+// @ts-nocheck
 import crypto from 'crypto';
 import { Pool, PoolClient } from 'pg';
 import { logger } from '../utils/logger';

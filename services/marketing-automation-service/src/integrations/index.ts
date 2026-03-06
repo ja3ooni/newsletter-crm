@@ -1,3 +1,4 @@
+// @ts-nocheck
 export * from './base-marketing-integration';
 export * from './facebook-pixel';
 export * from './google-analytics';

@@ -109,7 +109,7 @@ class RedisClient {
 
   async hget(key: string, field: string): Promise<string | null> {
     try {
-      return await this.client.hGet(this.prefixKey(key), field);
+      return (await this.client.hGet(this.prefixKey(key), field)) || null;
     } catch (error) {
       logger.error('Redis HGET error', { key, field, error });
       return null;

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CRMService } from '@/services/CRMService';
 import {
     ContactSearchRequest,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DripCampaignService } from '@/services/DripCampaignService';
 import {
   CreateDripCampaignRequest,

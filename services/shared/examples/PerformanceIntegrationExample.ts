@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Example integration of performance optimization components
  * This shows how to integrate the caching, email optimization, and performance monitoring

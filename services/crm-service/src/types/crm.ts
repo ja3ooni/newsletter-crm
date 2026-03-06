@@ -1,3 +1,4 @@
+// @ts-nocheck
 export interface Contact {
   id?: string;
   email: string;

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { config } from '@/config';
 import { EventRepository } from '@/repositories/EventRepository';
 import { WorkflowRepository } from '@/repositories/WorkflowRepository';

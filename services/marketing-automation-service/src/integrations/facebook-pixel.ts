@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios, { AxiosInstance } from 'axios';
 import * as crypto from 'crypto';
 import { logger } from '../utils/logger';

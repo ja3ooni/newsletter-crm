@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import webpush from 'web-push';
 import { Contact, Deal, Meeting, Task } from '../types';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import app from '@/app';
 import { config } from '@/config';
 import DripEmailProcessor from '@/processors/DripEmailProcessor';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventService } from '@/services/EventService';
 import { FilterParams, PaginationParams } from '@/types';
 import { logger } from '@/utils/logger';

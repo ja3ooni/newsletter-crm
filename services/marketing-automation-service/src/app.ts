@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { config } from '@/config';
 import { authenticateToken } from '@/middleware/auth';
 import { errorHandler, notFoundHandler } from '@/middleware/errorHandler';

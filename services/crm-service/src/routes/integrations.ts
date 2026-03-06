@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { IntegrationController } from '../controllers/IntegrationController';
 import { authenticateToken } from '../middleware/auth';

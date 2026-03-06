@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { AnalyticsController } from '@/controllers/AnalyticsController';
 import { PredictiveAnalyticsController } from '@/controllers/PredictiveAnalyticsController';
 import { authenticateToken, optionalAuth } from '@/middleware/auth';

@@ -15,12 +15,13 @@ jest.mock('../../src/repositories/UserRepository');
 jest.mock('../../src/utils/logger');
 
 // Mock auth utilities
+
 const mockHashPassword = jest.fn();
 const mockVerifyPassword = jest.fn();
 jest.mock('../../src/utils/auth', () => ({
   AuthUtils: {
-    hashPassword: mockHashPassword,
-    verifyPassword: mockVerifyPassword
+    hashPassword: (...args) => mockHashPassword(...args),
+    verifyPassword: (...args) => mockVerifyPassword(...args)
   }
 }));
 
@@ -54,8 +55,8 @@ describe('UserService', () => {
     it('should create user with valid data', async () => {
       const expectedUser = { ...mockUser, id: 'new-user-123' };
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.create.mockResolvedValue(expectedUser);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
+      mockUserRepository.create.mockResolvedValue(expectedUser as any);
 
       const result = await userService.createUser(validCreateUserRequest);
 
@@ -72,7 +73,7 @@ describe('UserService', () => {
     it('should throw ValidationError for invalid email', async () => {
       mockIsValidEmail.mockReturnValue(false);
 
-      await expect(userService.createUser(invalidEmailUser))
+      await expect(userService.createUser(invalidEmailUser as any))
         .rejects.toThrow(ValidationError);
 
       expect(mockUserRepository.create).not.toHaveBeenCalled();
@@ -81,16 +82,16 @@ describe('UserService', () => {
     it('should throw ValidationError for weak password', async () => {
       mockIsValidPassword.mockReturnValue(false);
 
-      await expect(userService.createUser(weakPasswordUser))
+      await expect(userService.createUser(weakPasswordUser as any))
         .rejects.toThrow(ValidationError);
 
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
 
     it('should throw ValidationError for existing email', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser as any);
 
-      await expect(userService.createUser(validCreateUserRequest))
+      await expect(userService.createUser(validCreateUserRequest as any))
         .rejects.toThrow(ValidationError);
 
       expect(mockUserRepository.create).not.toHaveBeenCalled();
@@ -116,10 +117,10 @@ describe('UserService', () => {
 
       const expectedUser = { ...mockUser, email: oauthUserData.email, passwordHash: undefined };
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.create.mockResolvedValue(expectedUser);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
+      mockUserRepository.create.mockResolvedValue(expectedUser as any);
 
-      const result = await userService.createUser(oauthUserData);
+      const result = await userService.createUser(oauthUserData as any);
 
       expect(result).toEqual(expectedUser);
       expect(mockHashPassword).not.toHaveBeenCalled();
@@ -130,18 +131,18 @@ describe('UserService', () => {
     });
 
     it('should handle repository errors gracefully', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
       mockUserRepository.create.mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(userService.createUser(validCreateUserRequest))
+      await expect(userService.createUser(validCreateUserRequest as any))
         .rejects.toThrow('Database connection failed');
     });
 
     it('should handle password hashing errors', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
       mockHashPassword.mockRejectedValue(new Error('Hashing failed'));
 
-      await expect(userService.createUser(validCreateUserRequest))
+      await expect(userService.createUser(validCreateUserRequest as any))
         .rejects.toThrow('Hashing failed');
     });
   });
@@ -157,7 +158,7 @@ describe('UserService', () => {
         updatedAt: new Date()
       };
 
-      mockUserRepository.findById.mockResolvedValue(expectedUser);
+      mockUserRepository.findById.mockResolvedValue(expectedUser as any);
 
       const result = await userService.getUserById(userId);
 
@@ -167,7 +168,7 @@ describe('UserService', () => {
 
     it('should throw NotFoundError when user not found', async () => {
       const userId = 'non-existent';
-      mockUserRepository.findById.mockResolvedValue(null);
+      mockUserRepository.findById.mockResolvedValue(null as any);
 
       await expect(userService.getUserById(userId))
         .rejects.toThrow(NotFoundError);
@@ -200,7 +201,7 @@ describe('UserService', () => {
         createdAt: new Date()
       };
 
-      mockUserRepository.update.mockResolvedValue(updatedUser);
+      mockUserRepository.update.mockResolvedValue(updatedUser as any);
 
       const result = await userService.updateUser(userId, updateData);
 
@@ -229,8 +230,8 @@ describe('UserService', () => {
         createdAt: new Date()
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
-      mockUserRepository.update.mockResolvedValue(updatedUser);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
+      mockUserRepository.update.mockResolvedValue(updatedUser as any);
 
       const result = await userService.updateUser(userId, emailUpdateData);
 
@@ -244,14 +245,14 @@ describe('UserService', () => {
       };
 
       const existingUser = { id: 'other-user', email: emailUpdateData.email };
-      mockUserRepository.findByEmail.mockResolvedValue(existingUser as any);
+      mockUserRepository.findByEmail.mockResolvedValue(existingUser as any as any);
 
       await expect(userService.updateUser(userId, emailUpdateData))
         .rejects.toThrow(ValidationError);
     });
 
     it('should throw NotFoundError when user not found', async () => {
-      mockUserRepository.update.mockResolvedValue(null);
+      mockUserRepository.update.mockResolvedValue(null as any);
 
       await expect(userService.updateUser(userId, updateData))
         .rejects.toThrow(NotFoundError);
@@ -301,7 +302,7 @@ describe('UserService', () => {
         updatedAt: new Date()
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(user);
+      mockUserRepository.findByEmail.mockResolvedValue(user as any);
       mockVerifyPassword.mockResolvedValue(true);
 
       const result = await userService.authenticateUser(credentials);
@@ -311,7 +312,7 @@ describe('UserService', () => {
     });
 
     it('should throw ValidationError for non-existent user', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByEmail.mockResolvedValue(null as any);
 
       await expect(userService.authenticateUser(credentials))
         .rejects.toThrow(ValidationError);
@@ -324,7 +325,7 @@ describe('UserService', () => {
         passwordHash: null
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(userWithoutPassword as any);
+      mockUserRepository.findByEmail.mockResolvedValue(userWithoutPassword as any as any);
 
       await expect(userService.authenticateUser(credentials))
         .rejects.toThrow(ValidationError);
@@ -337,7 +338,7 @@ describe('UserService', () => {
         passwordHash: 'hashed-password'
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(user as any);
+      mockUserRepository.findByEmail.mockResolvedValue(user as any as any);
       mockVerifyPassword.mockResolvedValue(false);
 
       await expect(userService.authenticateUser(credentials))
@@ -368,9 +369,9 @@ describe('UserService', () => {
         updatedAt: new Date()
       };
 
-      mockUserRepository.updatePreferences.mockResolvedValue(updatedUser);
+      mockUserRepository.updatePreferences.mockResolvedValue(updatedUser as any);
 
-      const result = await userService.updatePreferences(userId, preferences);
+      const result = await userService.updatePreferences(userId, preferences as any);
 
       expect(result).toEqual(updatedUser);
       expect(mockUserRepository.updatePreferences).toHaveBeenCalledWith(userId, preferences);
@@ -382,14 +383,14 @@ describe('UserService', () => {
         frequency: 'invalid' as any
       };
 
-      await expect(userService.updatePreferences(userId, invalidPreferences))
+      await expect(userService.updatePreferences(userId, invalidPreferences as any))
         .rejects.toThrow(ValidationError);
     });
 
     it('should throw NotFoundError when user not found', async () => {
-      mockUserRepository.updatePreferences.mockResolvedValue(null);
+      mockUserRepository.updatePreferences.mockResolvedValue(null as any);
 
-      await expect(userService.updatePreferences(userId, preferences))
+      await expect(userService.updatePreferences(userId, preferences as any))
         .rejects.toThrow(NotFoundError);
     });
 
@@ -398,7 +399,7 @@ describe('UserService', () => {
         contentSections: 'not-an-array' as any
       };
 
-      await expect(userService.updatePreferences(userId, invalidPreferences))
+      await expect(userService.updatePreferences(userId, invalidPreferences as any))
         .rejects.toThrow(ValidationError);
     });
 
@@ -407,7 +408,7 @@ describe('UserService', () => {
         topics: 'not-an-array' as any
       };
 
-      await expect(userService.updatePreferences(userId, invalidPreferences))
+      await expect(userService.updatePreferences(userId, invalidPreferences as any))
         .rejects.toThrow(ValidationError);
     });
   });
@@ -437,10 +438,10 @@ describe('UserService', () => {
 
       const newHashedPassword = 'new-hashed-password';
 
-      mockUserRepository.findById.mockResolvedValue(user);
+      mockUserRepository.findById.mockResolvedValue(user as any);
       mockVerifyPassword.mockResolvedValue(true);
       mockHashPassword.mockResolvedValue(newHashedPassword);
-      mockUserRepository.update.mockResolvedValue({ ...user, passwordHash: newHashedPassword });
+      mockUserRepository.update.mockResolvedValue({ ...user, passwordHash: newHashedPassword } as any);
 
       await userService.changePassword(userId, currentPassword, newPassword);
 
@@ -455,7 +456,7 @@ describe('UserService', () => {
         passwordHash: 'hashed-password'
       };
 
-      mockUserRepository.findById.mockResolvedValue(user as any);
+      mockUserRepository.findById.mockResolvedValue(user as any as any);
       mockVerifyPassword.mockResolvedValue(false);
 
       await expect(userService.changePassword(userId, currentPassword, newPassword))
@@ -468,7 +469,7 @@ describe('UserService', () => {
         passwordHash: null
       };
 
-      mockUserRepository.findById.mockResolvedValue(user as any);
+      mockUserRepository.findById.mockResolvedValue(user as any as any);
 
       await expect(userService.changePassword(userId, currentPassword, newPassword))
         .rejects.toThrow(ValidationError);
@@ -494,7 +495,7 @@ describe('UserService', () => {
         updatedAt: new Date()
       };
 
-      mockUserRepository.findById.mockResolvedValue(user);
+      mockUserRepository.findById.mockResolvedValue(user as any);
 
       const result = await userService.getPreferences(userId);
 

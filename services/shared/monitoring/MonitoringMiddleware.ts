@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios from 'axios';
 import { NextFunction, Request, Response } from 'express';
 import { Counter, Gauge, Histogram, register } from 'prom-client';

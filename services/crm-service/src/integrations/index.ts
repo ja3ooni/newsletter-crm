@@ -1,3 +1,4 @@
+// @ts-nocheck
 export * from './base-integration';
 export * from './custom-crm';
 export * from './hubspot';

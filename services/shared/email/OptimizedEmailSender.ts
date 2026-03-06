@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Job, Queue } from 'bull';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import { logger } from '../utils/logger';

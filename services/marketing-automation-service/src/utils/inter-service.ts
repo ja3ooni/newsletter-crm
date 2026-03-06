@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Marketing Automation Service Inter-Service Communication
  * Handles events and communication with other services

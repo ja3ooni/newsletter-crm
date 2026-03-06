@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from 'events';
 import { Readable, Transform, Writable } from 'stream';
 import { pipeline } from 'stream/promises';

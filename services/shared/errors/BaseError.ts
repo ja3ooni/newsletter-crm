@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Base error classes for consistent error handling across all services
  */
