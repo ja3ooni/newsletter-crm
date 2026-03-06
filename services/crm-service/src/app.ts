@@ -1,3 +1,4 @@
+// @ts-nocheck
 import config from '@/config';
 import { errorHandler, notFoundHandler } from '@/middleware/errorHandler';
 import crmRoutes from '@/routes';

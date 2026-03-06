@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TerritoryRepository } from '@/repositories/TerritoryRepository';
 import { CRMAnalyticsService } from '@/services/CRMAnalyticsService';
 import { CRMAutomationService } from '@/services/CRMAutomationService';

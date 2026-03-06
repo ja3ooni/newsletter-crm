@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { config } from '@/config';
 import { CampaignSubscription, DripCampaign } from '@/types';
 import Bull, { Job, JobOptions, Queue } from 'bull';

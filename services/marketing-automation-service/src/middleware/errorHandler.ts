@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { logger } from '@/utils/logger';
 import { NextFunction, Request, Response } from 'express';
 

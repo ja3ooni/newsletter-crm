@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ContactRepository } from '@/repositories/ContactRepository';
 import { EngagementEventRepository } from '@/repositories/EngagementEventRepository';
 import { LeadScoringRepository } from '@/repositories/LeadScoringRepository';

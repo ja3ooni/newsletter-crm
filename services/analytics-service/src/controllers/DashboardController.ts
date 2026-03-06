@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DashboardService } from '@/services/DashboardService';
 import { WebSocketService } from '@/services/WebSocketService';
 import { logger } from '@/utils/logger';

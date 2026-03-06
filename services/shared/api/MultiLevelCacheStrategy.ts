@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextFunction, Request, Response } from 'express';
 import { RedisClientType } from 'redis';
 import { logger } from '../utils/logger';

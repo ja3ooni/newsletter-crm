@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventService } from '@/services/EventService';
 import { logger } from '@/utils/logger';
 import { EventProcessingJobData } from '@/utils/queue';

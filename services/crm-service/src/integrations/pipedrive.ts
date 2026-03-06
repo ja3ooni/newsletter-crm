@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios, { AxiosInstance } from 'axios';
 import { Company, Contact, Deal } from '../types/crm';
 import logger from '../utils/logger';

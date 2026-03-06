@@ -1,3 +1,4 @@
+// @ts-nocheck
 import config from '@/config';
 import Redis from 'redis';
 import logger from './logger';

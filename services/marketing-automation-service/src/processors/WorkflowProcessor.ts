@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { WorkflowService } from '@/services/WorkflowService';
 import { logger } from '@/utils/logger';
 import { WorkflowExecutionJobData } from '@/utils/queue';

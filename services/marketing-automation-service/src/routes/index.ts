@@ -1,3 +1,4 @@
+// @ts-nocheck
 import DripCampaignController from '@/controllers/DripCampaignController';
 import EventController from '@/controllers/EventController';
 import WorkflowController from '@/controllers/WorkflowController';

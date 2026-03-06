@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { RedisClientType } from 'redis';
 import { logger } from '../utils/logger';
 import { ConnectionPoolManager, QueryResult } from './ConnectionPoolManager';

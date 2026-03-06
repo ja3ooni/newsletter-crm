@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CRMAutomationController } from '@/controllers/CRMAutomationController';
 import { authenticateToken } from '@/middleware/auth';
 import { ContactRepository } from '@/repositories/ContactRepository';

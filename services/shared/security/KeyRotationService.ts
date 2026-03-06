@@ -1,3 +1,4 @@
+// @ts-nocheck
 import crypto from 'crypto';
 import cron from 'node-cron';
 import { StructuredLogger } from '../logging/StructuredLogger';

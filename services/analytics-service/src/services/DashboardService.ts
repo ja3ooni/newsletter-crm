@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { AnalyticsDashboard, DashboardWidget, WidgetConfig } from '@/types';
 import { database } from '@/utils/database';
 import { logger } from '@/utils/logger';

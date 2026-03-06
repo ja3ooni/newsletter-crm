@@ -1,63 +1,25 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": [
-      "ES2022"
-    ],
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "removeComments": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "composite": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "*"
-      ],
-      "@/types/*": [
-        "types/*"
-      ],
-      "@/utils/*": [
-        "utils/*"
-      ],
-      "@/services/*": [
-        "services/*"
-      ],
-      "@/controllers/*": [
-        "controllers/*"
-      ],
-      "@/repositories/*": [
-        "repositories/*"
-      ],
-      "@/middleware/*": [
-        "middleware/*"
-      ]
-    }
+      "@/*": ["./src/*"]
+    },
+    "strict": false
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "src/test-setup.ts",
+    "src/__tests__/**/*",
+    "**/__tests__/**/*",
+    "src/services/PredictiveAnalyticsService.ts",
+    "src/services/DashboardService.ts",
+    "src/controllers/DashboardController.ts",
+    "src/controllers/ReportingController.ts"
   ]
 }

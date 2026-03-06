@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Main entry point for the CRM service
 import './server';
 

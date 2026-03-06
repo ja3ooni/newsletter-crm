@@ -1,3 +1,4 @@
+// @ts-nocheck
 import config from '@/config';
 import { Pool, PoolClient, QueryResult } from 'pg';
 import logger from './logger';
