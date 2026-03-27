@@ -1,6 +1,6 @@
 import { TemplateController } from '@/controllers/TemplateController';
-import { auth } from '@/middleware/auth';
-import { rateLimit } from '@/middleware/rateLimit';
+import { authMiddleware } from '@/middleware/auth';
+import { rateLimiters } from '@/middleware/rateLimit';
 import { Router } from 'express';
 
 const router = Router();
@@ -19,11 +19,11 @@ router.get('/:id', templateController.getTemplateById.bind(templateController));
 router.get('/', templateController.getTemplates.bind(templateController));
 
 // Protected routes
-router.use(auth);
+router.use(authMiddleware.authenticate);
 
 router.post(
   '/',
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }),
+  rateLimiters.general,
   templateController.createTemplate.bind(templateController)
 );
 router.post(

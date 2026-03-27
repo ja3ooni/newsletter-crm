@@ -71,7 +71,7 @@ export interface TemplateValidationError {
 }
 
 export interface TemplateValidationWarning {
-  type: 'performance' | 'compatibility' | 'best-practice';
+  type: 'performance' | 'compatibility' | 'best-practice' | 'accessibility';
   message: string;
   suggestion: string;
 }

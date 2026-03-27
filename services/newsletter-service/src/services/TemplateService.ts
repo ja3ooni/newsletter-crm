@@ -2,7 +2,7 @@ import {
   CreateTemplateData,
   TemplateRepository,
 } from '@/repositories/TemplateRepository';
-import { NewsletterTemplate } from '@/types';
+import { NewsletterTemplate, TemplateVariable } from '@/types';
 import { logger } from '@/utils/logger';
 
 export interface TemplateCustomizationOptions {
@@ -101,7 +101,7 @@ export class TemplateService {
 
     return html.replace('</head>', `<style>${mobileCSS}</style></head>`);
   }
-}
+
   async getMarketplaceTemplates(): Promise<TemplateMarketplaceItem[]> {
     const publicTemplates = await this.templateRepository.findPublicTemplates();
 
